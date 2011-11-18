@@ -19,8 +19,6 @@ module Push::Transport::Controller
 
     SidHttpKey = 'HTTP_X_SID'.freeze
     SidParamKey = 'sid'.freeze
-    JsonpCallbackParamKey = 'callback'.freeze
-    Connection = ::AMQP.connect(Push.config.amqp.to_hash)
 
     # This is our iframe cross-domain magic proxy that makes long polling work in all of our browsers.
     get '/_xdr_proxy' do
@@ -61,12 +59,7 @@ module Push::Transport::Controller
             log "Closed channel `#{exchange}`"
             body {
               log "Flushing out body `#{exchange}`"
-              if callback = params[JsonpCallbackParamKey]
-                log "Wrapped in JSONP callback `#{callback}`"
-                "#{callback}(#{message});"
-              else
-                message
-              end
+              message
             }
           }
         }
@@ -93,7 +86,11 @@ module Push::Transport::Controller
     def channel
       # The prefetch tells AMQP that we only want to grab one message at most when we connect to the queue. This prevents
       # messages from being dropped or not ack'ed when the client comes back around to reconnect.
-      @channel ||= ::AMQP::Channel.new(Connection).prefetch(1)
+      @channel ||= ::AMQP::Channel.new(self.class.connection).prefetch(1)
+    end
+
+    def self.connection
+      @connection ||= AMQP.connect(Push.config.amqp.to_hash)
     end
     
     def kill_queue
