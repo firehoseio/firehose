@@ -1,3 +1,5 @@
+require 'logger'
+
 # Make logging easier in various classes
 module Push::Logging
 private
