@@ -1,3 +1,5 @@
+require 'amqp'
+
 module Push
   # Backends for test and development environments
   module Backend
