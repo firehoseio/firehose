@@ -9,7 +9,7 @@
 require 'sinatra/base'
 require 'sinatra/async'
 
-module Push::Transport::Controller
+module Push::Transport
   class HttpLongPoll < Sinatra::Base
     set :root, File.expand_path('../http_long_poll', __FILE__)
 

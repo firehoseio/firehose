@@ -1,11 +1,11 @@
 require 'spec_helper'
 require 'rack/test'
 
-describe Push::Transport::Controller::HttpLongPoll do
+describe Push::Transport::HttpLongPoll do
   include Rack::Test::Methods
 
   def app
-    Push::Transport::Controller::HttpLongPoll.new
+    Push::Transport::HttpLongPoll.new
   end
 
   it "should be configurable" do

@@ -1,14 +1,12 @@
 module Push
   module Transport
-    module Controller
-      autoload :HttpLongPoll, 'push/transport/controller/http_long_poll'
-      autoload :WebSocket,    'push/transport/controller/web_socket'
-    end
+    autoload :HttpLongPoll, 'push/transport/http_long_poll'
+    autoload :WebSocket,    'push/transport/web_socket'
 
-    # Figure out which transport controller we're going to use to service the request.
+    # Figure out which transport transport we're going to use to service the request.
     class Dispatcher
       def call(env)
-        env['Upgrade'] == 'WebSocket' ? Controller::WebSocket.new.call(env) : Controller::HttpLongPoll.new.call(env)
+        env['Upgrade'] == 'WebSocket' ? WebSocket.new.call(env) : HttpLongPoll.new.call(env)
       end
     end
   end

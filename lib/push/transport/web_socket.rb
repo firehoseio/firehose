@@ -1,4 +1,4 @@
-module Push::Transport::Controller
+module Push::Transport
   class WebSocket < Cramp::Websocket
     include Push::Logger
 
