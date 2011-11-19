@@ -141,7 +141,7 @@ describe Push do
     it "should publish" do
       lambda{
         @producer.publish('hi').to('/exchange')
-      }.should change(@producer.backend.exchange['/exchange'], :count).by(1)
+      }.should change(@producer.backend.channel['/exchange'], :count).by(1)
     end
   end
 end

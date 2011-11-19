@@ -3,6 +3,82 @@ require 'amqp'
 module Push
   # Backends for test and development environments
   module Backend
+    # Mix this into backends that producers may push messages onto
+    module Publishable
+      # Publish a message into the backend
+      def publish(*channels)
+      end
+
+      # Introspection to see if this backend can be published to
+      def publishable?
+        true
+      end
+    end
+
+    # Mix this into backends that consumers may subscribe to for messages
+    module Subscribable
+      # Subscribe to a channel, then wait to receive messages on it. This
+      # call is usually async, otherwise it will block.
+      def subscribe(*channels, &block)
+      end
+
+      # Cleans up subscription connections, etc.
+      def unsubscribe(&block)
+        block.call(self)
+      end
+
+      # Introspection to see if this backend can be subscribed to
+      def subscribable?
+        true
+      end
+    end
+
+    # Messages can be both published or subscribed to this backend
+    module PubSub
+      def self.included(klass)
+        klass.send(:include, Subscribable)
+        klass.send(:include, Publishable)
+      end
+    end
+
+    # Lets make this inheritable if people perfer that.
+    class Base
+      include PubSub
+    end
+
+    class Test
+      include Push::Logging
+      include PubSub
+
+      def publish(message, *channels)
+        channels.each do |name|
+          logger.debug "Publishing '#{message}' to channel '#{name}'"
+          channel[name] << message
+        end
+      end
+
+      # Loop through everything until its all out of the array. The key here is not to block because
+      # we want to test pubsub in a sync environment to keep things sane
+      def subscribe(*channels, &block)
+        channels.each do |name|
+          until channel[name].empty? do
+            message = channel[name].pop
+            logger.debug "Consuming '#{message}' from channel '#{name}'"
+            block.call message
+          end
+          # Kill the channel once all of the messages are out of it. This simulates the cleaning up
+          # of a message exchange
+          channel.delete name
+        end
+      end
+
+      # The key of this hash corresponds to a channel on the backend. The value of the hash is an array
+      # of messages on the channel.
+      def channel
+        @channel ||= Hash.new {|h,k| h[k] = []} # Default hash empty hash values with an array (instead of nil)
+      end
+    end
+
     class AMQP
       include Push::Logging
 
@@ -34,19 +110,6 @@ module Push
       # let publish use this connection.
       def connection
         @connection ||= ::AMQP.connect(Push.config.amqp.to_hash)
-      end
-    end
-
-    class Test
-      include Push::Logging
-      
-      def publish(message, exchange_name)
-        logger.debug "Published '#{message}' to exchange #{exchange}"
-        exchange[exchange_name] << message
-      end
-
-      def exchange
-        @exchange ||= Hash.new {|h,k| h[k] = []} # Default hash empty hash values with an array (instead of nil)
       end
     end
 
