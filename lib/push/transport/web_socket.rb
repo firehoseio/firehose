@@ -1,46 +1,42 @@
+require 'em-websocket'
+
 module Push::Transport
-  class WebSocket < Cramp::Websocket
+  class WebSocket
     include Push::Logger
 
-    on_start :bind_queue
-    on_finish :unbind_queue
-    on_data :message_received
-    
-    def bind_queue
-      logger.info "Subscribed to '#{exchange}'"
-      queue.bind(channel.fanout(exchange)).subscribe(:ack => true) {|header, message|
-        header.ack
-        render message
-        logger.info "Sent message: #{message}"
-      }
+    Port = 8080
+    Host = '0.0.0.0'
+
+    attr_accessor :connection, :consumer
+
+    def initialize(connection, subscription)
+      @connection, @subscription = connection, subscription
     end
-    
-    def unbind_queue
-      queue.unsubscribe {
-        channel.close
-        logger.info "Unsubscribed from '#{exchange}'"
-      }
+
+    def bind
+      connection.onclose { unbind }
+      subscription.on_message {|m| connection.send m }
     end
-    
-    def message_received(data)
-      logger.info "Received #{data}" # Who cares? Do nothing.
+
+    # When this thing dies, delete all of the queues
+    def unbind
+      subscription.delete
     end
-    
-  private
-    def channel
-      @channel ||= AMQP::Channel.new
-    end
-    
-    def queue
-      @queue ||= channel.queue("#{sid}@#{exchange}", :arguments => {'x-expires' => Push.config.amqp.queue_ttl})
-    end
-    
-    def sid
-      @sid ||= UUID.new.generate
-    end
-    
-    def exchange
-      request.env['PATH_INFO']
+
+    # TODO this is screwy louie -- I need to be able to mount this into a web context so that 
+    # I can access the WS stuff by a path. That path is the channel that the consumer wnats
+    # to listen to. Yep, I'll need a multiplex channel, but its cool jeeves. You'll need a class
+    # above this that handles the connection loop for WS, and that my friend ,that is what
+    # you'll need to mount inside of the dispatcher.
+    def self.start(port=Port, host=Host)
+      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 8080) do |ws|
+        ws.onopen {
+          # TODO how do you extract the channels out of a WS context? It should be
+          # accessed via Rack PATH_INFO.
+          channel = '/fun'
+          new(ws, Consumer.new.subscribe(channel)).bind
+        }
+      end
     end
   end
 end

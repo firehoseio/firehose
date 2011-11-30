@@ -5,12 +5,9 @@ module Push
   autoload :Logging,        'push/logging'
   autoload :Backend,        'push/backend'
   autoload :Producer,       'push/producer'
+  autoload :Consumer,       'push/consumer'
   autoload :Transport,      'push/transport'
-  
-  # Register some default backends
-  Backend.register_adapter(:test, Backend::Test)
-  Backend.register_adapter(:amqp, Backend::AMQP)
-  
+
   def self.config(&blk)
     @config ||= Configuration.new
     yield @config if block_given?

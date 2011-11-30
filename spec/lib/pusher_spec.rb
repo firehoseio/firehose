@@ -110,38 +110,6 @@ describe Push do
           @env.amqp.queue_ttl.should eql(10)
         end
       end
-
-    end
-  end
-  
-  context "backend" do
-    context "adapters" do
-      before(:all) do
-        @an_adapter = Class.new
-      end
-
-      it "register new adapter" do
-        lambda{
-          Push::Backend.register_adapter(:super_cool, @an_adapter)
-        }.should change(Push::Backend.adapters, :count).by(1)
-      end
-
-      it "should return instance of an adapter" do
-        Push::Backend.register_adapter(:super_cool, @an_adapter)
-        Push::Backend.adapter(:super_cool).should be_an_instance_of(@an_adapter)
-      end
-    end
-  end
-
-  context "producer" do
-    before(:all) do
-      @producer = Push::Producer.new
-    end
-
-    it "should publish" do
-      lambda{
-        @producer.publish('hi').to('/exchange')
-      }.should change(@producer.backend.channel['/exchange'], :count).by(1)
     end
   end
 end

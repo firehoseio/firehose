@@ -1,17 +1,20 @@
 module Push
-  # Give us a really easy way to publish messages to an MQ exchange. This is 
+  # Give us a really easy way to publish messages to an MQ channel. This is 
   # MQ agnostic so that it works in a test environment.
   class Producer
     attr_reader :backend
     
-    # This gives us a nice Push.publish(message).to(exchange) DSL.
+    # This gives us a nice Push.publish(message).to(channel) DSL.
     class DSL
+      include Push::Logging
+
       def initialize(backend, message)
         @backend, @message = backend, message
       end
 
-      def to(exchange)
-        @backend.publish(@message, exchange)
+      def to(channel)
+        logger.debug "Publishing `#{@message}` to `#{channel}`"
+        @backend.publish(@message, channel)
       end
     end
 

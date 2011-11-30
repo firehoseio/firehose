@@ -1,0 +1,11 @@
+#!/usr/bin/env ruby
+
+require 'rubygems'
+require 'bundler/setup'
+require 'push'
+
+Push.config do |c|
+  c.backend = :bunny
+end
+
+Push::Producer.new.publish("Tick-tock its #{Time.now} O'clock").to('/1')

@@ -2,4 +2,5 @@
 .bundle
 .DS_Store
 Gemfile.lock
+log/*
 pkg/*

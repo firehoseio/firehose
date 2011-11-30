@@ -1,3 +1,5 @@
+require 'logger'
+
 module Push
   class Configuration
     attr_accessor :amqp, :web_socket, :logger, :backend, :long_poll, :exception_handler
@@ -13,7 +15,7 @@ module Push
         }
       end
     end
-    
+
     WebSocket = Struct.new(:url)
     LongPoll = Struct.new(:url, :timeout)
     
