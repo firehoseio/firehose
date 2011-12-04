@@ -3,6 +3,7 @@ require 'spec_helper'
 describe Push::Consumer do
   before(:each) do
     Push.config.backend = :test
+    # Push::Consumer::Subscription.backend = Push::Backend::Test.new
     @consumer = Push::Consumer.new
     @channel = Push::Consumer::Subscription.backend.channels
   end

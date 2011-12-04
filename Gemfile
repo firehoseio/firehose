@@ -3,7 +3,10 @@ source "http://rubygems.org"
 # Specify your gem's dependencies in push.gemspec
 gemspec
 
-gem 'growl_notify', :require => false
-gem 'rb-fsevent',   :require => false
-gem 'ruby-debug19', :require => false
-gem 'em-ventually', :require => false
+group :test do
+  gem 'growl_notify'
+  gem 'rb-fsevent'
+  gem 'ruby-debug19', :platform => :ruby_19
+  gem 'ruby-debug',   :platform => :ruby_18
+  gem 'em-ventually'
+end

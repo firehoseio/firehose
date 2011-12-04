@@ -6,7 +6,7 @@ describe Push::Backend::Test do
   end
 
   it "should be registered as :test" do
-    Push::Backend.adapter(:test).should be_instance_of(Push::Backend::Test)
+    Push::Backend::Adapters.adapter(:test).should be_instance_of(Push::Backend::Test)
   end
 
   it "should be subscribable" do

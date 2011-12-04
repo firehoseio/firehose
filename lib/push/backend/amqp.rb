@@ -4,6 +4,7 @@ module Push::Backend
   # Asynchronously publish and subscribe to messages to AMQP with Em::AMQP gem.
   class AMQP
     include PubSub
+    include Push::Logging
 
     attr_reader :connection
 
@@ -11,20 +12,26 @@ module Push::Backend
       @connection = connection
     end
 
-    # Run this puppy inside of Em.
+    # Publish a message to an AMQP fanout queue.
     def publish(message, name)
+      logger.debug "AMQP publishing `#{message}` to exchange `#{name}`"
       channel.fanout(name, :auto_delete => true).publish(message)
     end
 
-    # Setup the subscription
+    # Setup a queue for the consumer, then bind that queue to the fanout exchange created by the publisher.
     def subscribe(subscription)
-      # channel = channel(:prefetch => 1)
-      queue = channel.queue("#{subscription.consumer.id}@#{subscription.channel}", :arguments => {'x-expires' => Push.config.amqp.queue_ttl * 1000})
+      consumer_queue = "#{subscription.consumer.id}@#{subscription.channel}"
+      queue = channel.queue(consumer_queue, :arguments => {'x-expires' => Push.config.amqp.queue_ttl * 1000})
       fanout = channel.fanout(subscription.channel, :auto_delete => true)
 
-      subscription.on_delete { queue.delete }
+      subscription.on_delete {
+        logger.debug "AMQP unbinding `#{consumer_queue}`"
+        queue.unsubscribe
+      }
 
-      queue.bind(fanout, :ack => true).subscribe do |metadata, payload|
+      logger.debug "AMQP binding `#{consumer_queue}` to exchange `#{subscription.channel}`"
+      queue.bind(fanout).subscribe(:ack => true) do |metadata, payload|
+        logger.debug "AMQP acking payload `#{payload}`"
         metadata.ack
         subscription.process_message(payload)
       end
@@ -32,12 +39,13 @@ module Push::Backend
 
   private
     # Create an instance of an AMQP channel
-    def channel(opts={})
+    def channel
       # The prefetch tells AMQP that we only want to grab one message at most when we connect to the queue. This prevents
       # messages from being dropped or not ack'ed when the client comes back around to reconnect.
-      @channel ||= ::AMQP::Channel.new(connection).prefetch(opts[:prefetch] || 1)
+      ::AMQP::Channel.new(connection).prefetch(1)
     end
 
+    # Access and memoize the connection that we'll use for the AMQP backend
     def self.connection
       @connection ||= ::AMQP.connect(Push.config.amqp.to_hash.merge(:logging => true).merge(:auto_recovery => true))
     end

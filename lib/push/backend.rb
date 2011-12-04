@@ -64,9 +64,47 @@ module Push
     def self.adapters
       @adapters ||= {}
     end
+
+    # Provide interface from both the Consumer and Producer to 
+    # obtain a backend adapter for use when publishing or subscribing 
+    # to messages
+    module Adapter
+      def self.included(base)
+        base.send(:extend, ClassMethods)
+      end
+
+      module ClassMethods
+        # Memoize the default backend adapter
+        def backend
+          @backend ||= Backend::Adapters.adapter
+        end
+
+        # Override the default backend adapter. This is insanely
+        # useful for testing specific backends
+        def backend=(backend)
+          @backend = backend
+        end
+      end
+    end
+
+    module Adapters
+      # Now we need to make adapters registerable so that folks can set these in their configuration
+      # file settings
+      def self.register(name, adapter)
+        adapters[name.to_sym] = adapter
+      end
+
+      def self.adapter(name=Push.config.backend)
+        adapters[name.to_sym].new
+      end
+
+      def self.adapters
+        @adapters ||= {}
+      end
+    end
   end
 
-  Backend.register_adapter :bunny,  Backend::Bunny
-  Backend.register_adapter :amqp,   Backend::AMQP
-  Backend.register_adapter :test,   Backend::Test
+  Backend::Adapters.register :bunny,  Backend::Bunny
+  Backend::Adapters.register :amqp,   Backend::AMQP
+  Backend::Adapters.register :test,   Backend::Test
 end

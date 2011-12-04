@@ -1,5 +1,4 @@
 require 'spec_helper'
-require 'em-ventually/rspec'
 require 'eventmachine'
 
 describe Push::Backend do
@@ -10,13 +9,13 @@ describe Push::Backend do
 
     it "register new adapter" do
       lambda{
-        Push::Backend.register_adapter(:super_cool, @an_adapter)
-      }.should change(Push::Backend.adapters, :count).by(1)
+        Push::Backend::Adapters.register(:super_cool, @an_adapter)
+      }.should change(Push::Backend::Adapters.adapters, :count).by(1)
     end
 
     it "should return instance of an adapter" do
-      Push::Backend.register_adapter(:super_cool, @an_adapter)
-      Push::Backend.adapter(:super_cool).should be_an_instance_of(@an_adapter)
+      Push::Backend::Adapters.register(:super_cool, @an_adapter)
+      Push::Backend::Adapters.adapter(:super_cool).should be_an_instance_of(@an_adapter)
     end
   end
 end
@@ -37,7 +36,7 @@ describe Push::Backend::Bunny do
   end
 
   it "should be registered as :bunny" do
-    Push::Backend.adapter(:bunny).should be_instance_of(Push::Backend::Bunny)
+    Push::Backend::Adapters.adapter(:bunny).should be_instance_of(Push::Backend::Bunny)
   end
 
   it "should be subscribable" do

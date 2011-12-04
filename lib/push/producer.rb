@@ -4,6 +4,8 @@ module Push
   class Producer
     attr_reader :backend
     
+    include Backend::Adapter
+
     # This gives us a nice Push.publish(message).to(channel) DSL.
     class DSL
       include Push::Logging
@@ -18,8 +20,8 @@ module Push
       end
     end
 
-    def initialize
-      @backend = Backend.adapter
+    def initialize(backend=self.class.backend)
+      @backend = backend
     end
 
     def publish(message)

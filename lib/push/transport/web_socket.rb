@@ -1,42 +1,38 @@
-require 'em-websocket'
+require 'rack/websocket'
 
 module Push::Transport
-  class WebSocket
+  class WebSocket < Rack::WebSocket::Application
     include Push::Logger
 
-    Port = 8080
-    Host = '0.0.0.0'
-
-    attr_accessor :connection, :consumer
+    # class Handler
+    #   def initialize(socket, env)
+    #     @socket, @env = socket, env
+    #     consumer.subscribe_to(env['PATH_INFO']) do |s|
+    #       socket.on_close { subscription.delete }
+    #     end
+    #   end
+    # end
 
     def initialize(connection, subscription)
       @connection, @subscription = connection, subscription
     end
 
-    def bind
-      connection.onclose { unbind }
-      subscription.on_message {|m| connection.send m }
-    end
-
-    # When this thing dies, delete all of the queues
-    def unbind
-      subscription.delete
-    end
-
-    # TODO this is screwy louie -- I need to be able to mount this into a web context so that 
-    # I can access the WS stuff by a path. That path is the channel that the consumer wnats
-    # to listen to. Yep, I'll need a multiplex channel, but its cool jeeves. You'll need a class
-    # above this that handles the connection loop for WS, and that my friend ,that is what
-    # you'll need to mount inside of the dispatcher.
-    def self.start(port=Port, host=Host)
-      EventMachine::WebSocket.start(:host => "0.0.0.0", :port => 8080) do |ws|
-        ws.onopen {
-          # TODO how do you extract the channels out of a WS context? It should be
-          # accessed via Rack PATH_INFO.
-          channel = '/fun'
-          new(ws, Consumer.new.subscribe(channel)).bind
-        }
+    # Subscribe to a path and make some magic happen, mmmkay?
+    def on_open(env)
+      Push::Consumer.new(env['X_HTTP_CONSUMER_ID']).subscribe_to(env['PATH_INFO']) do |s|
+        on_close { subscription.delete }
+        s.on_message {|m| send_data m }
       end
     end
+
+    # def on_close(env)
+    # end
+
+    # def on_message(message, env)
+    # end
+
+    # def on_error(env, error)
+    #   puts "Error occured: " + error.message
+    # end
   end
 end

@@ -8,8 +8,9 @@ module Push
     def self.thin(app, host=Push::Test::Thin::Host, port=Push::Test::Thin::Port, &block)
       server = ::Thin::Server.new(app, host, port)
       server.start
-      block.call server, Thin::RequestHelper.new("http://#{host}:#{port}")
-      server.stop
+      EM.next_tick{
+        block.call server, Thin::RequestHelper.new("http://#{host}:#{port}")
+      }
     end
 
     module Thin
@@ -34,7 +35,7 @@ module Push
           http = EventMachine::HttpRequest.new(uri(path)).send(method, opts) # get(opts) ...
           # Wire up the callbacks, raise an exception if there's a connection error
           http.callback { block.call(http) }
-          http.errback  { raise http.inspect }
+          http.errback  { raise "Connection Error: #{http.inspect}" }
         end
 
         def uri(path)
