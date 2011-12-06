@@ -76,7 +76,7 @@ module Push
       module ClassMethods
         # Memoize the default backend adapter
         def backend
-          @backend ||= Backend::Adapters.adapter
+          @backend || Push.config.backend
         end
 
         # Override the default backend adapter. This is insanely
@@ -94,12 +94,13 @@ module Push
         adapters[name.to_sym] = adapter
       end
 
-      def self.adapter(name=Push.config.backend)
-        adapters[name.to_sym].new
-      end
-
       def self.adapters
         @adapters ||= {}
+      end
+
+      # Return an instance of a backend from the given adapter
+      def self.backend(name)
+        adapters[name.to_sym].new
       end
     end
   end

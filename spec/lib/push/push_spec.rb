@@ -78,7 +78,7 @@ describe Push do
       end
 
       it "should config backend" do
-        @env.backend.should eql(:test)
+        @env.backend.should be_instance_of(Push::Backend::Test)
       end
       
       it "should config web_socket url" do

@@ -4,8 +4,6 @@ module Push
   # generate or put into context Session IDs as needed that our backends can deal
   # with to maintain state between reconnects.
   class Consumer
-    include Push::Logging
-
     attr_accessor :id
 
     def initialize(id=nil,&block)
@@ -16,7 +14,7 @@ module Push
     # Subscribe to the backend to configure an instance of a subscription, 
     # receive messages.
     def subscribe(channel, &block)
-      subscription(channel) {|s| s.on_message &block }
+      subscription(channel){|s| s.on_message &block }.subscribe
     end
     alias :subscribe_to :subscribe
 

@@ -11,17 +11,15 @@ module Push::Backend
     # Loop through everything until its all out of the array. The key here is not to block because
     # we want to test pubsub in a sync environment to keep things sane
     def subscribe(subscription)
-      channel = subscription.channel
-
       # Kill the channel once all of the messages are out of it. This simulates the cleaning up
       # of a message exchange
       subscription.on_delete do
-        channels.delete channel
+        channels.delete subscription.channel
       end
 
       # Loop through the array and pop off all the messages in the subscription. If 
       # nothing is hit in the loop, don't block and continue processing.
-      while message = channels[channel].pop do
+      while message = channels[subscription.channel].pop do
         subscription.process_message message
       end
     end

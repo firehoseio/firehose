@@ -19,8 +19,14 @@ module Push
     WebSocket = Struct.new(:url)
     LongPoll = Struct.new(:url, :timeout)
     
-    def backend=(name)
-      @backend = name.to_sym
+    # Reset the backend if a new adapter is specified
+    def backend=(adapter)
+      @adapter, @backend = adapter.to_sym, nil
+    end
+
+    # Return an instance of a configured backend (and memoize)
+    def backend
+      @backend ||= Backend::Adapters.backend(@adapter)
     end
 
     def initialize

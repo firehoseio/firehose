@@ -8,16 +8,16 @@ module Push
   autoload :Consumer,       'push/consumer'
   autoload :Transport,      'push/transport'
 
-  def self.config(&blk)
+  def self.config(&block)
     @config ||= Configuration.new
-    yield @config if block_given?
+    block.call @config if block
     @config
   end
-  
+
   def self.config=(config)
     @config = config
   end
-  
+
   def self.logger
     config.logger
   end

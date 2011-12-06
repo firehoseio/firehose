@@ -2,15 +2,12 @@ require 'spec_helper'
 
 describe Push::Consumer do
   before(:each) do
-    Push.config.backend = :test
-    # Push::Consumer::Subscription.backend = Push::Backend::Test.new
     @consumer = Push::Consumer.new
-    @channel = Push::Consumer::Subscription.backend.channels
   end
 
   context "subscription" do
     before(:each) do
-      @channel['/exchange'] << 'hi dude'
+      Push.config.backend.publish 'hi dude', '/exchange'
     end
 
     it "should consume message" do
@@ -18,7 +15,7 @@ describe Push::Consumer do
         @consumer.subscribe('/exchange') do |m|
           m.should eql('hi dude')
         end
-      }.should change(@channel['/exchange'], :count).by(-1)
+      }.should change(Push.config.backend.channels['/exchange'], :count).by(-1)
     end
 
     it "should set channel" do
@@ -30,7 +27,7 @@ describe Push::Consumer do
     end
 
     it "should set backend" do
-      @consumer.subscribe('/exchange').backend.should eql(Push::Consumer::Subscription.backend)
+      @consumer.subscribe('/exchange').backend.should be_instance_of(Push::Backend::Test)
     end
   end
 

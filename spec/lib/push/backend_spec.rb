@@ -15,7 +15,7 @@ describe Push::Backend do
 
     it "should return instance of an adapter" do
       Push::Backend::Adapters.register(:super_cool, @an_adapter)
-      Push::Backend::Adapters.adapter(:super_cool).should be_an_instance_of(@an_adapter)
+      Push::Backend::Adapters.backend(:super_cool).should be_an_instance_of(@an_adapter)
     end
   end
 end
@@ -36,7 +36,7 @@ describe Push::Backend::Bunny do
   end
 
   it "should be registered as :bunny" do
-    Push::Backend::Adapters.adapter(:bunny).should be_instance_of(Push::Backend::Bunny)
+    Push::Backend::Adapters.backend(:bunny).should be_instance_of(Push::Backend::Bunny)
   end
 
   it "should be subscribable" do

@@ -63,14 +63,16 @@ describe Push::Transport::HttpLongPoll do
     end
 
     it "should timeout and return a 204" do
-      # Push::Test.thin(app) do |server, http|
-      #   http.get('/never/ending/stream', :headers => {'X_HTTP_CONSUMER_ID' => 'brad'}) {|resp|
-      #     @response_status = resp.response_header.status
-      #   }
-      # end
-      # Push::Backend::AMQP.new.publish('message', '/never/never/land')
+      Push::Backend::AMQP.connection.reconnect
+      
+      Push::Test.thin(app) do |server, http|
+        http.get('/never/ending/stream', :headers => {'X_HTTP_CONSUMER_ID' => 'brad'}) {|resp|
+          @response_status = resp.response_header.status
+        }
+      end
+      Push::Backend::AMQP.new.publish('message', '/never/never/land')
 
-      # ly(204){ @response_status }
+      ly(204){ @response_status }
     end
   end
 end
