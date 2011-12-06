@@ -38,7 +38,7 @@ run Push::Transport::Dispatcher {|config|
   }
   # Use the /url/path for the queue channel. You could change this to a query
   # param, or whatever
-  config.channels {|env|
+  config.channel {|env|
     env['PATH_INFO']
   }
   # Specify the transports that the server will use to push events
