@@ -33,16 +33,14 @@ require 'push'
 run Push::Transport::Dispatcher {|config|
   # Extract the consumer ID from the HTTP session. This could be a cookie
   # query param, or whatever.
-  config.consumer_id {|env|
-    env['HTTP_CONSUMER_ID']
+  config.consumer {|env|
+    Push::Consumer.new(env['HTTP_CONSUMER_ID'])
   }
   # Use the /url/path for the queue channel. You could change this to a query
   # param, or whatever
   config.channel {|env|
     env['PATH_INFO']
   }
-  # Specify the transports that the server will use to push events
-  config.transports = [WebSocket, HttpLongPoll]
 }
 ```
 
