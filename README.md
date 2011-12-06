@@ -28,9 +28,22 @@ The consumer is the web server that your client connects to for real-time update
 
 ```ruby
 require 'rubygems'
-require 'push/consumer'
+require 'push'
 
-run Push::Consumer # Defaults to an AMQP server running on localhost
+run Push::Transport::Dispatcher {|config|
+  # Extract the consumer ID from the HTTP session. This could be a cookie
+  # query param, or whatever.
+  config.consumer_id {|env|
+    env['HTTP_CONSUMER_ID']
+  }
+  # Use the /url/path for the queue channel. You could change this to a query
+  # param, or whatever
+  config.channels {|env|
+    env['PATH_INFO']
+  }
+  # Specify the transports that the server will use to push events
+  config.transports = [WebSocket, HttpLongPoll]
+}
 ```
 
 Now run the config.ru file in a server that supports async Rack callbacks (like thin or rainbows)
@@ -51,9 +64,9 @@ Then run the following script in another terminal:
 
 ```ruby
 require 'rubygems'
-require 'push/producer'
+require 'push'
 
-Push::Producer.publish('hi there!').to('/greetings')
+Push::Producer.new.publish('hi there!').to('/greetings')
 ```
 
 Viola! The curl script will return 'hi there!'
