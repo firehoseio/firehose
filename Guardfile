@@ -8,3 +8,5 @@ guard 'bundler' do
   watch('Gemfile')
   watch(/^.+\.gemspec/)
 end
+
+guard 'coffeescript', :input => 'app/assets/coffeescripts', :output => 'app/assets/javascripts'
