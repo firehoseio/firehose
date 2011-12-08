@@ -10,6 +10,8 @@ end
 
 Push.config.from_hash(yaml)
 
-module Application
-  Push = Push::Producer.new
-end
+EM.next_tick {
+  module Application
+    Push = Push::Producer.new
+  end
+}
