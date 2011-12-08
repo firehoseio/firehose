@@ -1,14 +1,14 @@
 require 'rack/websocket'
-
+require 'ruby-debug'
 module Push::Transport
   class WebSocket < Rack::WebSocket::Application
     include Push::Logging
   
     # Subscribe to a path and make some magic happen, mmmkay?
     def on_open(env)
-      @subscription = Push::Consumer.new(env['X_HTTP_CONSUMER_ID']).subscription(env['PATH_INFO'])
+      @subscription = Push::Consumer.new(env['HTTP_CONSUMER_ID']).subscription(env['PATH_INFO'])
       @subscription.on_message {|message|
-        send_data message
+        send_data message[0]
       }
       @subscription.subscribe
     end
