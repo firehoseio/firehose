@@ -67,6 +67,56 @@ require 'push'
 Push::Producer.new.publish('hi there!').to('/greetings')
 ```
 
+## The Coffeescript
+
+In your browser be sure to include these files, in this specific order:
+
+* flash/swfobject.js
+* flash/FABridge.js
+* flash/web_socket.js
+* helper.js
+* push/transport.js
+* push/long_poll.js
+* push/web_socket.js
+* push/client.js
+
+Then in your browser create a new Push Client object like so:
+
+```coffeescript
+# Handlers
+onMessage: (json) ->
+  # This is the primary messagehandler
+
+onConnected: ->
+
+onDisconnected: ->
+
+onError: ->
+
+urls = 
+  websocket: http://some_websocket_url.com
+  longpoll: http://some_longpoll_url.com
+
+# Misc options for transports
+options = 
+  timeout: 5000
+  
+# URL params
+params = 
+  sid: 123
+
+# Chained initializer
+new Push.Client()
+  .url(urls)
+  .params(params)
+  .message(onMessage)
+  .options(options)
+  .connected(onConnected)
+  .disconnected(onDisconnected)
+  .connect()
+```
+
+
 Viola! The curl script will return 'hi there!'
 
 Now you're on your way to building realtime web applications.

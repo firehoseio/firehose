@@ -31,4 +31,5 @@ Gem::Specification.new do |s|
   s.add_development_dependency "guard-bundler"
   s.add_development_dependency "thin"
   s.add_development_dependency "em-http-request"
+  s.add_development_dependency "guard-coffeescript"
 end
