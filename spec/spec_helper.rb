@@ -4,6 +4,7 @@ require 'push'
 require 'rspec'
 require 'push/test'
 require 'em-ventually'
+require 'logger'
 
 # Make our EM specs timeout if an assertion isn't made after 5 seconds
 EM::Ventually.total_default = 5

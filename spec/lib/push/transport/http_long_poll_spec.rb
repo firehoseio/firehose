@@ -1,6 +1,5 @@
 require 'spec_helper'
 require 'rack/test'
-require 'logger'
 
 describe Push::Transport::HttpLongPoll do
   include EM::Ventually

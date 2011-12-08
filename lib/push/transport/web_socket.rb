@@ -2,37 +2,24 @@ require 'rack/websocket'
 
 module Push::Transport
   class WebSocket < Rack::WebSocket::Application
-    include Push::Logger
-
-    # class Handler
-    #   def initialize(socket, env)
-    #     @socket, @env = socket, env
-    #     consumer.subscribe_to(env['PATH_INFO']) do |s|
-    #       socket.on_close { subscription.delete }
-    #     end
-    #   end
-    # end
-
-    def initialize(connection, subscription)
-      @connection, @subscription = connection, subscription
-    end
-
+    include Push::Logging
+  
     # Subscribe to a path and make some magic happen, mmmkay?
     def on_open(env)
-      Push::Consumer.new(env['X_HTTP_CONSUMER_ID']).subscribe_to(env['PATH_INFO']) do |s|
-        on_close { subscription.delete }
-        s.on_message {|m| send_data m }
-      end
+      @subscription = Push::Consumer.new(env['X_HTTP_CONSUMER_ID']).subscription(env['PATH_INFO'])
+      @subscription.on_message {|message|
+        send_data message
+      }
+      @subscription.subscribe
     end
 
-    # def on_close(env)
-    # end
+    def on_close(env)
+      @subscription.delete if @subscription
+      logger.debug "WebSocket closing connection"
+    end
 
-    # def on_message(message, env)
-    # end
-
-    # def on_error(env, error)
-    #   puts "Error occured: " + error.message
-    # end
+    def on_error(env, error)
+      logger.debug "Websocket error: #{error.message}"
+    end
   end
 end
