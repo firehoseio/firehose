@@ -22,7 +22,7 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency "rack", ">= 1.1.0"
   s.add_runtime_dependency "eventmachine"
   s.add_runtime_dependency "websocket-rack"
-  s.add_runtime_dependency "amqp"
+  s.add_runtime_dependency "amqp", ">= 0.8.4"
   s.add_runtime_dependency "bunny"
 
   s.add_development_dependency "rspec"
