@@ -35,6 +35,10 @@ module Push::Backend
         metadata.ack
         subscription.process_message(payload)
       end
+
+      # Install signal handlers to deal with cleaning up potentially long running
+      # connections when we kill the server for reboots, etc.
+      Signal.trap('TERM'){ subscription.delete }
     end
 
   private
