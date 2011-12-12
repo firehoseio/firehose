@@ -3,8 +3,8 @@ module Push
     def manifest
       record do |m|
         # Initializer
-        m.directory File.join("config", "initializers")
-        m.file "config/initializers/push.rb",            "config/initializers/push.rb"
+        # m.directory File.join("config", "initializers")
+        # m.file "config/initializers/push.rb",            "config/initializers/push.rb"
 
         # We should compress these into 1 file
         m.directory File.join("public", "push", "javascripts")

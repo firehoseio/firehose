@@ -7,6 +7,7 @@ module Push
     # Fire up a thin server, do some stuff, then kill it
     def self.thin(app, host=Push::Test::Thin::Host, port=Push::Test::Thin::Port, &block)
       server = ::Thin::Server.new(app, host, port)
+      server.log_file = '/dev/null' # Shhhh
       server.start
       EM.next_tick{
         block.call server, Thin::RequestHelper.new("http://#{host}:#{port}")
