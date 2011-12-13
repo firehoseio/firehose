@@ -20,6 +20,7 @@
         this._error = __bind(this._error, this);
         this._success = __bind(this._success, this);
         this._request = __bind(this._request, this);
+        this.connect = __bind(this.connect, this);
         this.registerIETransport = __bind(this.registerIETransport, this);
         this.LongPoll = __bind(this.LongPoll, this);
         this.LongPoll = __bind(this.LongPoll, this);        LongPoll.__super__.constructor.call(this, args);
@@ -63,6 +64,13 @@
           });
           return $.support.cors = true;
         }
+      };
+      LongPoll.prototype.connect = function(delay) {
+        if (delay == null) {
+          delay = 0;
+        }
+        this.onConnected();
+        return LongPoll.__super__.connect.call(this, delay);
       };
       LongPoll.prototype._request = function() {
         return $.ajax(this.url["longpoll"], {

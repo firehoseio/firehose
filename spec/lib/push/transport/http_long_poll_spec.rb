@@ -12,7 +12,7 @@ describe Push::Transport::HttpLongPoll do
     Push::Transport::HttpLongPoll.new do |c|
       c.timeout = 3
       c.consumer do |env| # Extract out a session_id here. Could be from a cookie or a header.
-        Push::Consumer.new env['X_HTTP_CONSUMER_ID']
+        Push::Consumer.new env['HTTP_CONSUMER_ID']
       end
     end
   end
@@ -21,7 +21,7 @@ describe Push::Transport::HttpLongPoll do
     # include Rack::Test::Methods
 
     # it "should extract consumer_id from env" do
-    #   get '/', {}, {'X_HTTP_CONSUMER_ID' => 10}
+    #   get '/', {}, {'HTTP_CONSUMER_ID' => 10}
     #   last_request.env['push.consumer'].id.should eql(10)
     # end
   end
@@ -33,7 +33,7 @@ describe Push::Transport::HttpLongPoll do
         message, channel = 'hooowdy', '/thin/10'
 
         Push::Test.thin(app) do |server, http|
-          http.get(channel, :headers => {'X_HTTP_CONSUMER_ID' => 'brad'}) {|resp|
+          http.get(channel, :headers => {'HTTP_CONSUMER_ID' => 'brad'}) {|resp|
             @response_status = resp.response_header.status
           }
         end
@@ -49,7 +49,7 @@ describe Push::Transport::HttpLongPoll do
         message, channel = 'duuuude', '/thin/11'
 
         Push::Test.thin(app) do |server, http|
-          http.get(channel, :headers => {'X_HTTP_CONSUMER_ID' => 'brad'}) {|resp|
+          http.get(channel, :headers => {'HTTP_CONSUMER_ID' => 'brad'}) {|resp|
             @message = resp.response
           }
         end
@@ -65,7 +65,7 @@ describe Push::Transport::HttpLongPoll do
       Push::Backend::AMQP.connection.reconnect
       
       Push::Test.thin(app) do |server, http|
-        http.get('/never/ending/stream', :headers => {'X_HTTP_CONSUMER_ID' => 'brad'}) {|resp|
+        http.get('/never/ending/stream', :headers => {'HTTP_CONSUMER_ID' => 'brad'}) {|resp|
           @response_status = resp.response_header.status
         }
       end

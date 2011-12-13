@@ -9,7 +9,7 @@ module Push::Transport
       @subscription = Push::Consumer.new(env['HTTP_CONSUMER_ID']).subscription(env['PATH_INFO'])
       # message[0] is a hack because something is jacked up with the arity of on_message. Figure this 
       # out so that message only returns the payload.
-      @subscription.on_message {|message| send_data message[0] }
+      @subscription.on_message {|message, consumer| send_data message }
       @subscription.subscribe
     end
 

@@ -62,7 +62,7 @@ module Push
 
     # Run a message through the callback
     def process_message(message)
-      logger.debug "Subscription message for consumer `#{consumer.id}` on `#{channel}`"
+      logger.debug "Subscription message for consumer `#{consumer.id}` on `#{channel}`"      
       on_message.call(message, self) if on_message
     end
 

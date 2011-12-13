@@ -27,7 +27,7 @@ module Push::Transport
         stream.on_close {
           subscription.delete
         }
-        subscription.on_message {|message|
+        subscription.on_message {|message, consumer|
           subscription.delete
           stream.halt 200, {}, [message]
         }
