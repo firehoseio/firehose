@@ -1,5 +1,6 @@
 require 'spec_helper'
 require 'rack/test'
+require 'set'
 
 describe Push::Transport::WebSocket do
   include EM::Ventually
@@ -18,26 +19,23 @@ describe Push::Transport::WebSocket do
   end
 
   it "should consume message" do
+    Push::Backend::AMQP.connection.reconnect
     messages, channel = %w[1 2 3], '/hey/there'
     ws_url = "ws://localhost:#{Push::Test::Thin::Port}#{channel}"
     received_messages = []
 
     Push::Test.thin(app) do |server, http|
       http = EventMachine::HttpRequest.new(ws_url).get :timeout => 0
-      http.errback { puts "oops" }
-      http.callback {
-        puts "WebSocket connected!"
-      }
-      http.stream {|msg|
-        received_messages << msg
-      }
+      http.errback  { raise }
+      http.callback { }
+      http.stream   {|msg| received_messages << msg }
       EM.add_timer(1) {
         messages.each {|msg|
-          Push.config.backend.publish(msg, channel)
+          Push::Backend::AMQP.new.publish(msg, channel)
         }
       }
     end
 
-    ly(messages){ received_messages }
+    ly { messages }.test{ |v| Set.new(messages) == Set.new(received_messages) }
   end
 end
