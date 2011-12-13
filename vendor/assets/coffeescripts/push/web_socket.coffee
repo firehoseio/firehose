@@ -11,6 +11,9 @@
     constructor: (args) ->
       super args
 
+      # Set flash socket path
+      WebSocket.__swfLocation = "push/javascripts/flash/WebSocketMain.swf"
+      
       # Mozilla decided to have their own implementation of Web Sockets so detect for that
       window.WebSocket = window.MozWebSocket if window["MozWebSocket"] and window.MozWebSocket
 
@@ -31,3 +34,15 @@
         # This was not a clean disconnect. An error occurred somewhere
         # Lets try to reconnect
         @_error(event)
+
+    _error: (event) =>
+      # Cleanup the current connection
+      if @socket
+        @socket.onopen = null
+        @socket.onclose = null
+        @socket.onerror = null
+        @socket.onmessage = null
+        @socket.close()
+        delete(@socket)
+
+      super

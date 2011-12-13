@@ -17,11 +17,13 @@
         return window.WebSocket || (window["MozWebSocket"] && window.MozWebSocket) || WebSocket.flashSupported();
       };
       function WebSocket(args) {
+        this._error = __bind(this._error, this);
         this._close = __bind(this._close, this);
         this._message = __bind(this._message, this);
         this._request = __bind(this._request, this);
         this.WebSocket = __bind(this.WebSocket, this);
         this.WebSocket = __bind(this.WebSocket, this);        WebSocket.__super__.constructor.call(this, args);
+        WebSocket.__swfLocation = "push/javascripts/flash/WebSocketMain.swf";
         if (window["MozWebSocket"] && window.MozWebSocket) {
           window.WebSocket = window.MozWebSocket;
         }
@@ -44,6 +46,17 @@
         if (!event || (event && !event.wasClean)) {
           return this._error(event);
         }
+      };
+      WebSocket.prototype._error = function(event) {
+        if (this.socket) {
+          this.socket.onopen = null;
+          this.socket.onclose = null;
+          this.socket.onerror = null;
+          this.socket.onmessage = null;
+          this.socket.close();
+          delete this.socket;
+        }
+        return WebSocket.__super__._error.apply(this, arguments);
       };
       return WebSocket;
     }).call(this);
