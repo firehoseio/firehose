@@ -63,7 +63,7 @@ module Push
     # Run a message through the callback
     def process_message(message)
       logger.debug "Subscription message for consumer `#{consumer.id}` on `#{channel}`"      
-      on_message.call(message, self) if on_message
+      on_message.call(*[message, self].slice(0, on_message.arity)) if on_message
     end
 
     # Configure a callback to handle subscription deletions. Useful if there's
