@@ -35,14 +35,15 @@ run Push::Transport::Dispatcher.new {|config|
   
   # Extract the consumer ID from the HTTP session. This could be a cookie
   # query param, or whatever.
-  config.set_consumer {|env|
+  config.consumer = Proc.new do |env|
     Push::Consumer.new(env['HTTP_CONSUMER_ID'])
-  }
+  end
+  
   # Use the /url/path for the queue channel. You could change this to a query
   # param, or whatever
-  config.set_channel {|env|
+  config.channel = Proc.new do |env|
     env['PATH_INFO']
-  }
+  end
 }
 ```
 
