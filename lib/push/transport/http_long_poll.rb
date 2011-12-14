@@ -2,28 +2,15 @@ require 'eventmachine'
 
 module Push::Transport
   class HttpLongPoll
-    # Backend that will be bound to the front-end for grabbing the connection.
-    attr_accessor :timeout
-
-    # Setup a timeout value that we'll use to gracefully end streams with
-    # a status code that can communicate to our client to gracefully reconnect
-    Timeout = 30
-
-    # Default proc for extracting the channel name out of the rack environment.
-    Channel = Proc.new {|env| env['PATH_INFO'] }
-
-    # Default proc for extracting the consumer out of the rack environment.
-    Consumer = Proc.new {|env| Push::Consumer.new env['HTTP_CONSUMER_ID'] }
-
     # Setup the rack application with a consumer that can be connected to the front-end for processing.
-    def initialize(&block)
-      block.call self if block
+    def initialize(config=nil)
+      @config = config || Configuration.new
     end
 
     # Process the Rack request with a streaming response with the consumer.
     def call(env)
-      Stream.response env, timeout do |stream|
-        subscription = consumer.call(env).subscription(channel.call(env))
+      Stream.response env, @config.timeout do |stream|
+        subscription = @config.consumer(env).subscription(@config.channel(env))
         stream.on_close {
           subscription.delete
         }
@@ -36,21 +23,6 @@ module Push::Transport
         }
         subscription.subscribe
       end
-    end
-
-    # If a block is given, set the code that will extract the consumer_id out of the
-    # rack env hash. The consumer_id may be stored in a cookie, on a memcached key, or
-    # whatever.
-    def consumer(&block)
-      block ? (@consumer = block) : (@consumer || Consumer)
-    end
-
-    def channel(&block)
-      block ? (@channel = block) : (@channel || Channel)
-    end
-
-    def timeout
-      @timeout ||= Timeout
     end
   end
 

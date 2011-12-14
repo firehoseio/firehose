@@ -3,12 +3,15 @@ require 'rack/websocket'
 module Push::Transport
   class WebSocket < Rack::WebSocket::Application
     include Push::Logging
+    
+    def initialize(config=nil, opts={})
+      @config = config || Configuration.new
+      super opts
+    end
 
     # Subscribe to a path and make some magic happen, mmkmay?
     def on_open(env)
-      @subscription = Push::Consumer.new(env['HTTP_CONSUMER_ID']).subscription(env['PATH_INFO'])
-      # message[0] is a hack because something is jacked up with the arity of on_message. Figure this 
-      # out so that message only returns the payload.
+      @subscription = @config.consumer(env).subscription(@config.channel(env))
       @subscription.on_message {|message, consumer| send_data message }
       @subscription.subscribe
     end

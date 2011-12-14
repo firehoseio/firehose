@@ -9,12 +9,9 @@ describe Push::Transport::HttpLongPoll do
   end
 
   def app
-    Push::Transport::HttpLongPoll.new do |c|
-      c.timeout = 3
-      c.consumer do |env| # Extract out a session_id here. Could be from a cookie or a header.
-        Push::Consumer.new env['HTTP_CONSUMER_ID']
-      end
-    end
+    config = Push::Transport::Configuration.new
+    config.timeout = 3
+    Push::Transport::HttpLongPoll.new config
   end
 
   context "rack" do

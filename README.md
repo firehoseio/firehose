@@ -30,15 +30,17 @@ The consumer is the web server that your client connects to for real-time update
 require 'rubygems'
 require 'push'
 
-run Push::Transport::Dispatcher {|config|
+run Push::Transport::Dispatcher.new {|config|
+  config.timeout = 20
+  
   # Extract the consumer ID from the HTTP session. This could be a cookie
   # query param, or whatever.
-  config.consumer {|env|
+  config.set_consumer {|env|
     Push::Consumer.new(env['HTTP_CONSUMER_ID'])
   }
   # Use the /url/path for the queue channel. You could change this to a query
   # param, or whatever
-  config.channel {|env|
+  config.set_channel {|env|
     env['PATH_INFO']
   }
 }

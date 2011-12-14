@@ -11,11 +11,7 @@ describe Push::Transport::WebSocket do
   end
 
   def app
-    Push::Transport::WebSocket.new do |c|
-      # c.consumer do |env| # Extract out a session_id here. Could be from a cookie or a header.
-      #   Push::Consumer.new env['X_HTTP_CONSUMER_ID']
-      # end
-    end
+    Push::Transport::WebSocket.new
   end
 
   it "should consume message" do
