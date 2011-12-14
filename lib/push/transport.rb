@@ -59,7 +59,7 @@ module Push
         @timeout || Timeout
       end
       
-      def set_consumer(&block)
+      def consumer=(block)
         @consumer = block
       end
       
@@ -67,7 +67,7 @@ module Push
         (@consumer || Consumer).call env
       end
       
-      def set_channel(&block)
+      def channel=(block)
         @channel = block
       end
       

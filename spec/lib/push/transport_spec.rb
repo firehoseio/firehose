@@ -5,8 +5,8 @@ describe Push::Transport::Dispatcher do
     before(:all) do
       @dispatcher = Push::Transport::Dispatcher.new do |config|
         config.timeout = 4
-        config.set_consumer {|env| Push::Consumer.new(env['HTTP_FOO'])}
-        config.set_channel {|env| env['HTTP_BAR']}
+        config.consumer = Proc.new {|env| Push::Consumer.new(env['HTTP_FOO'])}
+        config.channel = Proc.new {|env| env['HTTP_BAR']}
       end
     end
 
