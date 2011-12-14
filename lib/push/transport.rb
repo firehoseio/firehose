@@ -20,7 +20,8 @@ module Push
       end
       
       def call(env)
-        handler_method = websocket_request?(env) ? :web_socket_handler : :http_long_poll_handler
+        handler_method = websocket_request?(env) ?
+          :web_socket_handler : :http_long_poll_handler
         self.class.send(handler_method).call env
       end
 
@@ -31,7 +32,7 @@ module Push
 
       # Create an instance of a WebSocket Rack app and memoize.
       def self.web_socket_handler
-        @web_socket_handler ||= WebSocket.new(@config, :backend => { :debug => true })
+        @web_socket_handler ||= WebSocket.new @config
       end
       
     private
@@ -50,6 +51,14 @@ module Push
 
       # Default proc for extracting the consumer out of the rack environment.
       Consumer = Proc.new {|env| Push::Consumer.new env['HTTP_CONSUMER_ID'] }
+      
+      def verbose_logging=(val)
+        @verbose_logging = !!val
+      end
+      
+      def verbose_logging
+        @verbose_logging || false
+      end
       
       def timeout=(val)
         @timeout = val

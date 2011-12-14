@@ -7,6 +7,7 @@ describe Push::Transport::Dispatcher do
         config.timeout  = 4
         config.consumer = Proc.new {|env| Push::Consumer.new(env['HTTP_FOO'])}
         config.channel  = Proc.new {|env| env['HTTP_BAR']}
+        config.verbose_logging = 'true-ish'
       end
     end
 
@@ -17,6 +18,10 @@ describe Push::Transport::Dispatcher do
       
       it "should have the non-default timeout" do
         @config.timeout.should equal 4
+      end
+      
+      it "should be set for verbose logging" do
+        @config.verbose_logging.should be_true
       end
 
       it "should use request's HTTP_FOO for consumer ID" do
@@ -43,6 +48,7 @@ describe Push::Transport::Dispatcher do
       
       it "should use the defaults..." do
         @config.timeout.should equal 30
+        @config.verbose_logging.should be_false
 
         consumer = @config.consumer 'HTTP_CONSUMER_ID' => 'sammiches'
         consumer.id.should == 'sammiches'

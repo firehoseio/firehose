@@ -4,8 +4,9 @@ module Push::Transport
   class WebSocket < Rack::WebSocket::Application
     include Push::Logging
     
-    def initialize(config=nil, opts={})
+    def initialize(config=nil)
       @config = config || Configuration.new
+      opts = @config.verbose_logging ? {:backend => { :debug => true }} : {}
       super opts
     end
 
