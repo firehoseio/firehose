@@ -4,9 +4,9 @@ describe Push::Transport::Dispatcher do
   context "when initializing with non-default config settings" do
     before(:all) do
       @dispatcher = Push::Transport::Dispatcher.new do |config|
-        config.timeout = 4
+        config.timeout  = 4
         config.consumer = Proc.new {|env| Push::Consumer.new(env['HTTP_FOO'])}
-        config.channel = Proc.new {|env| env['HTTP_BAR']}
+        config.channel  = Proc.new {|env| env['HTTP_BAR']}
       end
     end
 
