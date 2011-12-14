@@ -31,7 +31,7 @@ module Push
 
       # Create an instance of a WebSocket Rack app and memoize.
       def self.web_socket_handler
-        @web_socket_handler ||= WebSocket.new(:backend => { :debug => true })
+        @web_socket_handler ||= WebSocket.new(@config, :backend => { :debug => true })
       end
       
     private
