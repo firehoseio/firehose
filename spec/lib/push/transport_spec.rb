@@ -19,8 +19,15 @@ describe Push::Transport::Dispatcher do
         @config.timeout.should equal 4
       end
 
-      it "should use request's HTTP_FOO for consumer ID"
-      it "should use request's HTTP_BAR for channel"
+      it "should use request's HTTP_FOO for consumer ID" do
+        consumer = @config.consumer 'HTTP_FOO' => 'abc123'
+        consumer.id.should == 'abc123'
+      end
+      
+      it "should use request's HTTP_BAR for channel" do
+        channel = @config.channel 'HTTP_BAR' => '/XY/Z'
+        channel.should == '/XY/Z'
+      end
     end
   end
   
@@ -29,6 +36,21 @@ describe Push::Transport::Dispatcher do
       @dispatcher = Push::Transport::Dispatcher.new
     end
     
-    it "should use the defaults..."
+    context "config" do
+      before(:each) do
+        @config = @dispatcher.configuration
+      end
+      
+      it "should use the defaults..." do
+        @config.timeout.should equal 30
+
+        consumer = @config.consumer 'HTTP_CONSUMER_ID' => 'sammiches'
+        consumer.id.should == 'sammiches'
+
+        channel = @config.channel 'PATH_INFO' => '/xxx/zz'
+        channel.should == '/xxx/zz'
+      end
+    end
   end
+  
 end
