@@ -20,7 +20,7 @@ describe Push::Backend::Bunny do
   it "should publish and subscribe to a message" do
     bunny = Push::Backend::Bunny.new
 
-    bunny.publish('the exchange does not exist yet, so I should never be received', '/1')
+    bunny.publish('the exchange does not exist yet, so I should never be received', '/bunny/1')
     # We need to do this so the queue exists for the producer, and we can receieve a message
     bunny.subscribe(@consumer, '/bunny/1') do |m|
       m.should be_nil
