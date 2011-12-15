@@ -2,6 +2,7 @@ require 'spec_helper'
 
 describe Push::Consumer do
   before(:each) do
+    Push.config.backend = :test
     @consumer = Push::Consumer.new
   end
 
