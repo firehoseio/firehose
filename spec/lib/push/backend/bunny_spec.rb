@@ -1,5 +1,11 @@
 require 'spec_helper'
 
+def count_instances_of(type)
+  count = 0
+  ObjectSpace.each_object(Bunny::Exchange) { count += 1 }
+  count
+end
+
 describe Push::Backend::Bunny do
   before(:all) do
     @consumer = Push::Consumer.new
@@ -31,7 +37,15 @@ describe Push::Backend::Bunny do
     end
   end
 
-  it "should release exchange after publish"
+  it "should release exchange after publish" do
+    lambda do
+      1000.times do
+        bunny = Push::Backend::Bunny.new
+        bunny.publish 'marbles', '/outta/sight'
+      end
+      GC.start
+    end.should change {count_instances_of Bunny::Exchange}.by 1
+  end
 
   it "should release queue after subscribe"
 end
