@@ -45,7 +45,15 @@ describe Push::Backend::AMQP do
     end
   end
   
-  it "should release exchange after publish if there are no consumers waiting"
+  it "should release exchange after publish if there are no consumers waiting" do
+    channel = '/amqp/bar'
+    backend = Push::Backend::AMQP.new
+    backend.connection.reconnect
+    backend.publish 'woohoo!', channel
+    ly{ list_exchanges }.test do |exchanges|
+      exchanges.none? {|exchange| exchange == '/amqp/bar'}
+    end
+  end
 
   context "subscription" do
     context "deletion" do
@@ -55,11 +63,17 @@ describe Push::Backend::AMQP do
   end
 end
 
+def list_exchanges
+  %x{ rabbitmqctl -q list_exchanges }.split(/\n/).map do |line|
+    line.split(/\t/)
+  end
+end
+
 def count_exchanges
-  %x{ rabbitmqctl -q list_exchanges }.split(/\n/).length
+  list_exchanges.length
 end
 
 def print_exchanges
-  result = %x{ rabbitmqctl -q list_exchanges }
-  puts "\n\nexchanges:\n#{result}\n"
+  exchanges = list_exchanges.map{|ex| ex == '' ? '(no name)' : ex}
+  puts "\n\nexchanges:\n#{exchanges.join "\n"}\n"
 end
