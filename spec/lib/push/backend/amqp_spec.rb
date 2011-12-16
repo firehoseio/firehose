@@ -21,16 +21,31 @@ describe Push::Backend::AMQP do
 
     ly('sup?'){ @test_message }
   end
-
-  context "publishing" do
-    before(:each) do
-      @channel = '/amqp/pub'
-      @subscription = Push::Consumer::Subscription.new(@consumer, @channel, Push::Backend::AMQP.new)
+  
+  context "when there is a consumer waiting" do
+    def setup_consumer
+      @channel = '/amqp/foo'
+      
+      @subscription = Push::Consumer::Subscription.new @consumer,
+        @channel, Push::Backend::AMQP.new
+      
+      @subscription.backend.connection.reconnect
+      @subscription.subscribe
     end
-
-    it "should release exchange after publish if there are no consumers waiting"
-    it "should not release exchange if there's a consumer waiting for a message"
+    
+    it "should not release the exchange after publishing" do
+      setup_consumer
+      old_count = count_exchanges
+      Push::Backend::AMQP.new.publish 'oh hey', @channel
+      ly(old_count){ count_exchanges }
+    end
+    
+    after(:all) do
+      @subscription.delete if @subscription
+    end
   end
+  
+  it "should release exchange after publish if there are no consumers waiting"
 
   context "subscription" do
     context "deletion" do
@@ -38,4 +53,13 @@ describe Push::Backend::AMQP do
       it "should release exchange"
     end
   end
+end
+
+def count_exchanges
+  %x{ rabbitmqctl -q list_exchanges }.split(/\n/).length
+end
+
+def print_exchanges
+  result = %x{ rabbitmqctl -q list_exchanges }
+  puts "\n\nexchanges:\n#{result}\n"
 end
