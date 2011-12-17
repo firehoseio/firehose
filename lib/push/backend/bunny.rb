@@ -34,7 +34,9 @@ module Push::Backend
     # Create a queue that the consumer uses to pop messages off this thing.
     def consumer_queue(name)
       unless @consumer_queue
-        @consumer_queue = connection.queue("#{consumer.id}@#{name}", :auto_delete => true, :arguments => {'x-expires' => Push.config.amqp.queue_ttl * 1000})
+        @consumer_queue = connection.queue "#{consumer.id}@#{name}",
+          :auto_delete  => true,
+          :arguments    => {'x-expires' => Push.config.amqp.queue_ttl * 1000}
         @consumer_queue.bind(exchange(name))
       end
       @consumer_queue

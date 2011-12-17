@@ -14,7 +14,7 @@ Push is both a Rack application and Javascript that makes building scalable real
 
 socket.io attempts to store connection state per node instance. Push makes no attempt to store connection state.
 
-Also, socket.io attempts to abstract a low-latency full duplex port. Push assumes that its impposible to simulate this in older web browsers that don't support WebSockets. As such, Push focuses on low-latency server-to-client connections and encourages the use of HTTP transports for client-to-server communications.
+Also, socket.io attempts to abstract a low-latency full-duplex port. Push assumes that its impossible to simulate this in older web browsers that don't support WebSockets. As such, Push focuses on low-latency server-to-client connections and encourages the use of HTTP transports for client-to-server communications.
 
 Finally, push attempts to solve data consistency issues and authentication by encourage the use of proxying to the web application.
 
@@ -30,18 +30,21 @@ The consumer is the web server that your client connects to for real-time update
 require 'rubygems'
 require 'push'
 
-run Push::Transport::Dispatcher {|config|
+run Push::Transport::Dispatcher.new do |config|
+  config.timeout = 20
+  
   # Extract the consumer ID from the HTTP session. This could be a cookie
   # query param, or whatever.
-  config.consumer {|env|
+  config.consumer = Proc.new do |env|
     Push::Consumer.new(env['HTTP_CONSUMER_ID'])
-  }
+  end
+  
   # Use the /url/path for the queue channel. You could change this to a query
   # param, or whatever
-  config.channel {|env|
+  config.channel = Proc.new do |env|
     env['PATH_INFO']
-  }
-}
+  end
+end
 ```
 
 Now run the config.ru file in a server that supports async Rack callbacks (like thin or rainbows)
@@ -84,18 +87,18 @@ Then in your browser create a new Push Client object like so:
 
 ```coffeescript
 # Handlers
-onMessage: (json) ->
-  # This is the primary messagehandler
+onMessage = (json) ->
+  # Handle a message pushed from the server!
 
-onConnected: ->
+onConnected = ->
 
-onDisconnected: ->
+onDisconnected = ->
 
-onError: ->
+onError = ->
 
 urls = 
-  websocket: http://some_websocket_url.com
-  longpoll: http://some_longpoll_url.com
+  websocket: 'http://some_websocket_url.com'
+  longpoll:  'http://some_longpoll_url.com'
 
 # Misc options for transports
 options = 
@@ -119,4 +122,4 @@ new Push.Client()
 
 Viola! The curl script will return 'hi there!'
 
-Now you're on your way to building realtime web applications.
+Now you're on your way to building real-time web applications.

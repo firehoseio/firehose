@@ -10,19 +10,80 @@ module Push
 
     # Figure out which transport transport we're going to use to service the request.
     class Dispatcher
+      def initialize(&block)
+        @config = Configuration.new
+        block.call(@config) if block
+      end
+      
+      def configuration
+        @config
+      end
+      
       def call(env)
-        env['HTTP_UPGRADE'] =~ /websocket/i ? self.class.web_socket_handler.call(env) : self.class.http_long_poll_handler.call(env)
+        handler_method = websocket_request?(env) ?
+          :web_socket_handler : :http_long_poll_handler
+        self.class.send(handler_method).call env
       end
 
       # Create an instance of a HTTP Long Poll Rack app and memoize.
       def self.http_long_poll_handler
-        @http_long_poll_handler ||= HttpLongPoll.new
+        @http_long_poll_handler ||= HttpLongPoll.new @config
       end
 
       # Create an instance of a WebSocket Rack app and memoize.
       def self.web_socket_handler
-        @web_socket_handler ||= WebSocket.new(:backend => { :debug => true })
+        @web_socket_handler ||= WebSocket.new @config
+      end
+      
+    private
+      def websocket_request?(env)
+        env['HTTP_UPGRADE'] =~ /websocket/i
       end
     end
+    
+    class Configuration
+      # Setup a timeout value that we'll use to gracefully end streams with
+      # a status code that can communicate to our client to gracefully reconnect
+      Timeout = 30
+
+      # Default proc for extracting the channel name out of the rack environment.
+      Channel = Proc.new {|env| env['PATH_INFO'] }
+
+      # Default proc for extracting the consumer out of the rack environment.
+      Consumer = Proc.new {|env| Push::Consumer.new env['HTTP_CONSUMER_ID'] }
+      
+      def verbose_logging=(val)
+        @verbose_logging = !!val
+      end
+      
+      def verbose_logging
+        @verbose_logging || false
+      end
+      
+      def timeout=(val)
+        @timeout = val
+      end
+      
+      def timeout
+        @timeout || Timeout
+      end
+      
+      def consumer=(block)
+        @consumer = block
+      end
+      
+      def consumer env
+        (@consumer || Consumer).call env
+      end
+      
+      def channel=(block)
+        @channel = block
+      end
+      
+      def channel env
+        (@channel || Channel).call env
+      end
+    end
+    
   end
 end

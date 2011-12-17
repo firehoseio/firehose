@@ -44,6 +44,10 @@
         # also, override the support check
         $.support.cors = true;
       
+    connect: (delay = 0) =>
+      @onConnected()
+      super(delay)
+
     _request: =>
       $.ajax @url["longpoll"], 
         crossDomain: true

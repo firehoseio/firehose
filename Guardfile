@@ -9,4 +9,4 @@ guard 'bundler' do
   watch(/^.+\.gemspec/)
 end
 
-guard 'coffeescript', :input => 'app/assets/coffeescripts', :output => 'app/assets/javascripts'
+guard 'coffeescript', :input => 'vendor/assets/coffeescripts', :output => 'vendor/assets/javascripts'
