@@ -11,29 +11,31 @@ module Push
     # Figure out which transport transport we're going to use to service the request.
     class Dispatcher
       def initialize(&block)
-        @config = Configuration.new
-        block.call(@config) if block
-      end
-      
-      def configuration
-        @config
+        block.call(config) if block
       end
       
       def call(env)
+        p env
         handler_method = websocket_request?(env) ?
           :web_socket_handler : :http_long_poll_handler
-        self.class.send(handler_method).call env
+        self.send(handler_method).call env
       end
 
       # Create an instance of a HTTP Long Poll Rack app and memoize.
-      def self.http_long_poll_handler
-        @http_long_poll_handler ||= HttpLongPoll.new @config
+      def http_long_poll_handler
+        @http_long_poll_handler ||= HttpLongPoll.new config
       end
 
       # Create an instance of a WebSocket Rack app and memoize.
-      def self.web_socket_handler
-        @web_socket_handler ||= WebSocket.new @config
+      def web_socket_handler
+        @web_socket_handler ||= WebSocket.new config
       end
+
+      # Configuration object for transports
+      def config
+        @config ||= Configuration.new
+      end
+      alias :configuration :config
       
     private
       def websocket_request?(env)
