@@ -12,21 +12,29 @@ module Push::Backend
       @connection = connection
     end
 
+    class Publisher
+      attr_reader :amqp_backend
+      def initialize(amqp_backend)
+        @amqp_backend = amqp_backend
+      end
+    end
+
     # Publish a message to an AMQP fanout queue.
     def publish(message, name)
       logger.debug "AMQP publishing `#{message}` to exchange `#{name}`"
-      channel.fanout(name, :auto_delete => true).publish(message)
+      publish_channel.fanout(name, :auto_delete => true).publish(message)
     end
 
     # Setup a queue for the consumer, then bind that queue to the fanout exchange created by the publisher.
     def subscribe(subscription)
       consumer_queue = "#{subscription.consumer.id}@#{subscription.channel}"
-      queue = channel.queue(consumer_queue, :arguments => {'x-expires' => Push.config.amqp.queue_ttl * 1000})
-      fanout = channel.fanout(subscription.channel, :auto_delete => true)
+      queue = subscription_channel.queue(consumer_queue, :arguments => {'x-expires' => Push.config.amqp.queue_ttl * 1000})
+      fanout = subscription_channel.fanout(subscription.channel, :auto_delete => true)
 
       subscription.on_delete {
         logger.debug "AMQP unbinding `#{consumer_queue}`"
-        queue.unsubscribe
+        # The AMQP server automatically deletes and unbinds this queue after the
+        # number of seconds specified in the 'x-expires' argument above.
       }
 
       logger.debug "AMQP binding `#{consumer_queue}` to exchange `#{subscription.channel}`"
@@ -42,11 +50,15 @@ module Push::Backend
     end
 
   private
-    # Create an instance of an AMQP channel
-    def channel
-      # The prefetch tells AMQP that we only want to grab one message at most when we connect to the queue. This prevents
-      # messages from being dropped or not ack'ed when the client comes back around to reconnect.
-      ::AMQP::Channel.new(connection).prefetch(1)
+    # We only need one channel to publish messages
+    def publish_channel
+      @publish_channel ||= ::AMQP::Channel.new(connection)
+    end
+
+    # If we keep our consumers in order, we only need one subscription channel
+    # with a prefetch of 1 (prevent in-flight messages from getting lost).
+    def subscription_channel
+      @subscription_channel ||= ::AMQP::Channel.new(connection).prefetch(1)
     end
 
     # Access and memoize the connection that we'll use for the AMQP backend

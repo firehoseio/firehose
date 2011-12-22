@@ -1,79 +1,137 @@
 require 'spec_helper'
 
+# DANGER WILL ROBINSON! You're heading into event machine test code. Things
+# get kind of crazy in here, and by that I mean that traditional before(:each)
+# blocks don't run inside the reactor, so you're screwed if you try to setup
+# EM to make it happen. Don't even try! Just use custom setup methods.
+
 describe Push::Backend::AMQP do
   include EM::Ventually
-  
+  include Push::Test::AMQP
+
   before(:all) do
+    Push.config.amqp.queue_ttl = 0
+  end
+
+  def setup
+    Push::Backend::AMQP.connection.reconnect
+    @backend = Push::Backend::AMQP.new
     @consumer = Push::Consumer.new
+    @channel = amqp.next_channel
+  end
+
+  def setup_subscription
+    @subscription = Push::Consumer::Subscription.new @consumer, @channel, @backend
   end
 
   it "should publish and subscribe to a message across multiple backends" do
-    Push::Backend::AMQP.connection.reconnect
-    channel = '/amqp/tres'
-
-    subscription = Push::Consumer::Subscription.new(@consumer, channel, Push::Backend::AMQP.new)
-    subscription.on_message do |m|
+    setup
+    setup_subscription
+    @subscription.on_message do |m|
       @test_message = m
     end
-    subscription.subscribe
-    EM.add_timer(1){ Push::Backend::AMQP.new.publish('sup?', channel) }
-    Push::Backend::AMQP.new.publish('sup?', channel)
+    @subscription.subscribe
 
+    # Dunny why yet, but we have to let this 'warm up'
+    EM.add_timer(1){ Push::Backend::AMQP.new.publish('sup?', @channel) }
+    Push::Backend::AMQP.new.publish('sup?', @channel)
     ly('sup?'){ @test_message }
   end
-  
-  context "when there is a consumer waiting" do
-    def setup_consumer
-      @channel = '/amqp/foo'
-      
-      @subscription = Push::Consumer::Subscription.new @consumer,
-        @channel, Push::Backend::AMQP.new
-      
-      @subscription.backend.connection.reconnect
-      @subscription.subscribe
-    end
-    
-    it "should not release the exchange after publishing" do
-      setup_consumer
-      old_count = count_exchanges
-      Push::Backend::AMQP.new.publish 'oh hey', @channel
-      ly(old_count){ count_exchanges }
-    end
-    
-    after(:all) do
-      @subscription.delete if @subscription
-    end
-  end
-  
-  it "should release exchange after publish if there are no consumers waiting" do
-    channel = '/amqp/bar'
-    backend = Push::Backend::AMQP.new
-    backend.connection.reconnect
-    backend.publish 'woohoo!', channel
-    ly{ list_exchanges }.test do |exchanges|
-      exchanges.none? {|exchange| exchange == '/amqp/bar'}
-    end
-  end
 
-  context "subscription" do
-    context "deletion" do
-      it "should release consumer queue"
-      it "should release exchange"
-    end
-  end
-end
+  # context "AMQP" do
+  #   context "publishing" do
+  #     context "with a waiting consumer" do
+  #       it "should release channel" do
+  #         setup
+  #         count = amqp.channels.count
+  #         setup_subscription
 
-def list_exchanges
-  %x{ rabbitmqctl -q list_exchanges }.split(/\n/).map do |line|
-    line.split(/\t/)
-  end
-end
+  #         @backend.publish 'oh me...', @channel
+  #         @backend.publish 'oh my!', @channel
+  #         # 2 more because the consumer and publisher are connected
+  #         ly(count + 2){ amqp.channels.count }
+  #       end
 
-def count_exchanges
-  list_exchanges.length
-end
+  #       it "should release connection channel references" do
+  #         setup
+  #         count = @backend.connection.channels.count
+  #         setup_subscription
 
-def print_exchanges
-  exchanges = list_exchanges.map{|ex| ex == '' ? '(no name)' : ex}
-  puts "\n\nexchanges:\n#{exchanges.join "\n"}\n"
+  #         @backend.publish 'oh me...', @channel
+  #         @backend.publish 'oh my!', @channel
+  #         # 2 more because the consumer and publisher are connected
+  #         ly(count + 2){ @backend.connection.channels.count }
+  #       end
+
+  #       it "should not release exchange" do
+  #         setup
+  #         count = amqp.exchanges.count
+  #         setup_subscription
+
+  #         @backend.publish 'oh me...', @channel
+  #         @backend.publish 'oh my!', @channel
+
+  #         ly{ amqp.exchanges }.test do |exchanges|
+  #           exchanges.any? {|exchange| exchange == @channel }
+  #         end
+  #       end
+  #     end
+
+  #     context "without a waiting consumer" do
+  #       it "should release channel" do
+  #         setup
+  #         count = amqp.channels.count
+  #         @backend.publish 'woohoo!', @channel
+  #         ly(count){ @backend.connection.channels.count }
+  #       end
+
+  #       it "should release exchange" do
+  #         setup
+  #         @backend.publish 'woohoo!', @channel
+  #         # Make sure the exchang ceases to exist
+  #         ly{ amqp.exchanges }.test do |exchanges|
+  #           exchanges.none? {|exchange| exchange == @channel }
+  #         end
+  #       end
+  #     end
+  #   end
+
+  #   context "subscription" do
+  #     it "should release queue" do
+  #       count = amqp.queues.count
+  #       setup
+  #       setup_subscription
+
+  #       @subscription.delete
+  #       ly(count){ amqp.queues.count }
+  #     end
+
+  #     it "should release exchange" do
+  #       count = amqp.exchanges.count
+  #       setup
+  #       setup_subscription
+
+  #       @subscription.delete
+  #       ly(count){ amqp.exchanges.count }
+  #     end
+
+  #     it "should release channel" do
+  #       count = amqp.channels.count
+  #       setup
+  #       setup_subscription
+
+  #       @subscription.delete
+  #       ly(count){ amqp.channels.count }
+  #     end
+
+  #     it "should release connection channel references" do
+  #       setup
+  #       setup_subscription
+  #       count = @backend.connection.channels.count
+
+  #       @subscription.delete
+  #       ly(count - 1){ @backend.connection.channels.count }
+  #     end
+  #   end
+  # end
 end

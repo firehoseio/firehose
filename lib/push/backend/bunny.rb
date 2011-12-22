@@ -4,54 +4,51 @@ module Push::Backend
   # Synchronously publish and subscribe to messages to AMQP with the Bunny AMQP gem.
   class Bunny
     include PubSub
+    include Push::Logging
 
-    attr_reader :consumer
+    attr_reader :connection
 
+    def initialize(connection=self.class.connection)
+      @connection = connection
+    end
+
+    # Publish a message to the fanout exchange.
     def publish(message, name)
-      exchange(name).publish(message)
+      logger.debug "Bunny publishing `#{message}` to exchange `#{name}`"
+      connection.exchange(name, :auto_delete => true, :type => :fanout).publish(message)
     end
 
-    def subscribe(consumer, name, &block)
-      @consumer = consumer
-      message = consumer_queue(name).pop
-      block.call(message[:payload] == :queue_empty ? nil : message[:payload])
-    end
+    # Setup the propper resource management around 
+    def subscribe(subscription)
+      queue = connection.queue "#{subscription.consumer.id}@#{subscription.channel}",
+        :auto_delete  => true,
+        :arguments    => {'x-expires' => Push.config.amqp.queue_ttl * 1000}
+      fanout = connection.exchange(subscription.channel, :auto_delete => true, :type => :fanout)
+      queue.bind(fanout)
 
-    # Unsubscribe from the queue, unbind the thing, and crush it!
-    def unsubscribe
-      if @consumer_queue
-        @consumer_queue.unsubscribe
-        @consumer_queue = nil
-      end
+      # Cleanup is handled automatically for us by the timeout that we set on the 
+      # client connection queue. There's also no channel clean-up since we're not 
+      # running this inside of a concurrent run-time environment.
+
+      # Try popping a message off the queue, deal with Bunny idiosyncracies, and 
+      # pass the message into the subscription object for further processing.
+      subscription.process_message(self.class.process_message(queue.pop))
     end
 
   private
-    # Create an instance of an exchange
-    def exchange(name)
-      connection.exchange(name, :auto_delete => true, :type => :fanout)
+    # Clean up and normalize Bunny messages into something that Push can pass onto
+    # the consumer.
+    def self.process_message(message)
+      message[:payload] == :queue_empty ? nil : message[:payload]
     end
 
-    # Create a queue that the consumer uses to pop messages off this thing.
-    def consumer_queue(name)
-      unless @consumer_queue
-        @consumer_queue = connection.queue "#{consumer.id}@#{name}",
-          :auto_delete  => true,
-          :arguments    => {'x-expires' => Push.config.amqp.queue_ttl * 1000}
-        @consumer_queue.bind(exchange(name))
-      end
-      @consumer_queue
-    end
-
+    # Default connection for Bunny AMPQ connection
     def self.connection
       unless @connection
         @connection = ::Bunny.new(Push.config.amqp)
         @connection.start
       end
       @connection
-    end
-
-    def connection
-      @connection ||= self.class.connection
     end
   end
 end

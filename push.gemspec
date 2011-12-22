@@ -20,7 +20,7 @@ Gem::Specification.new do |s|
 
   # specify any dependencies here; for example:
   s.add_runtime_dependency "rack", ">= 1.1.0"
-  s.add_runtime_dependency "eventmachine"
+  s.add_runtime_dependency "eventmachine", ">= 1.0.0.beta"
   s.add_runtime_dependency "websocket-rack", '>= 0.3.2'
   s.add_runtime_dependency "amqp", ">= 0.8.4"
   s.add_runtime_dependency "bunny"

@@ -1,8 +1,12 @@
 require 'spec_helper'
 
 describe Push::Backend::Bunny do
+  include Push::Test::AMQP
+
   before(:all) do
     @consumer = Push::Consumer.new
+    @backend = Push::Backend::Bunny.new
+    @channel = amqp.next_channel
   end
 
   it "should be registered as :bunny" do
@@ -18,20 +22,53 @@ describe Push::Backend::Bunny do
   end
 
   it "should publish and subscribe to a message" do
-    bunny = Push::Backend::Bunny.new
+    subscription = Push::Consumer::Subscription.new(@consumer, @channel, @backend)
 
-    bunny.publish('the exchange does not exist yet, so I should never be received', '/bunny/1')
-    # We need to do this so the queue exists for the producer, and we can receieve a message
-    bunny.subscribe(@consumer, '/bunny/1') do |m|
-      m.should be_nil
-    end
-    bunny.publish('testing', '/bunny/1')
-    bunny.subscribe(@consumer, '/bunny/1') do |m|
+    @backend.publish('testing', @channel)
+    @backend.subscribe(subscription) do |m|
       m.should eql('testing')
     end
   end
 
-  it "should release exchange after publish"
+  context "AMQP resources" do
+    before(:each) do
+      @subscription = Push::Consumer::Subscription.new(@consumer, @channel, @backend)
+    end
 
-  it "should release queue after subscribe"
+    it "should release channels" do
+      lambda{
+        @backend.publish('hmmmm', @channel)
+        @backend.subscribe(@subscription) do |m|
+          lambda{
+            m.should eql('hmmmm')
+          }.should change(amqp.channels, :count).by(1)
+        end
+        @subscription.delete
+      }.should_not change(amqp.channels, :count)
+    end
+
+    it "should release exchanges" do
+      lambda{
+        @backend.publish('hmmmm', @channel)
+        @backend.subscribe(@subscription) do |m|
+          lambda{
+            m.should eql('hmmmm')
+          }.should change(amqp.exchanges, :count).by(1)
+        end
+        @subscription.delete
+      }.should_not change(amqp.exchanges, :count)
+    end
+
+    it "should release queues" do
+      lambda{
+        @backend.publish('hmmmm', @channel)
+        @backend.subscribe(@subscription) do |m|
+          lambda{
+            m.should eql('hmmmm')
+          }.should change(amqp.queues, :count).by(1)
+        end
+        @subscription.delete
+      }.should_not change(amqp.queues, :count)
+    end
+  end
 end
