@@ -6,36 +6,32 @@ require 'spec_helper'
 # EM to make it happen. Don't even try! Just use custom setup methods.
 
 describe Push::Backend::AMQP do
-  include EM::Ventually
   include Push::Test::AMQP
 
   before(:all) do
     Push.config.amqp.queue_ttl = 0
   end
 
-  def setup
-    Push::Backend::AMQP.connection.reconnect
-    @backend = Push::Backend::AMQP.new
-    @consumer = Push::Consumer.new
-    @channel = amqp.next_channel
-  end
-
-  def setup_subscription
-    @subscription = Push::Consumer::Subscription.new @consumer, @channel, @backend
-  end
+  let(:backend) { Push::Backend::AMQP.new }
+  let(:consumer){ Push::Consumer.new }
+  let(:channel) { amqp.next_channel } # Not sure whats up with this channel? Where does amqp come from?
+  let(:subscription){
+    Push::Consumer::Subscription.new consumer, channel, backend
+  }
 
   it "should publish and subscribe to a message across multiple backends" do
-    setup
-    setup_subscription
-    @subscription.on_message do |m|
-      @test_message = m
-    end
-    @subscription.subscribe
+    sent_message, received_message = 'sup?', nil
+    em do
+      subscription.on_message do |m|
+        received_message = m
+      end
+      subscription.subscribe
 
-    # Dunny why yet, but we have to let this 'warm up'
-    EM.add_timer(1){ Push::Backend::AMQP.new.publish('sup?', @channel) }
-    Push::Backend::AMQP.new.publish('sup?', @channel)
-    ly('sup?'){ @test_message }
+      # Dunny why yet, but we have to let this 'warm up'
+      EM.add_timer(1){ Push::Backend::AMQP.new.publish('sup?', channel) }
+    end
+
+    received_message.should eql(sent_message)
   end
 
   # context "AMQP" do

@@ -3,17 +3,20 @@ require 'bundler/setup'
 require 'push'
 require 'rspec'
 require 'push/test'
-require 'em-ventually'
 require 'logger'
 require 'thin'
 
-# Make our EM specs timeout if an assertion isn't made after 5 seconds
-EM::Ventually.total_default = 5
-
 # Shhhh up the thin logging
-Thin::Logging.silent = true
+# Thin::Logging.silent = true
 
 module Push::Test::AMQP
+  def em(timeout=5, &block)
+    EM.run{
+      EM.add_timer(timeout){ EM.stop }
+      yield block
+    }
+  end
+
   # Expose an amqp.whatever method to the test environment
   def amqp
     @dsl ||= DSL.new
@@ -36,7 +39,7 @@ module Push::Test::AMQP
     def channels
       command 'list_channels'
     end
-    
+
     def command(command)
       %x[rabbitmqctl -q #{command}].split(/\n/).map do |line|
         line.split(/\t/)

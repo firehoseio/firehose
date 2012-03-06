@@ -12,13 +12,6 @@ module Push::Backend
       @connection = connection
     end
 
-    class Publisher
-      attr_reader :amqp_backend
-      def initialize(amqp_backend)
-        @amqp_backend = amqp_backend
-      end
-    end
-
     # Publish a message to an AMQP fanout queue.
     def publish(message, name)
       logger.debug "AMQP publishing `#{message}` to exchange `#{name}`"
@@ -63,7 +56,7 @@ module Push::Backend
 
     # Access and memoize the connection that we'll use for the AMQP backend
     def self.connection
-      @connection ||= ::AMQP.connect(Push.config.amqp.to_hash.merge(:logging => true).merge(:auto_recovery => true))
+      ::AMQP.connect(Push.config.amqp.to_hash.merge(:logging => true).merge(:auto_recovery => true))
     end
   end
 end

@@ -21,8 +21,8 @@ Gem::Specification.new do |s|
   # specify any dependencies here; for example:
   s.add_runtime_dependency "rack", ">= 1.1.0"
   s.add_runtime_dependency "eventmachine", ">= 1.0.0.beta"
-  s.add_runtime_dependency "websocket-rack", '>= 0.3.2'
-  s.add_runtime_dependency "amqp", ">= 0.8.4"
+  s.add_runtime_dependency "websocket-rack", '>= 0.3.0'
+  s.add_runtime_dependency "amqp", ">= 0.9.0"
   s.add_runtime_dependency "bunny"
 
   s.add_development_dependency "rspec"
@@ -30,6 +30,7 @@ Gem::Specification.new do |s|
   s.add_development_dependency "guard-rspec"
   s.add_development_dependency "guard-bundler"
   s.add_development_dependency "thin"
-  s.add_development_dependency "em-http-request"
+  # em-http dropped support for WS as of version 1.0+ (https://github.com/igrigorik/em-http-request/issues/164)
+  s.add_development_dependency "em-http-request", "~> 0.3.0" 
   s.add_development_dependency "guard-coffeescript"
 end
