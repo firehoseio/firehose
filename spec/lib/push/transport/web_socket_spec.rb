@@ -5,10 +5,6 @@ require 'set'
 describe Push::Transport::WebSocket do
   include Push::Test::AMQP
 
-  before(:each) do
-    Push.config.backend = :amqp
-  end
-
   let(:app) { Push::Transport::WebSocket.new }
 
   it "should consume message" do
@@ -23,7 +19,7 @@ describe Push::Transport::WebSocket do
         http.stream   {|msg| received_messages.push msg }
         EM.add_timer(1) {
           messages.each {|msg|
-            Push::Backend::AMQP.new.publish(msg, channel)
+            Push::Backend.new.publish(msg, channel)
           }
         }
       end

@@ -38,10 +38,9 @@ module Push
   class Consumer::Subscription
     attr_reader :backend, :consumer, :channel
 
-    include Backend::Adapter
     include Push::Logging
 
-    def initialize(consumer, channel, backend=self.class.backend, &block)
+    def initialize(consumer, channel, backend=Push::Backend.new, &block)
       @consumer, @channel, @backend = consumer, channel, backend
       block.call self if block
     end

@@ -23,7 +23,6 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency "eventmachine", ">= 1.0.0.beta"
   s.add_runtime_dependency "websocket-rack", '>= 0.3.0'
   s.add_runtime_dependency "amqp", ">= 0.9.0"
-  s.add_runtime_dependency "bunny"
 
   s.add_development_dependency "rspec"
   s.add_development_dependency "rack-test"

@@ -7,6 +7,7 @@ module Push
   autoload :Producer,       'push/producer'
   autoload :Consumer,       'push/consumer'
   autoload :Transport,      'push/transport'
+  autoload :Server,         'push/server'
 
   def self.config(&block)
     @config ||= Configuration.new

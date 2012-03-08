@@ -1,111 +1,65 @@
 require 'amqp'
-require 'bunny'
 
 module Push
-  # Backends for test and development environments
-  module Backend
-    autoload :Test,   'push/backend/test'
-    autoload :AMQP,   'push/backend/amqp'
-    autoload :Bunny,  'push/backend/bunny'
+  # Asynchronously publish and subscribe to messages to AMQP with Em::AMQP gem.
+  class Backend
+    include Push::Logging
 
-    # Mix this into backends that producers may push messages onto
-    module Publishable
-      # Publish a message into the backend
-      def publish(channel)
-      end
+    attr_reader :connection
 
-      # Introspection to see if this backend can be published to
-      def publishable?
-        true
-      end
+    def initialize(connection=nil)
+      @connection = connection
     end
 
-    # Mix this into backends that consumers may subscribe to for messages
-    module Subscribable
-      # Subscribe to a channel, then wait to receive messages on it. This
-      # call is usually async, otherwise it will block.
-      def subscribe(consumer, channel, &block)
-      end
-
-      # Cleans up subscription connections, etc.
-      def unsubscribe(&block)
-        block.call(self)
-      end
-
-      # Introspection to see if this backend can be subscribed to
-      def subscribable?
-        true
-      end
+    def connection
+      @connection ||= self.class.connection
     end
 
-    # Messages can be both published or subscribed to this backend
-    module PubSub
-      def self.included(klass)
-        klass.send(:include, Subscribable)
-        klass.send(:include, Publishable)
-      end
+    # Publish a message to an AMQP fanout queue.
+    def publish(message, name)
+      logger.debug "AMQP publishing `#{message}` to exchange `#{name}`"
+      publish_channel.fanout(name, :auto_delete => true).publish(message)
     end
 
-    # Lets make this inheritable if people perfer that.
-    class Base
-      include PubSub
-    end
+    # Setup a queue for the consumer, then bind that queue to the fanout exchange created by the publisher.
+    def subscribe(subscription)
+      consumer_queue = "#{subscription.consumer.id}@#{subscription.channel}"
+      queue = subscription_channel.queue(consumer_queue, :arguments => {'x-expires' => Push.config.amqp.queue_ttl * 1000})
+      fanout = subscription_channel.fanout(subscription.channel, :auto_delete => true)
 
-    # Now we need to make adapters registerable so that folks can set these in their configuration
-    # file settings
-    def self.register_adapter(name, adapter)
-      adapters[name.to_sym] = adapter
-    end
+      subscription.on_delete {
+        logger.debug "AMQP unbinding `#{consumer_queue}`"
+        # The AMQP server automatically deletes and unbinds this queue after the
+        # number of seconds specified in the 'x-expires' argument above.
+      }
 
-    def self.adapter(name=Push.config.backend)
-      adapters[name.to_sym].new
-    end
-
-    def self.adapters
-      @adapters ||= {}
-    end
-
-    # Provide interface from both the Consumer and Producer to 
-    # obtain a backend adapter for use when publishing or subscribing 
-    # to messages
-    module Adapter
-      def self.included(base)
-        base.send(:extend, ClassMethods)
+      logger.debug "AMQP binding `#{consumer_queue}` to exchange `#{subscription.channel}`"
+      queue.bind(fanout).subscribe(:ack => true) do |metadata, payload|
+        logger.debug "AMQP acking payload `#{payload}`"
+        metadata.ack
+        subscription.process_message(payload)
       end
 
-      module ClassMethods
-        # Memoize the default backend adapter
-        def backend
-          @backend || Push.config.backend
-        end
-
-        # Override the default backend adapter. This is insanely
-        # useful for testing specific backends
-        def backend=(backend)
-          @backend = backend
-        end
-      end
+      # Install signal handlers to deal with cleaning up potentially long running
+      # connections when we kill the server for reboots, etc.
+      Signal.trap('TERM'){ subscription.delete }
     end
 
-    module Adapters
-      # Now we need to make adapters registerable so that folks can set these in their configuration
-      # file settings
-      def self.register(name, adapter)
-        adapters[name.to_sym] = adapter
-      end
+  private
+    # We only need one channel to publish messages
+    def publish_channel
+      @publish_channel ||= AMQP::Channel.new(connection)
+    end
 
-      def self.adapters
-        @adapters ||= {}
-      end
+    # If we keep our consumers in order, we only need one subscription channel
+    # with a prefetch of 1 (prevent in-flight messages from getting lost).
+    def subscription_channel
+      @subscription_channel ||= AMQP::Channel.new(connection).prefetch(1)
+    end
 
-      # Return an instance of a backend from the given adapter
-      def self.backend(name)
-        adapters[name.to_sym].new
-      end
+    # Access and memoize the connection that we'll use for the AMQP backend
+    def self.connection
+      AMQP.connect(Push.config.amqp.to_hash.merge(:logging => true).merge(:auto_recovery => true))
     end
   end
-
-  Backend::Adapters.register :bunny,  Backend::Bunny
-  Backend::Adapters.register :amqp,   Backend::AMQP
-  Backend::Adapters.register :test,   Backend::Test
 end

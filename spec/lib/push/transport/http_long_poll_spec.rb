@@ -4,10 +4,6 @@ require 'rack/test'
 describe Push::Transport::HttpLongPoll do
   include Push::Test::AMQP
 
-  before(:each) do
-    Push.config.backend = :amqp
-  end
-
   def app
     config = Push::Transport::Configuration.new
     config.timeout = 3
@@ -36,7 +32,7 @@ describe Push::Transport::HttpLongPoll do
             }
           end
           EM.add_timer(1){
-            Push::Backend::AMQP.new.publish(message, channel)
+            Push::Backend.new.publish(message, channel)
           }
         end
 
@@ -53,7 +49,7 @@ describe Push::Transport::HttpLongPoll do
             }
           end
           EM.add_timer(1){
-            Push::Backend::AMQP.new.publish(message, channel)
+            Push::Backend.new.publish(message, channel)
           }
         end
 
@@ -68,7 +64,7 @@ describe Push::Transport::HttpLongPoll do
             @response_status = resp.response_header.status
           }
         end
-        Push::Backend::AMQP.new.publish('message', '/never/never/land')
+        Push::Backend.new.publish('message', '/never/never/land')
       end
       @response_status.should eql(204)
     end

@@ -53,8 +53,6 @@ RSpec.configure do |config|
   config.before(:each) do
     # Reset configurations between runs so that we don't have to deal with recollecting connections
     Push.config = nil
-    # Default the back-end to test for this runner
-    Push.config.backend = :test
     # Keep our rspec output clean from the push logger
     Push.config.logger = Logger.new('/dev/null')
   end

@@ -15,7 +15,6 @@ module Push
       end
       
       def call(env)
-        p env
         handler_method = websocket_request?(env) ?
           :web_socket_handler : :http_long_poll_handler
         self.send(handler_method).call env

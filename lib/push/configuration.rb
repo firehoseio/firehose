@@ -18,15 +18,10 @@ module Push
 
     WebSocket = Struct.new(:url)
     LongPoll = Struct.new(:url, :timeout)
-    
-    # Reset the backend if a new adapter is specified
-    def backend=(adapter)
-      @adapter, @backend = adapter.to_sym, nil
-    end
 
     # Return an instance of a configured backend (and memoize)
     def backend
-      @backend ||= Backend::Adapters.backend(@adapter)
+      @backend ||= Push::Backend.new
     end
 
     def initialize
@@ -46,7 +41,7 @@ module Push
       if web_socket = hash['web_socket']
         self.web_socket.url = web_socket['url'] if web_socket['url']
       end
-      
+
       # HTTP longpoll setup
       if long_poll = hash['long_poll']
         self.long_poll.url = long_poll['url'] if long_poll['url']

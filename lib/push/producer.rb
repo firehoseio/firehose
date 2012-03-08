@@ -3,8 +3,6 @@ module Push
   # MQ agnostic so that it works in a test environment.
   class Producer
     attr_reader :backend
-    
-    include Backend::Adapter
 
     # This gives us a nice Push.publish(message).to(channel) DSL.
     class DSL
@@ -20,7 +18,7 @@ module Push
       end
     end
 
-    def initialize(backend=self.class.backend)
+    def initialize(backend=Push::Backend.new)
       @backend = backend
     end
 

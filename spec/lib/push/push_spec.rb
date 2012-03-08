@@ -1,19 +1,11 @@
 require 'spec_helper'
 
 describe Push do
-  before(:all) do
-    Push.config.backend = :test
-  end
-
   context "config" do
     before(:each) do
       @env = Push::Configuration.new
     end
     
-    it "should have backend" do
-      @env.backend.should eql(:amqp)
-    end
-
     context "amqp" do
       it "should default host to 127.0.0.1" do
         @env.amqp.host.should eql('127.0.0.1')
@@ -59,7 +51,6 @@ describe Push do
     context "from_hash" do
       before(:each) do
         @env.from_hash({
-          'backend' => 'test',
           'web_socket' => {
             'url' => 'ws://push.polleverywhere.com'
           },
@@ -75,10 +66,6 @@ describe Push do
             'vhost' => 'hi'
           }
         })
-      end
-
-      it "should config backend" do
-        @env.backend.should be_instance_of(Push::Backend::Test)
       end
       
       it "should config web_socket url" do
