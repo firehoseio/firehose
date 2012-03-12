@@ -54,6 +54,6 @@ RSpec.configure do |config|
     # Reset configurations between runs so that we don't have to deal with recollecting connections
     Push.config = nil
     # Keep our rspec output clean from the push logger
-    Push.config.logger = Logger.new('/dev/null')
+    # Push.config.logger = Logger.new('/dev/null')
   end
 end

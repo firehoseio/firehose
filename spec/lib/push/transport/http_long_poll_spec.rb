@@ -4,69 +4,82 @@ require 'rack/test'
 describe Push::Transport::HttpLongPoll do
   include Push::Test::AMQP
 
-  def app
-    config = Push::Transport::Configuration.new
-    config.timeout = 3
+  let(:channel){ amqp.next_channel }
+  let(:backend){ Push::Backend.new }
+  let(:config) {
+    config = Push::Transport::Configuration.new 
+    config.timeout = 2
+    config
+  }
+  let(:app){
     Push::Transport::HttpLongPoll.new config
-  end
-
-  context "rack" do
-    # include Rack::Test::Methods
-
-    # it "should extract consumer_id from env" do
-    #   get '/', {}, {'HTTP_CONSUMER_ID' => 10}
-    #   last_request.env['push.consumer'].id.should eql(10)
-    # end
-  end
+  }
 
   context "streaming" do
     context "successful request" do
       it "should be a 200 status code" do
-        message, channel = 'hooowdy', '/thin/10'
+        sent, received = 'hooowdy', nil
+        response_status = nil
 
         em do
           Push::Test.thin(app) do |server, http|
             http.get(channel, :headers => {'HTTP_CONSUMER_ID' => 'brad'}) {|resp|
-              @response_status = resp.response_header.status
+              response_status = resp.response_header.status
               EM.stop
             }
           end
-          EM.add_timer(1){
-            Push::Backend.new.publish(message, channel)
-          }
+
+          EM.add_timer(1) do
+            backend.publish(sent, channel)
+          end
         end
 
-        @response_status.should eql(200)
+        response_status.should eql(200)
       end
 
-      it "should have message body" do
-        message, channel = 'duuuude', '/thin/11'
-
+      it "should keep the consumer queue around between request cycles" do
+        sent, received = %w[one two], []
+        
         em do
           Push::Test.thin(app) do |server, http|
             http.get(channel, :headers => {'HTTP_CONSUMER_ID' => 'brad'}) {|resp|
-              @message = resp.response
+              received << resp.response if resp.response_header.status == 200
+              p "uno"
+              # ... aaand grab the second message after we close out this connection.
+              http.get(channel, :headers => {'HTTP_CONSUMER_ID' => 'brad'}) {|resp|
+                p "dos"
+                received << resp.response if resp.response_header.status == 200
+                EM.stop
+              }
             }
           end
-          EM.add_timer(1){
-            Push::Backend.new.publish(message, channel)
-          }
+
+          EM.add_timer(1) do
+            # Drop 2 messages into zie queue
+            sent.each do |message|
+              backend.publish(message, channel)
+            end
+          end
         end
 
-        message.should eql(@message)
+        received.should =~ sent
       end
+    end
+  end
+
+  it "should timeout and return a 204" do
+    response_status = nil
+
+    em do
+      Push::Test.thin(app) do |server, http|
+        http.get('/timeout/land', :headers => {'HTTP_CONSUMER_ID' => 'brad'}) {|resp|
+          response_status = resp.response_header.status
+          EM.stop
+        }
+      end
+      backend.publish('message', channel) # If we don't publish a message and close AMQP, it will stupidly complain.
     end
 
-    it "should timeout and return a 204" do
-      em do
-        Push::Test.thin(app) do |server, http|
-          http.get('/never/ending/stream', :headers => {'HTTP_CONSUMER_ID' => 'brad'}) {|resp|
-            @response_status = resp.response_header.status
-          }
-        end
-        Push::Backend.new.publish('message', '/never/never/land')
-      end
-      @response_status.should eql(204)
-    end
+    response_status.should eql(204)
   end
 end

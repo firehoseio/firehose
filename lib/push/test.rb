@@ -36,7 +36,10 @@ module Push
           http = EventMachine::HttpRequest.new(uri(path)).send(method, opts) # get(opts) ...
           # Wire up the callbacks, raise an exception if there's a connection error
           http.callback { block.call(http) }
-          http.errback  { raise "Connection Error: #{http.inspect}" }
+          http.errback  { 
+            raise "Connection Error: #{http.inspect}"
+            EM.stop
+          }
         end
 
         def uri(path)

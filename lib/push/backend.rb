@@ -23,20 +23,22 @@ module Push
 
     # Setup a queue for the consumer, then bind that queue to the fanout exchange created by the publisher.
     def subscribe(subscription)
+      ttl = (Push.config.amqp.queue_ttl * 1000).to_i
       consumer_queue = "#{subscription.consumer.id}@#{subscription.channel}"
-      queue = subscription_channel.queue(consumer_queue, :arguments => {'x-expires' => Push.config.amqp.queue_ttl * 1000})
+      queue = subscription_channel.queue(consumer_queue, :arguments => {'x-expires' => ttl})
       fanout = subscription_channel.fanout(subscription.channel, :auto_delete => true)
 
       subscription.on_delete {
-        logger.debug "AMQP unbinding `#{consumer_queue}`"
+        logger.debug "AMQP waiting for `#{consumer_queue}` to expire in #{ttl}ms"
         # The AMQP server automatically deletes and unbinds this queue after the
         # number of seconds specified in the 'x-expires' argument above.
+        # queue.delete
       }
 
       logger.debug "AMQP binding `#{consumer_queue}` to exchange `#{subscription.channel}`"
-      queue.bind(fanout).subscribe(:ack => true) do |metadata, payload|
+      queue.bind(fanout).subscribe do |metadata, payload|
         logger.debug "AMQP acking payload `#{payload}`"
-        metadata.ack
+        # metadata.ack
         subscription.process_message(payload)
       end
 
