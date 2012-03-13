@@ -8,10 +8,6 @@ require 'spec_helper'
 describe Push::Backend do
   include Push::Test::AMQP
 
-  before(:each) do
-    Push.config.amqp.queue_ttl = 0.5 # If we make this 0, the exchanges will stick around FOREVER
-  end
-
   let(:backend) { Push::Backend.new }
   let(:consumer){ Push::Consumer.new }
   let(:channel) { "/backend_test/#{Time.now.to_i}" }
@@ -38,6 +34,8 @@ describe Push::Backend do
   it "should release exchange after publishing if no clients are connected" do
     exchanges_during_subscription = []
     exchanges_after_subscription = []
+
+    Push.config.amqp.queue_ttl = 0.1
 
     em 5 do
       subscription.on_message do |m|

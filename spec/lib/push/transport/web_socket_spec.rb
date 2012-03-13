@@ -13,7 +13,7 @@ describe Push::Transport::WebSocket do
     received_messages = []
 
     em do
-      Push::Test.thin(app) do |server, http|
+      Push::Test.thin(app) do |http|
         http = EventMachine::HttpRequest.new(ws_url).get
         http.errback  { EM.stop }
         http.stream   {|msg| received_messages.push msg }

@@ -32,13 +32,12 @@ module Push
         logger.debug "AMQP waiting for `#{consumer_queue}` to expire in #{ttl}ms"
         # The AMQP server automatically deletes and unbinds this queue after the
         # number of seconds specified in the 'x-expires' argument above.
-        # queue.delete
       }
 
       logger.debug "AMQP binding `#{consumer_queue}` to exchange `#{subscription.channel}`"
-      queue.bind(fanout).subscribe do |metadata, payload|
+      queue.bind(fanout).subscribe(:ack => true) do |metadata, payload|
         logger.debug "AMQP acking payload `#{payload}`"
-        # metadata.ack
+        metadata.ack
         subscription.process_message(payload)
       end
 

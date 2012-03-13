@@ -10,7 +10,7 @@ module Push
       server.log_file = Push.logger # Shhhh
       server.start
       EM.next_tick{
-        block.call server, Thin::RequestHelper.new("http://#{host}:#{port}")
+        block.call Thin::RequestHelper.new("http://#{host}:#{port}")
       }
     end
 

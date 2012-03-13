@@ -9,6 +9,7 @@ module Push::Transport
 
     # Process the Rack request with a streaming response with the consumer.
     def call(env)
+      p env
       Stream.response env, @config.timeout do |stream|
         subscription = @config.consumer(env).subscription(@config.channel(env))
         stream.on_close {
@@ -50,7 +51,7 @@ module Push::Transport
       env[ResponseStream] = self
       # Start a timer if a timeout paramter is given; otherwise forget it! We'll
       # let the server deal with timeouts.
-      start_timeout
+      start_timeout if timeout
       logger.debug "Stream initialized"
     end
 
@@ -74,12 +75,10 @@ module Push::Transport
     end
 
     def start_timeout
-      if timeout
-        @timeout_timer = EM.add_timer(timeout.to_f) {
-          logger.debug "Stream timed-out"
-          @on_timeout.call
-        }
-      end
+      @timeout_timer = EM.add_timer(timeout.to_f) {
+        logger.debug "Stream timed-out"
+        @on_timeout.call
+      }
     end
 
     def cancel_timeout

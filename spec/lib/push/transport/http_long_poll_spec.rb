@@ -9,6 +9,7 @@ describe Push::Transport::HttpLongPoll do
   let(:config) {
     config = Push::Transport::Configuration.new 
     config.timeout = 2
+    config.consumer = Proc.new{|env| Push::Consumer.new Rack::Request.new(env).params['cid']}
     config
   }
   let(:app){
@@ -22,8 +23,8 @@ describe Push::Transport::HttpLongPoll do
         response_status = nil
 
         em do
-          Push::Test.thin(app) do |server, http|
-            http.get(channel, :headers => {'HTTP_CONSUMER_ID' => 'brad'}) {|resp|
+          Push::Test.thin(app) do |http|
+            http.get(channel) {|resp|
               response_status = resp.response_header.status
               EM.stop
             }
@@ -38,20 +39,18 @@ describe Push::Transport::HttpLongPoll do
       end
 
       it "should keep the consumer queue around between request cycles" do
-        sent, received = %w[one two], []
+        sent, received, requests = %w[one two three four five six seven eight nine ten], [], 0
         
-        em do
-          Push::Test.thin(app) do |server, http|
-            http.get(channel, :headers => {'HTTP_CONSUMER_ID' => 'brad'}) {|resp|
-              received << resp.response if resp.response_header.status == 200
-              p "uno"
-              # ... aaand grab the second message after we close out this connection.
-              http.get(channel, :headers => {'HTTP_CONSUMER_ID' => 'brad'}) {|resp|
-                p "dos"
-                received << resp.response if resp.response_header.status == 200
-                EM.stop
+        em 20 do
+          Push::Test.thin(app) do |http|
+            request = Proc.new {
+              http.get("#{channel}?r=#{requests+=1}&cid=brad") {|resp|
+                received << resp.response
+                # Trigger n long-poll requests.
+                requests < sent.size ? request.call : EM.stop
               }
             }
+            request.call
           end
 
           EM.add_timer(1) do
@@ -71,7 +70,7 @@ describe Push::Transport::HttpLongPoll do
     response_status = nil
 
     em do
-      Push::Test.thin(app) do |server, http|
+      Push::Test.thin(app) do |http|
         http.get('/timeout/land', :headers => {'HTTP_CONSUMER_ID' => 'brad'}) {|resp|
           response_status = resp.response_header.status
           EM.stop
