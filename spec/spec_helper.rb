@@ -6,9 +6,6 @@ require 'push/test'
 require 'logger'
 require 'thin'
 
-# Shhhh up the thin logging
-# Thin::Logging.silent = true
-
 module Push::Test::AMQP
   def em(timeout=5, &block)
     EM.run{
@@ -55,5 +52,7 @@ RSpec.configure do |config|
     Push.config = nil
     # Keep our rspec output clean from the push logger
     Push.config.logger = Logger.new('/dev/null')
+    # Chill thin!
+    Thin::Logging.silent = true
   end
 end
