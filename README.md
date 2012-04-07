@@ -8,7 +8,7 @@
 
 # What is Push?
 
-Push is both a Rack application and Javascript that makes building scalable real-time web applications possible.
+Push is both a Rack application and JavasSript library that makes building scalable real-time web applications possible.
 
 # How is it different from socket.io?
 
@@ -20,7 +20,12 @@ Finally, push attempts to solve data consistency issues and authentication by en
 
 # Getting Started
 
-First, you'll need to install RabbitMQ. In the future, Push may support multiple backends, but for now we use RabbitMQ. Fire up that daemon and we'll setup the server.
+First, you'll need to install and run RabbitMQ.
+
+```
+apt-get install rabbitmq    # Install on Ubuntu
+brew install rabbitmq       # Install on Mac Homebrew
+```
 
 ## The Consumer
 
@@ -70,56 +75,30 @@ require 'push'
 Push::Producer.new.publish('hi there!').to('/greetings')
 ```
 
-## The Coffeescript
+## JavaScript Client
 
-In your browser be sure to include these files, in this specific order:
+Then in your browser create a new Push Client object as such:
 
-* flash/swfobject.js
-* flash/FABridge.js
-* flash/web_socket.js
-* helper.js
-* push/transport.js
-* push/long_poll.js
-* push/web_socket.js
-* push/client.js
-
-Then in your browser create a new Push Client object like so:
-
-```coffeescript
-# Handlers
-onMessage = (json) ->
-  # Handle a message pushed from the server!
-
-onConnected = ->
-
-onDisconnected = ->
-
-onError = ->
-
-urls = 
-  websocket: 'http://some_websocket_url.com'
-  longpoll:  'http://some_longpoll_url.com'
-
-# Misc options for transports
-options = 
-  timeout: 5000
-  
-# URL params
-params = 
-  sid: 123
-
-# Chained initializer
+```javascript
 new Push.Client()
-  .url(urls)
-  .params(params)
-  .message(onMessage)
-  .options(options)
-  .connected(onConnected)
-  .disconnected(onDisconnected)
+  .url({
+    websocket: 'ws://some_websocket_url.com',
+    longpoll:  'http://some_longpoll_url.com'
+  })
+  .params({
+    cid: '024023948234'
+  })
+  .options({
+    timeout: 5000
+  })
+  .message(function(msg){
+    alert(msg); // Fires when a message is received from the server.
+  })
+  .connected(function(){
+    alert('Howdy friend!');
+  })
+  .disconnected(function(){
+    alert('Bu bye');
+  })
   .connect()
 ```
-
-
-Viola! The curl script will return 'hi there!'
-
-Now you're on your way to building real-time web applications.
