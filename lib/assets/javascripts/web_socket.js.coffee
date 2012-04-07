@@ -11,8 +11,8 @@
     constructor: (args) ->
       super args
 
-      # Set flash socket path
-      WebSocket.__swfLocation = "push/javascripts/flash/WebSocketMain.swf"
+      # Set flash socket path.
+      WebSocket.__swfLocation = "/flash/WebSocketMain.swf"
       
       # Mozilla decided to have their own implementation of Web Sockets so detect for that
       window.WebSocket = window.MozWebSocket if window["MozWebSocket"] and window.MozWebSocket

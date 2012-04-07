@@ -9,4 +9,5 @@ guard 'bundler' do
   watch(/^.+\.gemspec/)
 end
 
-guard 'coffeescript', :input => 'assets/coffeescripts', :output => 'assets/javascripts'
+# Catch syntax errors early on.
+guard 'coffeescript', :input => 'lib/assets/javascripts', :output => '/dev/null'
