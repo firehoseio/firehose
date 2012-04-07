@@ -8,23 +8,23 @@ describe Push::Transport::WebSocket do
   let(:app) { Push::Transport::WebSocket.new }
 
   it "should consume message" do
-    messages, channel = %w[1 2 3], '/hey/there'
+    sent, channel = (1..500).map(&:to_s), '/hey/there'
     ws_url = "ws://localhost:#{Push::Test::Thin::Port}#{channel}"
-    received_messages = []
+    received = []
 
     em do
       Push::Test.thin(app) do |http|
         http = EventMachine::HttpRequest.new(ws_url).get
         http.errback  { EM.stop }
-        http.stream   {|msg| received_messages.push msg }
+        http.stream   {|msg| received.push msg }
         EM.add_timer(1) {
-          messages.each {|msg|
+          sent.each {|msg|
             Push::Backend.new.publish(msg, channel)
           }
         }
       end
     end
 
-    messages.should =~ received_messages
+    sent.should include(received)
   end
 end

@@ -39,7 +39,7 @@ describe Push::Transport::HttpLongPoll do
       end
 
       it "should keep the consumer queue around between request cycles" do
-        sent, received, requests = (0..100).map(&:to_s), [], 0
+        sent, received, requests = (0..500).map(&:to_s), [], 0
         
         em 20 do
           Push::Test.thin(app) do |http|
@@ -61,7 +61,7 @@ describe Push::Transport::HttpLongPoll do
           end
         end
 
-        received.should =~ sent
+        received.should include(sent)
       end
     end
   end
