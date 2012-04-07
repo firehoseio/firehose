@@ -30,8 +30,8 @@ module Push
 
       subscription.on_delete {
         logger.debug "AMQP waiting for `#{consumer_queue}` to expire in #{ttl}ms"
-        # The AMQP server automatically deletes and unbinds this queue after the
-        # number of seconds specified in the 'x-expires' argument above.
+        # TODO - Cancel the CONSUMER for this queue, then x-expires up top will clean up this thing.
+        queue.default_consumer.cancel
       }
 
       logger.debug "AMQP binding `#{consumer_queue}` to exchange `#{subscription.channel}`"

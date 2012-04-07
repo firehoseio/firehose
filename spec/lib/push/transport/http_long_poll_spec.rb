@@ -39,7 +39,7 @@ describe Push::Transport::HttpLongPoll do
       end
 
       it "should keep the consumer queue around between request cycles" do
-        sent, received, requests = %w[one two three four five six seven eight nine ten], [], 0
+        sent, received, requests = (0..100).map(&:to_s), [], 0
         
         em 20 do
           Push::Test.thin(app) do |http|
@@ -54,7 +54,7 @@ describe Push::Transport::HttpLongPoll do
           end
 
           EM.add_timer(1) do
-            # Drop 2 messages into zie queue
+            # Drop messages into zie queue
             sent.each do |message|
               backend.publish(message, channel)
             end

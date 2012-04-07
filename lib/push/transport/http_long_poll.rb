@@ -9,7 +9,6 @@ module Push::Transport
 
     # Process the Rack request with a streaming response with the consumer.
     def call(env)
-      p env
       Stream.response env, @config.timeout do |stream|
         subscription = @config.consumer(env).subscription(@config.channel(env))
         stream.on_close {
