@@ -8,8 +8,8 @@ cid = rand(99999)
 in_flight_messages = []
 
 # mps = messages per second
-producer_mps = 10
-consumer_mps = 10
+producer_mps = 50
+consumer_mps = 50
 
 EM.run{
   started_at = Time.now
