@@ -10,17 +10,17 @@ module Push
     def response(env)
       method = env['REQUEST_METHOD']
       path = env['REQUEST_PATH']
-      ttl = 1000
-      cid = params[:cid] || SecureRandom.uuid
+      ttl = 15000 # Keep messages in a RabbitMQ queue for 15s before killing all of them.
+      cid = params[:cid] || SecureRandom.uuid # And ID for the web client.
 
       case method
       # GET is how clients subscribe to the queue. When a messages comes in, we flush out a response,
       # close down the requeust, and the client then reconnects.
       when 'GET'
-        queue_name = "#{cid}@#{path}"
-        channel = AMQP::Channel.new(self.class.connection).prefetch(1)
-        exchange = AMQP::Exchange.new(channel, :fanout, path, :auto_delete => true)
-        queue = AMQP::Queue.new(channel, queue_name, :arguments => {'x-expires' => ttl})
+        queue_name  = "#{cid}@#{path}"
+        channel     = AMQP::Channel.new(self.class.connection).prefetch(1)
+        exchange    = AMQP::Exchange.new(channel, :fanout, path, :auto_delete => true)
+        queue       = AMQP::Queue.new(channel, queue_name, :arguments => {'x-expires' => ttl})
         queue.bind(exchange)
 
         # When we get a message, we want to remove the consumer from the queue so that the x-expires
@@ -39,13 +39,15 @@ module Push
 
       # PUT is how we throw messages on to the fan-out queue.
       when 'PUT'
-        body = env['rack.input'].read
+        body      = env['rack.input'].read
+        channel   = AMQP::Channel.new(self.class.connection)
+        exchange  = AMQP::Exchange.new(channel, :fanout, path, :auto_delete => true)
         p [:put, path, body]
 
-        channel = AMQP::Channel.new(self.class.connection)
-        exchange = AMQP::Exchange.new(channel, :fanout, path, :auto_delete => true)
-
+        # TODO How do I clean up this exchange at this point? Do I close it somehow or the channel?
+        # The exchange just hangs out indefinitely now.
         exchange.publish(body)
+
         [202, {}, []]
       else
         [501, {}, ["#{method} not supported."]]
