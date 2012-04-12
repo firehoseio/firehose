@@ -1,29 +1,60 @@
 require "push/version"
+require 'goliath'
+require 'amqp'
+require 'securerandom'
 
 module Push
-  autoload :Configuration,  'push/configuration'
-  autoload :Logging,        'push/logging'
-  autoload :Backend,        'push/backend'
-  autoload :Producer,       'push/producer'
-  autoload :Consumer,       'push/consumer'
-  autoload :Transport,      'push/transport'
-  autoload :Server,         'push/server'
+  class LongPolling < Goliath::API
+    use Goliath::Rack::Params
 
-  def self.config(&block)
-    @config ||= Configuration.new
-    block.call @config if block
-    @config
-  end
+    def response(env)
+      method = env['REQUEST_METHOD']
+      path = env['REQUEST_PATH']
+      ttl = 1000
+      cid = params[:cid] || SecureRandom.uuid
 
-  def self.config=(config)
-    @config = config
-  end
+      case method
+      # GET is how clients subscribe to the queue. When a messages comes in, we flush out a response,
+      # close down the requeust, and the client then reconnects.
+      when 'GET'
+        queue_name = "#{cid}@#{path}"
+        channel = AMQP::Channel.new(self.class.connection).prefetch(1)
+        exchange = AMQP::Exchange.new(channel, :fanout, path, :auto_delete => true)
+        queue = AMQP::Queue.new(channel, queue_name, :arguments => {'x-expires' => ttl})
+        queue.bind(exchange)
 
-  def self.logger
-    config.logger
-  end
+        # When we get a message, we want to remove the consumer from the queue so that the x-expires
+        # ttl starts ticking down. On the reconnect, the consumer connects to the queue and resets the
+        # timer on x-expires... in theory at least.
+        consumer = AMQP::Consumer.new(channel, queue, cid)
+        consumer.on_delivery do |metadata, payload|
+          p [:get, cid, consumer.consumer_tag, path, payload]
+          metadata.ack
+          consumer.cancel
+          env.chunked_stream_send(payload)
+          env.chunked_stream_close
+        end.consume
 
-  def self.exception_reporter(e)
-    Push.config.exception_reporter.call(e)
+        chunked_streaming_response(200, 'Content-Type' => 'text/plain')
+
+      # PUT is how we throw messages on to the fan-out queue.
+      when 'PUT'
+        body = env['rack.input'].read
+        p [:put, path, body]
+
+        channel = AMQP::Channel.new(self.class.connection)
+        exchange = AMQP::Exchange.new(channel, :fanout, path, :auto_delete => true)
+
+        exchange.publish(body)
+        [202, {}, []]
+      else
+        [501, {}, ["#{method} not supported."]]
+      end
+    end
+
+  private
+    def self.connection
+      @connection ||= AMQP.connect
+    end
   end
 end

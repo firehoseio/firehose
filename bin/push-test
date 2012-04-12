@@ -1,19 +1,6 @@
 #!/usr/bin/env ruby
 
+$:.unshift File.expand_path('../..', __FILE__)
+
 require 'rubygems'
-require 'bundler/setup'
-require 'push'
-require 'eventmachine'
-
-Push.config do |c|
-  c.backend = :amqp
-end
-
-# Start counting up so that we can beind to this channel while we're developing
-EM.run{
-  counter = 0
-
-  EM.add_periodic_timer(1){
-    Push::Producer.new.publish("#{counter+=1}").to('/counter')
-  }
-}
+require 'test/long_poll_test'

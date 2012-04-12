@@ -19,10 +19,9 @@ Gem::Specification.new do |s|
   s.require_paths = ["lib"]
 
   # specify any dependencies here; for example:
-  s.add_runtime_dependency "rack", ">= 1.1.0"
+  s.add_runtime_dependency "goliath", "=> 0.9.4"
   s.add_runtime_dependency "eventmachine", ">= 1.0.0.beta"
-  s.add_runtime_dependency "websocket-rack", '>= 0.3.0'
-  s.add_runtime_dependency "amqp", ">= 0.9.0"
+  s.add_runtime_dependency "amqp", ">= 0.9.4"
 
   s.add_development_dependency "rspec"
   s.add_development_dependency "rack-test"

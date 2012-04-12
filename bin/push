@@ -4,10 +4,3 @@ $:.unshift File.expand_path('../../lib', __FILE__)
 
 require 'rubygems'
 require 'push'
-require 'thin'
-
-host = '127.0.0.1'
-port = 9009
-server = Thin::Server.new Push::Server.new, host, port
-
-server.start!
