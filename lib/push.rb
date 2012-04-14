@@ -10,7 +10,7 @@ module Push
     attr_reader :sid
 
     def initialize(sid=nil)
-      @sid ||= self.class.sid
+      @sid = sid || self.class.sid
     end
 
     def subscribe(path, &block)
@@ -96,7 +96,6 @@ module Push
       # GET is how clients subscribe to the queue. When a messages comes in, we flush out a response,
       # close down the requeust, and the client then reconnects.
       when 'GET'
-        queue_name  = "#{cid}@#{path}"
         subscription = Push::Subscription.new(cid)
         subscription.subscribe path do |payload|
           subscription.unsubscribe
