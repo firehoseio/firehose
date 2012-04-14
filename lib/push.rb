@@ -9,8 +9,8 @@ module Push
   class Subscription
     attr_reader :sid
 
-    def initialize(sid=self.class.sid)
-      @sid = sid
+    def initialize(sid=nil)
+      @sid ||= self.class.sid
     end
 
     def subscribe(path, &block)
@@ -56,6 +56,7 @@ module Push
       # TODO How do I clean up this exchange at this point? Do I close it somehow or the channel?
       # The exchange just hangs out indefinitely now.
       exchange.publish(message)
+      exchange.delete(:if_unused => true)
     end
 
   protected
