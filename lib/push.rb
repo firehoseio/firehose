@@ -1,4 +1,4 @@
-require "push/version"
+require 'push/version'
 
 require 'goliath'
 require 'goliath/websocket'
@@ -11,8 +11,8 @@ module Push
   class WebSocket < Goliath::WebSocket
     use Goliath::Rack::Params
 
-    # TODO hook AMQP up to this.
     def on_open(env)
+      # TODO Fix the Push::App app to not need '/ws' in front of the socket.
       path    = env['REQUEST_PATH'].gsub(/^\/ws/, '') # Name of the queue in AMQP we'll be pulling from.
       cid     = params[:cid]
 
