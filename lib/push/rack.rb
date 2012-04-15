@@ -69,7 +69,6 @@ module Push
 
     private
       def websocket_request?(env)
-        p env
         env['HTTP_UPGRADE'] =~ /websocket/i
       end
     end
