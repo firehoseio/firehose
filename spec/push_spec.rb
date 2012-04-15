@@ -3,7 +3,7 @@ require 'goliath'
 require 'em-http'
 
 describe "Push" do
-  let(:app)       { Push::App.new }
+  let(:app)       { Push::Goliath::App.new }
   let(:messages)  { (1..1000).map(&:to_s) }
   let(:channel)   { "/push/integration/#{Time.now.to_i}" }
   let(:uri)       { URI.parse('http://127.0.0.1:9876') }
@@ -18,7 +18,7 @@ describe "Push" do
     server.address  = uri.host
     server.port     = uri.port
     server.api      = app
-    server.app      = Goliath::Rack::Builder.build(Push::App, server.api)
+    server.app      = Goliath::Rack::Builder.build(Push::Goliath::App, server.api)
     server.logger   = Log4r::Logger.new('goliath')
 
     server.start do
