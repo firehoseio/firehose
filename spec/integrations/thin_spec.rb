@@ -2,7 +2,7 @@ require 'spec_helper'
 require 'thin'
 require 'em-http'
 
-describe "Push" do
+describe Push::Rack do
   let(:app)       { Push::Rack::App.new }
   let(:messages)  { (1..1000).map(&:to_s) }
   let(:channel)   { "/push/integration/#{Time.now.to_i}" }
@@ -11,7 +11,7 @@ describe "Push" do
   let(:ws_url)    { "ws://#{uri.host}:#{uri.port}#{channel}" }
   let(:cid)       { "client-#{Time.now.to_i}" }
 
-  it "should pub-sub" do
+  it "should pub-sub http and websockets" do
     # Setup variables that we'll use after we turn off EM to validate our
     # test assertions.
     outgoing, received_http, received_ws = messages.dup, [], []
@@ -53,6 +53,7 @@ describe "Push" do
       end
     end
 
+    # Great, we have all the pieces in order, lets run this thing in the reactor.
     EM.run do
       # Stop the server no matter what happens.
       EM.add_timer(30) { EM.stop }
@@ -68,8 +69,8 @@ describe "Push" do
       EM.add_timer(1){ publish.call }
     end
 
-    # When EM stops, these asserts are validated.
-    received_http.should =~ messages
-    received_ws.should =~ messages
+    # When EM stops, these assertions will be made.
+    received_http.should  =~ messages
+    received_ws.should    =~ messages
   end
 end

@@ -10,7 +10,7 @@ module Push
 
     def subscribe(path, &block)
       queue_name  = "#{subscriber_id}@#{path}"
-      channel     = AMQP::Channel.new(self.class.connection).prefetch(1)
+      channel     = AMQP::Channel.new(Push.amqp.connection).prefetch(1)
       exchange    = AMQP::Exchange.new(channel, :fanout, path, :auto_delete => true)
       queue       = AMQP::Queue.new(channel, queue_name, :arguments => {'x-expires' => ttl})
       queue.bind(exchange)
@@ -39,10 +39,6 @@ module Push
     end
 
   protected
-    def self.connection
-      @connection ||= AMQP.connect
-    end
-
     def self.subscriber_id
       SecureRandom.uuid
     end

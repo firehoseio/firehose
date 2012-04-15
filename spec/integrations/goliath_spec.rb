@@ -2,7 +2,7 @@ require 'spec_helper'
 require 'goliath'
 require 'em-http'
 
-describe "Push" do
+describe Push::Goliath do
   let(:app)       { Push::Goliath::App.new }
   let(:messages)  { (1..1000).map(&:to_s) }
   let(:channel)   { "/push/integration/#{Time.now.to_i}" }
