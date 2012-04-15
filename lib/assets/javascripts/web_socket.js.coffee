@@ -1,4 +1,4 @@
-@module "Push", ->
+@module "Firehose", ->
   class @WebSocket extends @Transport
     @flashSupported: =>
       $.browser.msie

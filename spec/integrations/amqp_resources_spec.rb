@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe "Push amqp resources" do
+describe "Firehose amqp resources" do
 
   let(:channel) { "/resource-test-#{Time.now.to_i}" }
 
@@ -17,7 +17,7 @@ describe "Push amqp resources" do
       # Kill test if it runs longer than 5s
       EM.add_timer(5) { EM.stop }
 
-      subscription = Push::Subscription.new
+      subscription = Firehose::Subscription.new
       subscription.ttl = 1
 
       subscription.subscribe channel do |payload|
@@ -33,7 +33,7 @@ describe "Push amqp resources" do
       end
 
       # Let the subscriber subscribe before publishing messages.
-      EM.add_timer(1){ Push::Publisher.new.publish(channel, sent) }
+      EM.add_timer(1){ Firehose::Publisher.new.publish(channel, sent) }
     end
 
     after_exchange_count = `rabbitmqctl list_exchanges`.lines.count

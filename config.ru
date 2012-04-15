@@ -1,6 +1,6 @@
-require 'push'
+require 'firehose'
 require 'rack'
 
 use Rack::Reloader
 
-run Push::Rack::App.new
+run Firehose::Rack::App.new

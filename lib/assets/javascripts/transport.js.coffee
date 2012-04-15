@@ -1,4 +1,4 @@
-@module "Push", ->
+@module "Firehose", ->
   class @Transport
     # Class method to determine whether transport is supported by the current browser
     @supported: =>

@@ -1,12 +1,12 @@
-require 'push/version'
+require 'firehose/version'
 
 require 'amqp'
 
-module Push
-  autoload :Subscription, 'push/subscription'
-  autoload :Publisher,    'push/publisher'
-  autoload :Goliath,      'push/goliath'
-  autoload :Rack,         'push/rack'
+module Firehose
+  autoload :Subscription, 'firehose/subscription'
+  autoload :Publisher,    'firehose/publisher'
+  autoload :Goliath,      'firehose/goliath'
+  autoload :Rack,         'firehose/rack'
 
   # TODO move this into a configuration or session class.
   # Hang on to AMQP configuration settings.
@@ -15,7 +15,7 @@ module Push
   end
 
   # TODO figure out a better way to memoize AMQP connection for production runtimes, and 
-  # make it resetable for testing environment. Some sort of Push::Session object is probably
+  # make it resetable for testing environment. Some sort of Firehose::Session object is probably
   # in order
   def self.reset!
     @amqp = nil

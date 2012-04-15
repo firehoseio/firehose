@@ -2,10 +2,10 @@ require 'spec_helper'
 require 'goliath'
 require 'em-http'
 
-describe Push::Goliath do
-  let(:app)       { Push::Goliath::App.new }
+describe Firehose::Goliath do
+  let(:app)       { Firehose::Goliath::App.new }
   let(:messages)  { (1..1000).map(&:to_s) }
-  let(:channel)   { "/push/integration/#{Time.now.to_i}" }
+  let(:channel)   { "/firehose/integration/#{Time.now.to_i}" }
   let(:uri)       { URI.parse('http://127.0.0.1:9876') }
   let(:url)       { "#{uri}#{channel}" }
   let(:cid)       { "client-#{Time.now.to_i}" }
@@ -18,7 +18,7 @@ describe Push::Goliath do
     server.address  = uri.host
     server.port     = uri.port
     server.api      = app
-    server.app      = Goliath::Rack::Builder.build(Push::Goliath::App, server.api)
+    server.app      = Goliath::Rack::Builder.build(Firehose::Goliath::App, server.api)
     server.logger   = Log4r::Logger.new('goliath')
 
     server.start do

@@ -1,7 +1,7 @@
 require 'thin'
 require 'thin/websockets'
 
-module Push
+module Firehose
   module Thin
   end
 end

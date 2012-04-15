@@ -1,4 +1,4 @@
-@module "Push", ->
+@module "Firehose", ->
   class @LongPoll extends @Transport
     # CORS is supported in IE 8+
     @ieSupported: =>

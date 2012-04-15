@@ -1,7 +1,7 @@
 require "net/http"
 require "uri"
 
-module Push
+module Firehose
   class HttpPublisher
     attr_reader :uri
 

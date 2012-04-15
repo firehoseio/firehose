@@ -1,17 +1,17 @@
 require 'goliath'
 require 'goliath/websocket'
 
-module Push
+module Firehose
   module Goliath
     class WebSocket < ::Goliath::WebSocket
       use ::Goliath::Rack::Params
 
       def on_open(env)
-        # TODO Fix the Push::App app to not need '/ws' in front of the socket.
+        # TODO Fix the Firehose::App app to not need '/ws' in front of the socket.
         path    = env['REQUEST_PATH'].gsub(/^\/ws/, '') # Name of the queue in AMQP we'll be pulling from.
         cid     = params[:cid]
 
-        @subscription = Push::Subscription.new(cid)
+        @subscription = Firehose::Subscription.new(cid)
         @subscription.subscribe path do |payload|
           env.stream_send(payload)
         end
@@ -34,7 +34,7 @@ module Push
         # GET is how clients subscribe to the queue. When a messages comes in, we flush out a response,
         # close down the requeust, and the client then reconnects.
         when 'GET'
-          subscription = Push::Subscription.new(cid)
+          subscription = Firehose::Subscription.new(cid)
           subscription.subscribe path do |payload|
             subscription.unsubscribe
             env.chunked_stream_send(payload)
@@ -45,7 +45,7 @@ module Push
         when 'PUT'
           body = env['rack.input'].read
           p [:put, path, body]
-          Push::Publisher.new.publish(path, body)
+          Firehose::Publisher.new.publish(path, body)
 
           [202, {}, []]
         else

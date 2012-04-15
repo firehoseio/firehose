@@ -2,10 +2,10 @@ require 'spec_helper'
 require 'thin'
 require 'em-http'
 
-describe Push::Rack do
-  let(:app)       { Push::Rack::App.new }
+describe Firehose::Rack do
+  let(:app)       { Firehose::Rack::App.new }
   let(:messages)  { (1..1000).map(&:to_s) }
-  let(:channel)   { "/push/integration/#{Time.now.to_i}" }
+  let(:channel)   { "/firehose/integration/#{Time.now.to_i}" }
   let(:uri)       { URI.parse('http://127.0.0.1:9876') }
   let(:url)       { "#{uri}#{channel}" }
   let(:ws_url)    { "ws://#{uri.host}:#{uri.port}#{channel}" }

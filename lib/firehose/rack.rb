@@ -1,6 +1,6 @@
 require 'rack/websocket'
 
-module Push
+module Firehose
   module Rack
     AsyncResponse = [-1, {}, []]
 
@@ -16,20 +16,20 @@ module Push
         # close down the requeust, and the client then reconnects.
         when 'GET'
           EM.next_tick do
-            subscription = Push::Subscription.new(cid)
+            subscription = Firehose::Subscription.new(cid)
             subscription.subscribe path do |payload|
               subscription.unsubscribe
               env['async.callback'].call([200, {}, [payload]])
             end
           end
 
-          Push::Rack::AsyncResponse
+          Firehose::Rack::AsyncResponse
 
         # PUT is how we throw messages on to the fan-out queue.
         when 'PUT'
           body = env['rack.input'].read
           p [:put, path, body]
-          Push::Publisher.new.publish(path, body)
+          Firehose::Publisher.new.publish(path, body)
 
           [202, {}, []]
         else
@@ -45,7 +45,7 @@ module Push
         cid   = req.params['cid']
         path  = req.path
 
-        @subscription = Push::Subscription.new(cid)
+        @subscription = Firehose::Subscription.new(cid)
         @subscription.subscribe path do |payload|
           send_data payload
         end

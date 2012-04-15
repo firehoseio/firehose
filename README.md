@@ -6,17 +6,17 @@
     
     A Realtime Ruby web application toolkit
 
-# What is Push?
+# What is Firehose?
 
-Push is both a Rack application and JavasSript library that makes building scalable real-time web applications possible.
+Firehose is both a Rack application and JavasSript library that makes building scalable real-time web applications possible.
 
 # How is it different from socket.io?
 
-socket.io attempts to store connection state per node instance. Push makes no attempt to store connection state.
+socket.io attempts to store connection state per node instance. Firehose makes no attempt to store connection state.
 
-Also, socket.io attempts to abstract a low-latency full-duplex port. Push assumes that its impossible to simulate this in older web browsers that don't support WebSockets. As such, Push focuses on low-latency server-to-client connections and encourages the use of HTTP transports for client-to-server communications.
+Also, socket.io attempts to abstract a low-latency full-duplex port. Firehose assumes that its impossible to simulate this in older web browsers that don't support WebSockets. As such, Firehose focuses on low-latency server-to-client connections and encourages the use of HTTP transports for client-to-server communications.
 
-Finally, push attempts to solve data consistency issues and authentication by encourage the use of proxying to the web application.
+Finally, firehose attempts to solve data consistency issues and authentication by encourage the use of proxying to the web application.
 
 # Getting Started
 
@@ -33,15 +33,15 @@ The consumer is the web server that your client connects to for real-time update
 
 ```ruby
 require 'rubygems'
-require 'push'
+require 'firehose'
 
-run Push::Transport::Dispatcher.new do |config|
+run Firehose::Transport::Dispatcher.new do |config|
   config.timeout = 20
   
   # Extract the consumer ID from the HTTP session. This could be a cookie
   # query param, or whatever.
   config.consumer = Proc.new do |env|
-    Push::Consumer.new(env['HTTP_CONSUMER_ID'])
+    Firehose::Consumer.new(env['HTTP_CONSUMER_ID'])
   end
   
   # Use the /url/path for the queue channel. You could change this to a query
@@ -70,17 +70,17 @@ Then run the following script in another terminal:
 
 ```ruby
 require 'rubygems'
-require 'push'
+require 'firehose'
 
-Push::Producer.new.publish('hi there!').to('/greetings')
+Firehose::Producer.new.publish('hi there!').to('/greetings')
 ```
 
 ## JavaScript Client
 
-Then in your browser create a new Push Client object as such:
+Then in your browser create a new Firehose Client object as such:
 
 ```javascript
-new Push.Client()
+new Firehose.Client()
   .url({
     websocket: 'ws://some_websocket_url.com',
     longpoll:  'http://some_longpoll_url.com'
