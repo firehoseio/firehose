@@ -1,1 +1,1 @@
-push: bundle exec bin/push -sv -p $PORT
+push: bundle exec thin -p $PORT -R config.ru --debug start

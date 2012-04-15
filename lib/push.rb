@@ -6,4 +6,5 @@ module Push
   autoload :Subscription, 'push/subscription'
   autoload :Publisher,    'push/publisher'
   autoload :Goliath,      'push/goliath'
+  autoload :Rack,         'push/rack'
 end
