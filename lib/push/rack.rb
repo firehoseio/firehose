@@ -22,7 +22,7 @@ module Push
               env['async.callback'].call([200, {}, [payload]])
             end
           end
-          
+
           Push::Rack::AsyncResponse
 
         # PUT is how we throw messages on to the fan-out queue.

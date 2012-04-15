@@ -2,6 +2,14 @@ require 'securerandom'
 
 module Push
   class Subscription
+    TTL = 15000
+
+    # Time to live for the queue on the server after the subscription is canceled. This
+    # is mostly for flakey connections where the client may reconnect after *ttl* and continue
+    # receiving messages.
+    attr_accessor :ttl
+
+    # Globally unique subscription id
     attr_reader :subscriber_id
 
     def initialize(subscriber_id=nil)
@@ -35,7 +43,7 @@ module Push
     # The time that a queue should live *after* the client unsubscribes. This is useful for
     # flakey network connections, like HTTP Long Polling or even broken web sockets.
     def ttl
-      15000
+      @ttl ||= TTL
     end
 
   protected
