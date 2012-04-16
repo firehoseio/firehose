@@ -28,6 +28,12 @@ apt-get install rabbitmq    # Install on Ubuntu
 brew install rabbitmq       # Install on Mac Homebrew
 ```
 
+Then install the gem.
+
+```sh
+gem install firehose
+```
+
 ## The Server
 
 The consumer is the web server that your client connects to for real-time updates. Create a config.ru file with the following:
@@ -45,7 +51,7 @@ Now run the config.ru file in a server that supports async Rack callbacks (like 
 thin -R config.ru -p 4000 start
 ```
 
-## The Publisher
+## Publish a message to a bunch of subscribers
 
 Lets test it out! Open two terminal windows. In one window, curl:
 
@@ -67,7 +73,7 @@ Greetings fellow human being...
 
 ## Yeah, so?
 
-You have a dirt simple HTTP pub-sub feed. You could setup an `after_commit` hook on ActiveRecord to push JSON to an end-point. On the subscription side, you could have a Backbone.js application that picks up the changes and updates the client-side UI.
+You have a dirt simple HTTP pub-sub feed. You could setup an `after_commit` hook on ActiveRecord to push JSON to an end-point. On the other side, you could have a Backbone.js application that picks up the changes and updates the client-side UI.
 
 Holy mackerel! Its a nice, clean, RESTful way to build real-time web applications.
 
@@ -75,11 +81,13 @@ Holy mackerel! Its a nice, clean, RESTful way to build real-time web application
 
 Firehose doesn't just stop at curl; it has a full-featured JavaScript client that lets you subscribe to channels for live updates.
 
+Still have the server running? Copy and paste the code below into Firebug or the WebKit console.
+
 ```javascript
 new Firehose.Client()
   .url({
-    websocket: 'ws://localhost:5100',
-    longpoll:  'http://localhost:5100'
+    websocket: 'ws://localhost:4000/hello',
+    longpoll:  'http://localhost:4000/hello'
   })
   .params({
     cid: '024023948234'
@@ -88,13 +96,20 @@ new Firehose.Client()
     timeout: 5000
   })
   .message(function(msg){
-    console.log(msg); // Fires when a message is received from the server.
+    console.log(msg);
   })
   .connected(function(){
     console.log('Howdy friend!');
   })
   .disconnected(function(){
-    console.log('Bu bye');
+    console.log('Bu bye.');
   })
   .connect()
+```
+
+Then publish another message.
+
+
+```sh
+curl -X PUT -d "This is almost magical" "http://localhost:4000/hello"
 ```
