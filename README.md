@@ -1,10 +1,11 @@
-                    /
-     ___       ___ (___
-    |   )|   )|___ |   )
-    |__/ |__/  __/ |  /
-    |
+      __ _          _                    
+     / _(_)        | |                   
+    | |_ _ _ __ ___| |__   ___  ___  ___ 
+    |  _| | '__/ _ \ '_ \ / _ \/ __|/ _ \
+    | | | | | |  __/ | | | (_) \__ \  __/
+    |_| |_|_|  \___|_| |_|\___/|___/\___|
     
-    A Realtime Ruby web application toolkit
+    Build Realtime web applications in Ruby
 
 # What is Firehose?
 
