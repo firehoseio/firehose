@@ -16,45 +16,41 @@ Firehose is both a Rack application and JavasScript library that makes building 
 First, you'll need to install and run RabbitMQ.
 
 ```sh
-apt-get install rabbitmq    # Install on Ubuntu
-brew install rabbitmq       # Install on Mac Homebrew
+$ apt-get install rabbitmq    # Install on Ubuntu
+$ brew install rabbitmq       # Install on Mac Homebrew
 ```
 
 Then install the gem.
 
 ```sh
-gem install firehose
+$ gem install firehose
 ```
 
 ## The Server
 
-The consumer is the web server that your client connects to for real-time updates. Create a config.ru file with the following:
+Now fire up the server.
 
 ```ruby
-require 'rubygems'
-require 'firehose'
-
-run Firehose::Rack::App.new
+$ firehose start
+>> Thin web server (v1.3.1 codename Triple Espresso)
+>> Maximum connections set to 1024
+>> Listening on 127.0.0.1:7478, CTRL+C to stop
 ```
 
-Now run the config.ru file in a server that supports async Rack callbacks (like thin or rainbows)
-
-```ruby
-thin -R config.ru -p 4000 start
-```
+In case you're wondering, the Firehose application server runs the Rack app `Firehose::Rack::App.new` inside of Thin.
 
 ## Publish a message to a bunch of subscribers
 
 Lets test it out! Open two terminal windows. In one window, curl:
 
 ```sh
-curl "http://localhost:4000/hello"
+$ curl "http://localhost:7474/hello"
 ```
 
 Then run the following in the other terminal:
 
 ```sh
-curl -X PUT -d "Greetings fellow human being..." "http://localhost:4000/hello"
+$ curl -X PUT -d "Greetings fellow human being..." "http://localhost:7474/hello"
 ```
 
 and you should see the message in the other terminal.
@@ -78,8 +74,8 @@ Still have the server running? Copy and paste the code below into Firebug or the
 ```javascript
 new Firehose.Client()
   .url({
-    websocket: 'ws://localhost:4000/hello',
-    longpoll:  'http://localhost:4000/hello'
+    websocket: 'ws://localhost:7478/hello',
+    longpoll:  'http://localhost:7478/hello'
   })
   .params({
     cid: '024023948234'
@@ -103,7 +99,7 @@ Then publish another message.
 
 
 ```sh
-curl -X PUT -d "This is almost magical" "http://localhost:4000/hello"
+$ curl -X PUT -d "This is almost magical" "http://localhost:7478/hello"
 ```
 
 # How is it different from socket.io?

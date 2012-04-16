@@ -7,6 +7,7 @@ module Firehose
   autoload :Publisher,    'firehose/publisher'
   autoload :Goliath,      'firehose/goliath'
   autoload :Rack,         'firehose/rack'
+  autoload :CLI,          'firehose/cli'
 
   # TODO move this into a configuration or session class.
   # Hang on to AMQP configuration settings.
