@@ -11,14 +11,6 @@
 
 Firehose is both a Rack application and JavasScript library that makes building scalable real-time web applications possible.
 
-# How is it different from socket.io?
-
-socket.io attempts to store connection state per node instance. Firehose makes no attempt to store connection state.
-
-Also, socket.io attempts to abstract a low-latency full-duplex port. Firehose assumes that its impossible to simulate this in older web browsers that don't support WebSockets. As such, Firehose focuses on low-latency server-to-client connections and encourages the use of existing HTTP transports, like POST and PUT, for client-to-server communications.
-
-Finally, Firehose attempts to solve data consistency issues and authentication by encourage the use of proxying to the web application.
-
 # Getting Started
 
 First, you'll need to install and run RabbitMQ.
@@ -113,3 +105,11 @@ Then publish another message.
 ```sh
 curl -X PUT -d "This is almost magical" "http://localhost:4000/hello"
 ```
+
+# How is it different from socket.io?
+
+socket.io attempts to store connection state per node instance. Firehose makes no attempt to store connection state.
+
+Also, socket.io attempts to abstract a low-latency full-duplex port. Firehose assumes that its impossible to simulate this in older web browsers that don't support WebSockets. As such, Firehose focuses on low-latency server-to-client connections and encourages the use of existing HTTP transports, like POST and PUT, for client-to-server communications.
+
+Finally, Firehose attempts to solve data consistency issues and authentication by encourage the use of proxying to the web application.
