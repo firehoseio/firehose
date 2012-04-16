@@ -5,7 +5,6 @@ require 'amqp'
 module Firehose
   autoload :Subscription, 'firehose/subscription'
   autoload :Publisher,    'firehose/publisher'
-  autoload :Goliath,      'firehose/goliath'
   autoload :Rack,         'firehose/rack'
   autoload :CLI,          'firehose/cli'
 

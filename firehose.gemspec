@@ -19,7 +19,6 @@ Gem::Specification.new do |s|
   s.require_paths = ["lib"]
 
   # specify any dependencies here; for example:
-#  s.add_runtime_dependency "goliath", "=> 0.9.4"
   s.add_runtime_dependency "eventmachine", ">= 1.0.0.beta"
   s.add_runtime_dependency "amqp", ">= 0.9.4"
   s.add_runtime_dependency "thin"
@@ -30,7 +29,6 @@ Gem::Specification.new do |s|
   s.add_development_dependency "rack-test"
   s.add_development_dependency "guard-rspec"
   s.add_development_dependency "guard-bundler"
-  s.add_development_dependency "thin"
   # em-http dropped support for WS as of version 1.0+ (https://github.com/igrigorik/em-http-request/issues/164)
   s.add_development_dependency "em-http-request", "~> 0.3.0" 
   s.add_development_dependency "guard-coffeescript"
