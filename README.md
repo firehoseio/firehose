@@ -36,21 +36,7 @@ The consumer is the web server that your client connects to for real-time update
 require 'rubygems'
 require 'firehose'
 
-run Firehose::Transport::Dispatcher.new do |config|
-  config.timeout = 20
-  
-  # Extract the consumer ID from the HTTP session. This could be a cookie
-  # query param, or whatever.
-  config.consumer = Proc.new do |env|
-    Firehose::Consumer.new(env['HTTP_CONSUMER_ID'])
-  end
-  
-  # Use the /url/path for the queue channel. You could change this to a query
-  # param, or whatever
-  config.channel = Proc.new do |env|
-    env['PATH_INFO']
-  end
-end
+run Firehose::Rack::App.new
 ```
 
 Now run the config.ru file in a server that supports async Rack callbacks (like thin or rainbows)
@@ -59,7 +45,7 @@ Now run the config.ru file in a server that supports async Rack callbacks (like 
 thin -R config.ru -p 4000 start
 ```
 
-## The Producer
+## The Publisher
 
 Lets test the producer! Open two terminal windows. In one window, curl the consumer server:
 
@@ -73,7 +59,7 @@ Then run the following script in another terminal:
 require 'rubygems'
 require 'firehose'
 
-Firehose::Producer.new.publish('hi there!').to('/greetings')
+Firehose::Publisher.new.publish('hi there!').to('/greetings')
 ```
 
 ## JavaScript Client
@@ -83,8 +69,8 @@ Then in your browser create a new Firehose Client object as such:
 ```javascript
 new Firehose.Client()
   .url({
-    websocket: 'ws://some_websocket_url.com',
-    longpoll:  'http://some_longpoll_url.com'
+    websocket: 'ws://localhost:5100',
+    longpoll:  'http://localhost:5100'
   })
   .params({
     cid: '024023948234'
@@ -93,13 +79,13 @@ new Firehose.Client()
     timeout: 5000
   })
   .message(function(msg){
-    alert(msg); // Fires when a message is received from the server.
+    console.log(msg); // Fires when a message is received from the server.
   })
   .connected(function(){
-    alert('Howdy friend!');
+    console.log('Howdy friend!');
   })
   .disconnected(function(){
-    alert('Bu bye');
+    console.log('Bu bye');
   })
   .connect()
 ```

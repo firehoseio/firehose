@@ -26,7 +26,8 @@ class Firehose.WebSocket extends Firehose.Transport
   _message: (event) =>
     try
       @onMessage($.parseJSON(event.data))
-    catch e      
+    catch e # If JSON parsing doesn't work, send the rest of it on through
+      @onMessage(event.data)
 
   _close: (event) =>
     if !event || (event and !event.wasClean)

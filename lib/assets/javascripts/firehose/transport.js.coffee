@@ -20,16 +20,17 @@ class Firehose.Transport
     setTimeout =>
       @_request()
     , delay
+    this
 
   # Sub classes need to implement this method to handle requests
   _request: =>
-    
+
   # Default error handler
   _error: (event) =>
     # Lets try to connect again with delay
     @onDisconnected()
     @connect(@_errorInterval)
-  
+
   # Default connection established handler
   _open: (event) =>
     @onConnected()
