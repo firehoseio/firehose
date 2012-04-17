@@ -1,6 +1,0 @@
-#!/usr/bin/env ruby
-
-$:.unshift File.expand_path('../..', __FILE__)
-
-require 'rubygems'
-require 'test/long_poll_test'

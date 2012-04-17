@@ -1,1 +1,1 @@
-firehose: bundle exec thin -p $PORT -R config.ru --debug start
+firehose: firehose start
