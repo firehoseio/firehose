@@ -2,10 +2,10 @@ require 'thor'
 
 module Firehose
   class CLI < Thor
-    desc "start", "starts the firehose server"
+    desc "server", "starts the firehose server"
     method_option :port, :type => :numeric, :default => 7474, :required => true, :aliases => '-p'
     method_option :host, :type => :string, :default => '0.0.0.0', :required => true, :aliases => '-h'
-    def start
+    def server
       require 'thin'
 
       server = Thin::Server.new(options[:host], options[:port]) do
