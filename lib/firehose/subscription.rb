@@ -1,5 +1,3 @@
-require 'securerandom'
-
 module Firehose
   class Subscription
     TTL = 15000
@@ -48,7 +46,7 @@ module Firehose
 
   protected
     def self.subscriber_id
-      SecureRandom.uuid
+      rand(999_999_999_999).to_s
     end
   end
 end
