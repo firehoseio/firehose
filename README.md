@@ -31,7 +31,7 @@ $ gem install firehose
 Now fire up the server.
 
 ```ruby
-$ firehose start
+$ firehose server
 >> Thin web server (v1.3.1 codename Triple Espresso)
 >> Maximum connections set to 1024
 >> Listening on 127.0.0.1:7478, CTRL+C to stop
