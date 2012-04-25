@@ -5,7 +5,7 @@ class Firehose.LongPoll extends Firehose.Transport
 
   @supported: =>
     # IE 8+, FF 3.5+, Chrome 4+, Safari 4+, Opera 12+, iOS 3.2+, Android 2.1+
-    $.support.cors || LongPoll.ieSupported()
+    $.support.cors || Firehose.LongPoll.ieSupported()
 
   constructor: (args) ->
     super args
@@ -20,7 +20,7 @@ class Firehose.LongPoll extends Firehose.Transport
     @registerIETransport()
 
   registerIETransport: =>
-    if LongPoll.ieSupported()
+    if Firehose.LongPoll.ieSupported()
       $.ajaxTransport 'json', (options, orignalOptions, jqXhr) ->
         xdr = null
         send: (_, callback) ->

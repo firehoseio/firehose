@@ -44,5 +44,5 @@ class Firehose.WebSocket extends Firehose.Transport
       @socket.onmessage = null
       @socket.close()
       delete(@socket)
-
+    
     super
