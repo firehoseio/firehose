@@ -10,14 +10,21 @@ class Firehose.WebSocket extends Firehose.Transport
   constructor: (args) ->
     super args
 
-    # Set flash socket path.
-    WebSocket.__swfLocation = "/flash/firehose/WebSocketMain.swf"
-    
-    # Mozilla decided to have their own implementation of Web Sockets so detect for that
+    # Configrations specifically for web sockets
+    @config.web_socket ||= {}
+    # Protocol schema we should use for talking to WS server.
+    @config.web_socket.url ||= "ws:#{@config.uri}?#{$.param(@config.params)}"
+    # Path of the swf WebSocket that we use in non-WS flash browsers.
+    @config.web_socket.swf_path ||= "/flash/firehose/WebSocketMain.swf"
+
+    # Set flash socket path for the WS SWF polyfill.
+    WebSocket.__swfLocation = @config.web_socket.swf_path
+
+    # Mozilla decided to have their own implementation of Web Sockets so detect for that.
     window.WebSocket = window.MozWebSocket if window["MozWebSocket"] and window.MozWebSocket
 
   _request: =>
-    @socket = new window.WebSocket(@url["websocket"] + "?" + $.param(@params))
+    @socket = new window.WebSocket(@config.web_socket.url)
     @socket.onopen = @_open
     @socket.onclose = @_close
     @socket.onerror = @_error
@@ -25,9 +32,9 @@ class Firehose.WebSocket extends Firehose.Transport
 
   _message: (event) =>
     try
-      @onMessage($.parseJSON(event.data))
+      @config.message($.parseJSON(event.data))
     catch e # If JSON parsing doesn't work, send the rest of it on through
-      @onMessage(event.data)
+      @config.message(event.data)
 
   _close: (event) =>
     if !event || (event and !event.wasClean)

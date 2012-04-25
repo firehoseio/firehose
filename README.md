@@ -72,27 +72,23 @@ Firehose doesn't just stop at curl; it has a full-featured JavaScript client tha
 Still have the server running? Copy and paste the code below into Firebug or the WebKit console.
 
 ```javascript
-new Firehose.Client()
-  .url({
-    websocket: 'ws://localhost:7478/hello',
-    longpoll:  'http://localhost:7478/hello'
-  })
-  .params({
-    cid: '024023948234'
-  })
-  .options({
-    timeout: 5000
-  })
-  .message(function(msg){
+new Firehose.Client({
+  message: function(msg){
     console.log(msg);
-  })
-  .connected(function(){
-    console.log('Howdy friend!');
-  })
-  .disconnected(function(){
-    console.log('Bu bye.');
-  })
-  .connect()
+  },
+  connected: function(){
+    console.log("Great Scotts!! We're connected!");
+  },
+  disconnected: function(){
+    console.log("Well shucks, we're not connected anymore");
+  },
+  error: function(){
+    console.log("Well then, something went horribly wrong.");
+  },
+  // Note that we do NOT specify a protocol here because we don't
+  // know that yet.
+  uri: '//localhost:7478/hello'
+}).connect();
 ```
 
 Then publish another message.

@@ -10,9 +10,14 @@ class Firehose.LongPoll extends Firehose.Transport
   constructor: (args) ->
     super args
 
+    # Configrations specifically for web sockets
+    @config.long_poll ||= {}
+    # Protocol schema we should use for talking to WS server.
+    @config.long_poll.url ||= "http:#{@config.uri}"
+
     # We use the lag time to make the client live longer than the server.
     @_lagTime = 5000
-    @_timeout = @options.timeout + @_lagTime
+    @_timeout = @config.options.timeout + @_lagTime
     @_dataType = "json"
     @_offlineTimer
     @_okInterval = 0
@@ -44,15 +49,15 @@ class Firehose.LongPoll extends Firehose.Transport
       $.support.cors = true;
     
   connect: (delay = 0) =>
-    @onConnected()
+    @config.connected()
     super(delay)
 
   _request: =>
-    $.ajax @url["longpoll"], 
+    $.ajax @config.http_long.url,
       crossDomain: true
       cache: false
       dataType: @_dataType
-      data: @params
+      data: @config.params
       timeout: @_timeout
       success: @_success
       error: @_error
@@ -67,13 +72,13 @@ class Firehose.LongPoll extends Firehose.Transport
       # in thise case
       @connect(@_okInterval)
     else
-      @onMessage(data)
+      @config.message(data)
       @connect(@_okInterval)
 
   # We need this custom handler to have the connection status
   # properly displayed
   _error: (jqXhr, status, error) =>
     clearTimeout(@_offlineTimer)
-    @onDisconnected()
-    @_offlineTimer = setTimeout(@onConnected, @_retryDelay + @_lagTime)
+    @config.disconnected()
+    @_offlineTimer = setTimeout(@config.connected, @_retryDelay + @_lagTime)
     @connect(@_retryDelay)

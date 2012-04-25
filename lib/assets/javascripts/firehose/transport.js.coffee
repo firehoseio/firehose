@@ -5,23 +5,9 @@ class Firehose.Transport
   @supported: =>
     false
 
-  constructor: (args) ->
+  constructor: (config={}) ->
+    @config = config
     @_retryDelay = 5000 
-
-  # Default the callbacks to an empty function so that non-configured options don't break.
-  onDisconnected: ->
-  onConnected: ->
-  onMessage: ->
-  onError: ->
-
-  # Chainable configuration.
-  disconnected: (@onDisconnected) -> this
-  connected:    (@onConnected)    -> this
-  message:      (@onMessage)      -> this
-  options:      (@options)        -> this
-  params:       (@params)         -> this
-  error:        (@onError)        -> this
-  url:          (@url)            -> this
 
   # Lets rock'n'roll! Connect to the server.
   connect: (delay = 0) =>
@@ -36,13 +22,13 @@ class Firehose.Transport
   # Default error handler
   _error: (event) =>
     # Lets try to connect again with delay
-    @onDisconnected()
+    @config.disconnected()
     @connect(@_retryDelay)
 
   # Default connection established handler
   _open: (event) =>
-    @onConnected()
+    @config.connected()
 
   # Default connection closed handler
   _close: (event) =>
-    @onDisconnected()
+    @config.disconnected()
