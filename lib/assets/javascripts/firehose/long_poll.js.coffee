@@ -75,5 +75,5 @@ class Firehose.LongPoll extends Firehose.Transport
   _error: (jqXhr, status, error) =>
     clearTimeout(@_offlineTimer)
     @onDisconnected()
-    @_offlineTimer = setTimeout(@onConnected, @_errorInterval + @_lagTime)
-    @connect(@_errorInterval)
+    @_offlineTimer = setTimeout(@onConnected, @_retryDelay + @_lagTime)
+    @connect(@_retryDelay)
