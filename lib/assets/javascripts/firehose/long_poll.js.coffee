@@ -11,14 +11,13 @@ class Firehose.LongPoll extends Firehose.Transport
     super args
 
     # Configrations specifically for web sockets
-    @config.long_poll ||= {}
+    @config.longPoll ||= {}
     # Protocol schema we should use for talking to WS server.
-    @config.long_poll.url ||= "http:#{@config.uri}"
+    @config.longPoll.url ||= "http:#{@config.uri}"
 
     # We use the lag time to make the client live longer than the server.
     @_lagTime = 5000
     @_timeout = @config.options.timeout + @_lagTime
-    @_dataType = "json"
     @_offlineTimer
     @_okInterval = 0
 
@@ -26,6 +25,8 @@ class Firehose.LongPoll extends Firehose.Transport
 
   registerIETransport: =>
     if Firehose.LongPoll.ieSupported()
+      # TODO - Ask Steel what this is for. Looks like some kind of polygot fill, but I want
+      # to take the 'json' transport out and do that myself.
       $.ajaxTransport 'json', (options, orignalOptions, jqXhr) ->
         xdr = null
         send: (_, callback) ->
@@ -53,10 +54,9 @@ class Firehose.LongPoll extends Firehose.Transport
     super(delay)
 
   _request: =>
-    $.ajax @config.http_long.url,
+    $.ajax @config.longPoll.url,
       crossDomain: true
       cache: false
-      dataType: @_dataType
       data: @config.params
       timeout: @_timeout
       success: @_success
@@ -72,7 +72,7 @@ class Firehose.LongPoll extends Firehose.Transport
       # in thise case
       @connect(@_okInterval)
     else
-      @config.message(data)
+      @config.message(@config.parse(data))
       @connect(@_okInterval)
 
   # We need this custom handler to have the connection status
