@@ -14,7 +14,8 @@ module Firehose
         cors_headers  = {
           'Access-Control-Allow-Origin'     => env['HTTP_ORIGIN'],
           'Access-Control-Allow-Methods'    => 'GET',
-          'Access-Control-Max-Age'          => '1728000'
+          'Access-Control-Max-Age'          => '1728000',
+          'Access-Control-Allow-Headers'    => 'Content-Type, User-Agent, If-Modified-Since, Cache-Control'
         }
 
         case method
