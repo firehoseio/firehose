@@ -11,8 +11,9 @@ module Firehose
         path    = req.path
         method  = req.request_method
         timeout = 30
+        cors_origin = env['HTTP_ORIGIN']
         cors_headers  = {
-          'Access-Control-Allow-Origin'     => env['HTTP_ORIGIN'],
+          'Access-Control-Allow-Origin'     => cors_origin,
           'Access-Control-Allow-Methods'    => 'GET',
           'Access-Control-Max-Age'          => '1728000',
           'Access-Control-Allow-Headers'    => 'Content-Type, User-Agent, If-Modified-Since, Cache-Control'
@@ -23,6 +24,9 @@ module Firehose
         # close down the requeust, and the client then reconnects.
         when 'GET'
           EM.next_tick do
+            # If the request is a CORS request, return those headers, otherwise don't worry 'bout it
+            response_headers = cors_origin ? cors_headers : {}
+
             # Setup a subscription with a client id. We haven't subscribed yet here.
             subscription = Firehose::Subscription.new(cid)
 
@@ -30,7 +34,7 @@ module Firehose
             # and they should come back for more
             timer = EventMachine::Timer.new(timeout) do
               # We send a 204 OK to tell the client to reconnect.
-              env['async.callback'].call [204, cors_headers, []]
+              env['async.callback'].call [204, response_headers, []]
               Firehose.logger.debug "HTTP wait `#{cid}@#{path}` timed out"
             end
 
@@ -39,7 +43,7 @@ module Firehose
               timer.cancel # Turn off the heart beat so we don't execute any of that business.
               subscription.unsubscribe
               subscription = nil # Set this to nil so that our heart beat timer doesn't try to double unsub.
-              env['async.callback'].call [200, cors_headers, [message]]
+              env['async.callback'].call [200, response_headers, [message]]
               Firehose.logger.debug "HTTP sent `#{message}` to `#{cid}@#{path}`"
             end
             Firehose.logger.debug "HTTP subscribed to `#{cid}@#{path}`"
