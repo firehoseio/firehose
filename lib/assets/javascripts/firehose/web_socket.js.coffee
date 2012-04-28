@@ -5,7 +5,7 @@ class Firehose.WebSocket extends Firehose.Transport
   @supported: =>
     # Compatibility reference: http://caniuse.com/websockets
     # Native websocket support + Flash web socket
-    window.WebSocket || (window["MozWebSocket"] and window.MozWebSocket) || WebSocket.flashSupported()
+    !!(window.WebSocket || (window["MozWebSocket"] and window.MozWebSocket) || WebSocket.flashSupported())
 
   constructor: (args) ->
     super args

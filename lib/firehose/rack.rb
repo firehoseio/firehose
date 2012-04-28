@@ -95,10 +95,18 @@ module Firehose
 
     class App
       def call(env)
-        websocket_request?(env) ? WebSocket.new.call(env) : HttpLongPoll.new.call(env)
+        websocket_request?(env) ? websocket.call(env) : http_long_poll.call(env)
       end
 
     private
+      def websocket
+        @websocket ||= WebSocket.new
+      end
+
+      def http_long_poll
+        @http_long_poll ||= HttpLongPoll.new
+      end
+
       def websocket_request?(env)
         env['HTTP_UPGRADE'] =~ /websocket/i
       end

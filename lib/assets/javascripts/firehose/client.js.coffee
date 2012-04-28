@@ -1,16 +1,16 @@
 class Firehose.Client
   # Transports that are available to Firehose.
-  @transports: ['WebSocket', 'LongPoll']
+  @transports: [Firehose.WebSocket, Firehose.LongPoll]
 
   # Generate a random client_id.
   @nextClientId: ->
     Math.floor((Math.random()*99999999999)+1)
 
-  constructor: (config={}) ->
+  constructor: (config = {}) ->
     # The clientId is used by the server to remember messages between requests. In a production environment,
     # this should probably be some combination of "user_id-rand". Why the rand? Because a user may have multiple
     # tabs open to the application, and each tab needs a different channel on the server.
-    config.clientId    ||= Firehose.Client.nextClientId()
+    config.clientId     ||= Firehose.Client.nextClientId()
     # List of transport stragies we have to use.
     config.transports   ||= Firehose.Client.transports
     # Empty handler for messages.
@@ -21,8 +21,10 @@ class Firehose.Client
     config.connected    ||= ->
     # Empty handler for when we're disconnected.
     config.disconnected ||= ->
-    # Additional options.
-    config.options      ||= {}
+    # The initial connection failed. This is probably triggered when a transport, like WebSockets
+    # is supported by the browser, but for whatever reason it can't connect (probably a firewall)
+    config.failed       ||= ->
+      throw "Could not connect"
     # URL that we'll connect to.
     config.uri          ||= undefined
     # Params that we'll tack on to the URL. We include a clientId in here for kicks.
@@ -31,15 +33,29 @@ class Firehose.Client
     # default on the webs is to parse JSON.
     config.parse ||= (body) ->
       $.parseJSON(body)
-    
+
     # Hang on to these config for when we connect.
     @config = config
     # Make sure we return ourself out of the constructor so we can chain.
     this
 
   connect: =>
-    # Figure out what transport is supported and return it.
-    # TODO if the initial connection fails, try the next transport mmmkay?
-    for transport in @config.transports
-      if transport = Firehose[transport]
-        return new transport(@config).connect() if transport.supported()
+    # Get a list of transports that the browser supports
+    supportedTransports = (transport for transport in @config.transports when transport.supported())
+    # Mmmkay, we've got transports supported by the browser, now lets try connecting 
+    # to them and dealing with failed connections that might be caused by firewalls,
+    # or other network connectivity issues.
+    transports = for transport in supportedTransports
+      # Copy the config so we can modify it with a failed callback.
+      config = @config
+      # Map the next transport into the existing transports connectionError
+      # If the connection fails, try the next transport supported by the browser.
+      config.failed = =>
+        # Map the next transport to connect insie of the current transport failures
+        if nextTransport = supportedTransports.pop()
+          new nextTransport(config).connect()
+        else
+          @config.failed() # Call the original fail method passed into the Firehose.Client
+      new transport(config)
+    # Fire off the first connection attempt.
+    transports[0].connect()

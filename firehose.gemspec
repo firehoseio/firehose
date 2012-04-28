@@ -7,7 +7,7 @@ Gem::Specification.new do |s|
   s.version     = Firehose::VERSION
   s.authors     = ["Brad Gessler", "Steel Fu"]
   s.email       = ["brad@polleverywhere.com", "steel@polleverywhere.com"]
-  s.homepage    = "http://github.com/polleverywhere/firehose"
+  s.homepage    = "http://firehose.io/"
   s.summary     = %q{Build realtime Ruby web applications}
   s.description = %q{Firehose is a realtime web application toolkit for building realtime Ruby web applications.}
 
@@ -24,6 +24,7 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency "thin"
   s.add_runtime_dependency "thor"
   s.add_runtime_dependency "websocket-rack"
+  s.add_runtime_dependency "faraday"
 
   s.add_development_dependency "rspec"
   s.add_development_dependency "rack-test"

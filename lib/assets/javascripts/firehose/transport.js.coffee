@@ -21,12 +21,17 @@ class Firehose.Transport
 
   # Default error handler
   _error: (event) =>
-    # Lets try to connect again with delay
-    @config.disconnected()
-    @connect(@_retryDelay)
+    unless @_succeeded
+      # Fail peremantly if the error happens on the first connection.
+      @config.failed(this)
+    else
+      # Lets try to connect again with delay
+      @config.disconnected()
+      @connect(@_retryDelay)
 
   # Default connection established handler
   _open: (event) =>
+    @_succeeded = true
     @config.connected()
 
   # Default connection closed handler

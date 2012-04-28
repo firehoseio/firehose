@@ -14,10 +14,14 @@ class Firehose.LongPoll extends Firehose.Transport
     @config.longPoll ||= {}
     # Protocol schema we should use for talking to WS server.
     @config.longPoll.url ||= "http:#{@config.uri}"
+    # How many ms should we wait before timing out the AJAX connection?
+    # TODO why was this set at 0s?
+    @config.longPoll.timeout ||= 0
 
+    # TODO - What is @_lagTime for? Can't we just use the @_timeout value?
     # We use the lag time to make the client live longer than the server.
     @_lagTime = 5000
-    @_timeout = @config.options.timeout + @_lagTime
+    @_timeout = @config.longPoll.timeout + @_lagTime
     @_offlineTimer
     @_okInterval = 0
 
@@ -63,6 +67,10 @@ class Firehose.LongPoll extends Firehose.Transport
       error: @_error
   
   _success: (data, status, jqXhr) =>
+    # TODO we actually want to do this when the thing calls out... mmm right now it takes
+    # up to 30s before we can call this thing.
+    # Call the 'connected' callback if the connection succeeds.
+    @_open(data) unless @_succeeded
     if jqXhr.status == 204
       # If we get a 204 back, that means the server timed-out and sent back a 204 with a
       # X-Http-Next-Request header
