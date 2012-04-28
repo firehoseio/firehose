@@ -10,7 +10,12 @@ module Firehose
       server = Thin::Server.new(options[:host], options[:port]) do
         run Firehose::Rack::App.new
       end
-      server.start!
+
+      begin
+        server.start!
+      rescue AMQP::TCPConnectionFailed => e
+        Firehose.logger.error "Unable to connect to AMQP, are you sure it's running?"
+      end
     end
   end
 end
