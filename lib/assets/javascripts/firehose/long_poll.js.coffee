@@ -15,8 +15,7 @@ class Firehose.LongPoll extends Firehose.Transport
     # Protocol schema we should use for talking to WS server.
     @config.longPoll.url ||= "http:#{@config.uri}"
     # How many ms should we wait before timing out the AJAX connection?
-    # TODO why was this set at 0s?
-    @config.longPoll.timeout ||= 0
+    @config.longPoll.timeout ||= 20000
 
     # TODO - What is @_lagTime for? Can't we just use the @_timeout value?
     # We use the lag time to make the client live longer than the server.
