@@ -27,7 +27,7 @@ module Firehose
 
             # Setup a timeout timer to tell clients that time out that everything is OK
             # and they should come back for more
-            timer = EM.add_timer(timeout) do
+            timer = EventMachine::Timer.new(timeout) do
               # We send a 204 OK to tell the client to reconnect.
               env['async.callback'].call [204, cors_headers, []]
               Firehose.logger.debug "HTTP wait `#{cid}@#{path}` timed out"
@@ -35,9 +35,9 @@ module Firehose
 
             # Ok, now subscribe to the subscription.
             subscription.subscribe path do |message|
+              timer.cancel # Turn off the heart beat so we don't execute any of that business.
               subscription.unsubscribe
               subscription = nil # Set this to nil so that our heart beat timer doesn't try to double unsub.
-              EM.cancel_timer timer # Turn off the heart beat so we don't execute any of that business.
               env['async.callback'].call [200, cors_headers, [message]]
               Firehose.logger.debug "HTTP sent `#{message}` to `#{cid}@#{path}`"
             end
