@@ -21,8 +21,6 @@ module Firehose
         # GET is how clients subscribe to the queue. When a messages comes in, we flush out a response,
         # close down the requeust, and the client then reconnects.
         when 'GET'
-          p [:subscribed, cid, path]
-
           EM.next_tick do
             # Setup a subscription with a client id. We haven't subscribed yet here.
             subscription = Firehose::Subscription.new(cid)
@@ -32,24 +30,24 @@ module Firehose
             timer = EM.add_timer(timeout) do
               # We send a 204 OK to tell the client to reconnect.
               env['async.callback'].call [204, cors_headers, []]
-              p [:timeout]
+              Firehose.logger.debug "HTTP wait `#{cid}@#{path}` timed out"
             end
 
             # Ok, now subscribe to the subscription.
-            subscription.subscribe path do |payload|
+            subscription.subscribe path do |message|
               subscription.unsubscribe
               subscription = nil # Set this to nil so that our heart beat timer doesn't try to double unsub.
               EM.cancel_timer timer # Turn off the heart beat so we don't execute any of that business.
-              env['async.callback'].call [200, cors_headers, [payload]]
+              env['async.callback'].call [200, cors_headers, [message]]
+              Firehose.logger.debug "HTTP sent `#{message}` to `#{cid}@#{path}`"
             end
+            Firehose.logger.debug "HTTP subscribed to `#{cid}@#{path}`"
 
             # Unsubscribe from the subscription if its still open and something bad happened
             # or the heart beat triggered before we could finish.
             env['async.close'].callback do
-              if subscription
-                subscription.unsubscribe
-                p [:close_unsubscription]
-              end
+              subscription.unsubscribe if subscription
+              Firehose.logger.debug "HTTP connection `#{cid}@#{path}` closing"
             end
           end
 
@@ -59,36 +57,43 @@ module Firehose
         # PUT is how we throw messages on to the fan-out queue.
         when 'PUT'
           body = env['rack.input'].read
-          p [:put, path, body]
+          Firehose.logger.debug "HTTP published `#{body}` to `#{path}`"
           Firehose::Publisher.new.publish(path, body)
 
           [202, {}, []]
         else
+          Firehose.logger.debug "HTTP #{method} not supported"
           [501, {'Content-Type' => 'text/plain'}, ["#{method} not supported."]]
         end
       end
     end
 
     class WebSocket < ::Rack::WebSocket::Application
+      attr_reader :cid, :path
+      
       # Subscribe to a path and make some magic happen, mmkmay?
       def on_open(env)
         req   = ::Rack::Request.new(env)
-        cid   = req.params['cid']
-        path  = req.path
+        @cid   = req.params['cid']
+        @path  = req.path
 
         @subscription = Firehose::Subscription.new(cid)
-        @subscription.subscribe path do |payload|
-          send_data payload
+        @subscription.subscribe path do |message|
+          Firehose.logger.debug "WS sent `#{message}` to `#{cid}@#{path}`"
+          send_data message
         end
+        Firehose.logger.debug "WS subscribed to `#{cid}@#{path}`"
       end
 
       # Delete the subscription if the thing even happened.
       def on_close(env)
         @subscription.unsubscribe if @subscription
+        Firehose.logger.debug "WS connection `#{cid}@#{path}` closing"
       end
 
       # Log websocket level errors
       def on_error(env, error)
+        Firehose.logger.error "WS connection `#{cid}@#{path}` error `#{error}`: #{env.inspect}"
         @subscription.unsubscribe if @subscription
       end
     end

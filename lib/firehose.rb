@@ -1,6 +1,7 @@
 require 'firehose/version'
 
 require 'amqp'
+require 'logger'
 
 module Firehose
   autoload :Subscription, 'firehose/subscription'
@@ -19,5 +20,14 @@ module Firehose
   # in order
   def self.reset!
     @amqp = nil
+  end
+
+  # Logging
+  def self.logger
+    @logger ||= Logger.new($stdout)
+  end
+
+  def self.logger=(logger)
+    @logger = logger
   end
 end

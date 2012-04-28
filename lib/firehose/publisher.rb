@@ -5,6 +5,7 @@ module Firehose
       exchange  = AMQP::Exchange.new(channel, :fanout, path, :auto_delete => true)
       # TODO How do I clean up this exchange at this point? Do I close it somehow or the channel?
       # The exchange just hangs out indefinitely now.
+      Firehose.logger.debug "AMQP publishing `#{message}` to `#{path}`"
       exchange.publish(message)
       exchange.delete(:if_unused => true)
     end
