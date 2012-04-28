@@ -65,14 +65,14 @@ You have a dirt simple HTTP pub-sub feed. You could setup an `after_commit` hook
 
 Holy mackerel! Its a nice, clean, RESTful way to build real-time web applications.
 
-# The JavaScript Client
+# The JavaScript Consumer
 
 Firehose doesn't just stop at curl; it has a full-featured JavaScript client that lets you subscribe to channels for live updates.
 
 Still have the server running? Copy and paste the code below into Firebug or the WebKit console.
 
 ```javascript
-new Firehose.Client({
+new Firehose.Consumer({
   message: function(msg){
     console.log(msg);
   },
