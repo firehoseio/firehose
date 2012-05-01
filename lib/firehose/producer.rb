@@ -8,7 +8,6 @@ module Firehose
     # A DSL for publishing requests.
     class Builder
       def initialize(producer, message)
-        p message
         @producer, @message = producer, message
         self
       end
