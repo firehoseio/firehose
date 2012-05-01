@@ -31,10 +31,11 @@ module Firehose
 
     # Publish the message via HTTP.
     def put(message, channel, &block)
-      conn.put do |req|
+      response = conn.put do |req|
         req.path = channel
         req.body = message
-      end.on_complete(&block)
+      end
+      response.on_complete(&block) if block
     end
 
     # What adapter should Firehose use to PUT the message? List of adapters is
