@@ -30,7 +30,7 @@ describe Firehose::Rack do
 
     # Setup a publisher
     publish = Proc.new do
-      Firehose::Producer.new.publish outgoing.pop, channel do
+      Firehose::Producer.new.publish(outgoing.pop).to(channel) do
         publish.call unless outgoing.empty?
       end
     end

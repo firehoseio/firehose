@@ -4,6 +4,20 @@ require "uri"
 module Firehose
   # Publish messages to Firehose via an HTTP interface.
   class Producer
+
+    # A DSL for publishing requests.
+    class Builder
+      def initialize(producer, message)
+        p message
+        @producer, @message = producer, message
+        self
+      end
+
+      def to(channel, &callback)
+        @producer.put(@message, channel, &callback)
+      end
+    end
+
     attr_reader :uri
 
     def initialize(uri = Firehose::Default::URI)
@@ -11,8 +25,13 @@ module Firehose
       @uri.scheme ||= 'http'
     end
 
+    # A DSL for publishing messages.
+    def publish(message)
+      Builder.new(self, message)
+    end
+
     # Publish the message via HTTP.
-    def publish(message, channel, &block)
+    def put(message, channel, &block)
       conn.put do |req|
         req.path = channel
         req.body = message
