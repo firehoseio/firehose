@@ -1,4 +1,4 @@
 module Firehose
-  VERSION = "0.0.12"
-  CODENAME = "Shouty Shamous"
+  VERSION = "0.0.13"
+  CODENAME = "Chug Bug"
 end
