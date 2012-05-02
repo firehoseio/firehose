@@ -53,8 +53,7 @@ module Firehose
     # Build out a Faraday connection 
     def conn
       @conn ||= Faraday.new(:url => uri.to_s) do |builder|
-        builder.adapter   self.class.adapter
-        builder.response  :logger
+        builder.adapter self.class.adapter
       end
     end
   end
