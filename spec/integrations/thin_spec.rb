@@ -1,12 +1,12 @@
 require 'spec_helper'
 
-require 'thin'
-require 'em-http'
-require 'em-websocket-client'
-
 describe Firehose::Rack do
-  before(:each) do
+  before(:all) do
     Firehose::Producer.adapter = :em_http
+  end
+
+  after(:all) do
+    Firehose::Producer.adapter = nil
   end
 
   let(:app)       { Firehose::Rack::App.new }
