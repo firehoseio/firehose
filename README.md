@@ -34,7 +34,7 @@ Now fire up the server.
 $ firehose server
 >> Thin web server (v1.3.1 codename Triple Espresso)
 >> Maximum connections set to 1024
->> Listening on 127.0.0.1:7478, CTRL+C to stop
+>> Listening on 127.0.0.1:7474, CTRL+C to stop
 ```
 
 In case you're wondering, the Firehose application server runs the Rack app `Firehose::Rack::App.new` inside of Thin.
@@ -87,7 +87,7 @@ new Firehose.Consumer({
   },
   // Note that we do NOT specify a protocol here because we don't
   // know that yet.
-  uri: '//localhost:7478/hello'
+  uri: '//localhost:7474/hello'
 }).connect();
 ```
 
@@ -95,7 +95,7 @@ Then publish another message.
 
 
 ```sh
-$ curl -X PUT -d "This is almost magical" "http://localhost:7478/hello"
+$ curl -X PUT -d "\"This is almost magical\"" "http://localhost:7474/hello"
 ```
 
 # How is it different from socket.io?
