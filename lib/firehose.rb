@@ -34,4 +34,10 @@ module Firehose
   def self.logger=(logger)
     @logger = logger
   end
+
+  module Rails
+    class Engine < ::Rails::Engine
+      # enable rails to pick up lib/assets/*
+    end
+  end
 end
