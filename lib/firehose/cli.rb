@@ -6,6 +6,8 @@ module Firehose
     desc "server", "starts the firehose server"
     method_option :port, :type => :numeric, :default => Firehose::Default::URI.port, :required => true, :aliases => '-p'
     method_option :host, :type => :string, :default => '0.0.0.0', :required => true, :aliases => '-h'
+    method_option :daemonize, :type => :boolean, :default => false, :required => false, :aliases => '-d'
+    method_option :log, :type => :string, :default => 'firehose.log', :required => false, :aliases => '-l'
 
     def server
       broker = Firehose::Broker.new
@@ -26,6 +28,11 @@ module Firehose
       end
 
       begin
+        if options[:daemonize]
+          server.pid_file = 'firehose.pid'
+          server.log_file = options[:log]
+          server.daemonize
+        end
         server.start!
       rescue AMQP::TCPConnectionFailed => e
         Firehose.logger.error "Unable to connect to AMQP, are you sure it's running?"
