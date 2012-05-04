@@ -23,7 +23,7 @@ module Firehose
     # TODO - Move the channel to an initializer so that we can force on AMQP subscription per one
     # Firehose subscription. As it stands now, you could fire off multple subscriptions to diff amqp_channels
     def subscribe(&block)
-      amqp_queue_name = "#{consumer.guid}@#{channel}"
+      amqp_queue_name = "#{consumer.id}@#{channel}"
       amqp_channel    = AMQP::Channel.new(Firehose.amqp.connection).prefetch(1)
       amqp_exchange   = AMQP::Exchange.new(amqp_channel, :fanout, channel, :auto_delete => true)
       amqp_queue      = AMQP::Queue.new(amqp_channel, amqp_queue_name, :arguments => {'x-expires' => ttl})
@@ -32,15 +32,15 @@ module Firehose
       # When we get a message, we want to remove the consumer from the amqp_queue so that the x-expires
       # ttl starts ticking down. On the reconnect, the consumer connects to the amqp_queue and resets the
       # timer on x-expires... in theory at least.
-      @amqp_consumer = AMQP::Consumer.new(amqp_channel, amqp_queue, consumer.guid)
+      @amqp_consumer = AMQP::Consumer.new(amqp_channel, amqp_queue, consumer.id)
       @amqp_consumer.on_delivery do |metadata, message|
-        Firehose.logger.debug "AMQP delivering `#{message}` to `#{consumer.guid}@#{channel}`"
+        Firehose.logger.debug "AMQP delivering `#{message}` to `#{consumer.id}@#{channel}`"
         block.call(message, self)
         # The ack needs to go after the block is called. This makes sure that all processing
         # happens downstream before we remove it from the amqp_queue entirely.
         metadata.ack
       end.consume
-      Firehose.logger.debug "AMQP subscribed to `#{consumer.guid}@#{channel}`"
+      Firehose.logger.debug "AMQP subscribed to `#{consumer.id}@#{channel}`"
       self # Return the subscription for chaining.
     end
 

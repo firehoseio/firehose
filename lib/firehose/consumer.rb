@@ -3,11 +3,11 @@ module Firehose
     # Unique identifier for a consumer. Note that a consumer does not map directly to
     # a user_id. In a web browser world, you might have a user with multiple tabs open,
     # so you'll went to send each users tab a seperate message stream. Consider a convention
-    # such as :user_id-:guid for your application.
-    attr_reader :guid
+    # such as :user_id-:id for your application.
+    attr_reader :id
 
-    def initialize(guid = self.class.next_guid)
-      @guid = guid
+    def initialize(id = self.class.next_id)
+      @id = id
     end
 
     # Create a subscription and subscribe to a channel.
@@ -42,7 +42,7 @@ module Firehose
     end
 
   protected
-    def self.next_guid
+    def self.next_id
       rand(999_999_999_999).to_s
     end
   end
