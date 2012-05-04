@@ -1,4 +1,4 @@
 module Firehose
-  VERSION = "0.0.15"
-  CODENAME = "Error Reportin' Roberto"
+  VERSION = "0.0.16"
+  CODENAME = "Statistical Sam"
 end
