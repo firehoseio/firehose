@@ -2,7 +2,8 @@ require 'spec_helper'
 
 describe "Firehose amqp resources" do
 
-  let(:channel) { "/resource-test-#{Time.now.to_i}" }
+  let(:channel)   { "/resource-test-#{Time.now.to_i}" }
+  let(:consumer)  { Firehose::Consumer.new }
 
   it "should clean up exchanges and queues" do
     sent, received = 'howdy!', nil
@@ -17,10 +18,10 @@ describe "Firehose amqp resources" do
       # Kill test if it runs longer than 5s
       EM.add_timer(5) { EM.stop }
 
-      subscription = Firehose::Subscription.new
+      subscription = Firehose::Subscription.new(consumer, channel)
       subscription.ttl = 1
 
-      subscription.subscribe channel do |payload|
+      subscription.subscribe do |payload|
         received = payload
         subscription.unsubscribe
 

@@ -4,10 +4,12 @@ require 'amqp'
 require 'logger'
 
 module Firehose
-  autoload :Default,      'firehose/default'
   autoload :Subscription, 'firehose/subscription'
-  autoload :Producer,     'firehose/producer'
   autoload :Publisher,    'firehose/publisher'
+  autoload :Producer,     'firehose/producer'
+  autoload :Consumer,     'firehose/consumer'
+  autoload :Default,      'firehose/default'
+  autoload :Broker,       'firehose/broker'
   autoload :Rack,         'firehose/rack'
   autoload :CLI,          'firehose/cli'
 

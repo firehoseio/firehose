@@ -5,12 +5,17 @@ module Firehose
     AsyncResponse = [-1, {}, []]
 
     class HttpLongPoll
+      def initialize(broker)
+        @broker = broker
+      end
+
       def call(env)
         req     = ::Rack::Request.new(env)
         cid     = req.params['cid']
         path    = req.path
         method  = req.request_method
         timeout = 30
+        # TODO seperate out CORS logic as an async middleware with a Goliath web server.
         cors_origin = env['HTTP_ORIGIN']
         cors_headers  = {
           'Access-Control-Allow-Origin'     => cors_origin,
@@ -28,7 +33,7 @@ module Firehose
             response_headers = cors_origin ? cors_headers : {}
 
             # Setup a subscription with a client id. We haven't subscribed yet here.
-            subscription = Firehose::Subscription.new(cid)
+            consumer = @broker.consumer(cid)
 
             # Setup a timeout timer to tell clients that time out that everything is OK
             # and they should come back for more
@@ -39,10 +44,9 @@ module Firehose
             end
 
             # Ok, now subscribe to the subscription.
-            subscription.subscribe path do |message|
+            consumer.subscribe_to path do |message, subscription|
               timer.cancel # Turn off the heart beat so we don't execute any of that business.
-              subscription.unsubscribe
-              subscription = nil # Set this to nil so that our heart beat timer doesn't try to double unsub.
+              consumer.unsubscribe
               env['async.callback'].call [200, response_headers, [message]]
               Firehose.logger.debug "HTTP sent `#{message}` to `#{cid}@#{path}`"
             end
@@ -51,7 +55,7 @@ module Firehose
             # Unsubscribe from the subscription if its still open and something bad happened
             # or the heart beat triggered before we could finish.
             env['async.close'].callback do
-              subscription.unsubscribe if subscription
+              consumer.unsubscribe if consumer
               Firehose.logger.debug "HTTP connection `#{cid}@#{path}` closing"
             end
           end
@@ -76,14 +80,18 @@ module Firehose
     class WebSocket < ::Rack::WebSocket::Application
       attr_reader :cid, :path
       
+      def initialize(broker)
+        @broker = broker
+      end
+
       # Subscribe to a path and make some magic happen, mmkmay?
       def on_open(env)
         req   = ::Rack::Request.new(env)
         @cid   = req.params['cid']
         @path  = req.path
 
-        @subscription = Firehose::Subscription.new(cid)
-        @subscription.subscribe path do |message|
+        @consumer = @broker.consumer(@cid)
+        @consumer.subscribe_to path do |message|
           Firehose.logger.debug "WS sent `#{message}` to `#{cid}@#{path}`"
           send_data message
         end
@@ -92,14 +100,14 @@ module Firehose
 
       # Delete the subscription if the thing even happened.
       def on_close(env)
-        @subscription.unsubscribe if @subscription
+        @consumer.unsubscribe if @consumer
         Firehose.logger.debug "WS connection `#{cid}@#{path}` closing"
       end
 
       # Log websocket level errors
       def on_error(env, error)
         Firehose.logger.error "WS connection `#{cid}@#{path}` error `#{error}`: #{env.inspect}"
-        @subscription.unsubscribe if @subscription
+        @consumer.unsubscribe if @consumer
       end
     end
 
@@ -110,15 +118,19 @@ module Firehose
 
     private
       def websocket
-        @websocket ||= WebSocket.new
+        @websocket ||= WebSocket.new(broker)
       end
 
       def http_long_poll
-        @http_long_poll ||= HttpLongPoll.new
+        @http_long_poll ||= HttpLongPoll.new(broker)
       end
 
       def websocket_request?(env)
         env['HTTP_UPGRADE'] =~ /websocket/i
+      end
+
+      def broker
+        @broker ||= Firehose::Broker.new
       end
     end
   end
