@@ -112,6 +112,14 @@ module Firehose
     end
 
     class App
+      # Firehose broker that will be used to pub/sub messages.
+      attr_reader :broker
+
+      # Fire up a default broker if one is not specified.
+      def initialize(broker = Firehose::Broker.new)
+        @broker = broker
+      end
+
       def call(env)
         websocket_request?(env) ? websocket.call(env) : http_long_poll.call(env)
       end
@@ -127,10 +135,6 @@ module Firehose
 
       def websocket_request?(env)
         env['HTTP_UPGRADE'] =~ /websocket/i
-      end
-
-      def broker
-        @broker ||= Firehose::Broker.new
       end
     end
   end

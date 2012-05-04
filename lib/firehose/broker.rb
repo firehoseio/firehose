@@ -1,8 +1,7 @@
 module Firehose
+  # TODO add support to broker for publishing, then abstract this out into a backend. A
+  # broker will eventually be passed into a web server front-end to serve up the web requests.
   class Broker
-    def initialize
-    end
-
     def consumers
       @consumers ||= Hash.new do |consumers, consumer_id|
         consumer = Firehose::Consumer.new(consumer_id)

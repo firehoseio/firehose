@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe Firehose::Rack do
   include EM::TestHelper
-  
+
   before(:all) do
     Firehose::Producer.adapter = :em_http
   end
@@ -62,7 +62,7 @@ describe Firehose::Rack do
     end
 
     # Great, we have all the pieces in order, lets run this thing in the reactor.
-    EM.run do
+    em do
       # Start the server
       ::Thin::Server.new('0.0.0.0', uri.port, app).start
 
