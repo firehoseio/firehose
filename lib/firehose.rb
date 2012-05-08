@@ -39,5 +39,5 @@ module Firehose
     class Engine < ::Rails::Engine
       # enable rails to pick up lib/assets/*
     end
-  end
+  end if defined?(::Rails::Engine)
 end
