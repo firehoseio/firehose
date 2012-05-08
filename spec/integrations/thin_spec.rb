@@ -12,12 +12,11 @@ describe Firehose::Rack do
   end
 
   let(:app)       { Firehose::Rack::App.new }
-  let(:messages)  { (1..1000).map(&:to_s) }
+  let(:messages)  { (1..2000).map(&:to_s) }
   let(:channel)   { "/firehose/integration/#{Time.now.to_i}" }
   let(:uri)       { Firehose::Default::URI }
   let(:http_url)  { "http://#{uri.host}:#{uri.port}#{channel}" }
   let(:ws_url)    { "ws://#{uri.host}:#{uri.port}#{channel}" }
-  let(:cid)       { "client-#{Time.now.to_i}" }
 
   it "should pub-sub http and websockets" do
     # Setup variables that we'll use after we turn off EM to validate our
@@ -39,7 +38,7 @@ describe Firehose::Rack do
 
     # Lets have an HTTP Long poll client
     http_long_poll = Proc.new do
-      http = EM::HttpRequest.new(http_url).get(:query => {'cid' => cid})
+      http = EM::HttpRequest.new(http_url).get(:query => {'cid' => 'alpha'})
       http.errback { em.stop }
       http.callback do
         received_http << http.response
@@ -53,7 +52,7 @@ describe Firehose::Rack do
 
     # And test a web socket client too, at the same time.
     websocket = Proc.new do
-      ws = EventMachine::WebSocketClient.connect(ws_url)
+      ws = EventMachine::WebSocketClient.connect("#{ws_url}?cid=bravo")
       ws.errback  { em.stop }
       ws.stream do |msg|
         received_ws << msg
@@ -64,7 +63,8 @@ describe Firehose::Rack do
     # Great, we have all the pieces in order, lets run this thing in the reactor.
     em do
       # Start the server
-      ::Thin::Server.new('0.0.0.0', uri.port, app).start
+      server = ::Thin::Server.new('0.0.0.0', uri.port, app)
+      server.start
 
       # Start the http_long_pollr.
       http_long_poll.call
@@ -75,7 +75,7 @@ describe Firehose::Rack do
     end
 
     # When EM stops, these assertions will be made.
-    received_http.should  =~ messages
     received_ws.should    =~ messages
+    received_http.should  =~ messages
   end
 end
