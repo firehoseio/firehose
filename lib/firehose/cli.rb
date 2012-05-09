@@ -19,8 +19,8 @@ module Firehose
 
       begin
         server.start!
-      rescue RuntimeError
-        Firehose.logger.error "Unable to connect to Redis, are you sure it's running?"
+      rescue
+        Firehose.logger.error "#{e.message}: #{e.backtrace}"
         raise
       end
     end
