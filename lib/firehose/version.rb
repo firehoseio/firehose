@@ -1,4 +1,4 @@
 module Firehose
-  VERSION = "0.0.16"
-  CODENAME = "Statistical Sam"
+  VERSION = "0.1.0"
+  CODENAME = "Redis Rodeo"
 end
