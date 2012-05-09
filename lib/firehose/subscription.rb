@@ -23,8 +23,8 @@ module Firehose
     end
 
     def unsubscribe(&block)
-      Firehose.logger.debug "Redis unsubscribed from `#{consumer_id}@#{channel}`"
       redis.unsubscribe(channel) do
+        Firehose.logger.debug "Redis unsubscribed from `#{consumer_id}@#{channel}`"
         redis.close
         block.call(self) if block
       end
