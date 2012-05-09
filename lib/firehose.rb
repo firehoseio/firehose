@@ -8,9 +8,10 @@ module Firehose
   autoload :Publisher,    'firehose/publisher'
   autoload :Producer,     'firehose/producer'
   autoload :Default,      'firehose/default'
+  autoload :Rails,        'firehose/rails'
   autoload :Rack,         'firehose/rack'
   autoload :CLI,          'firehose/cli'
-
+  
   # Logging
   def self.logger
     @logger ||= Logger.new($stdout)
