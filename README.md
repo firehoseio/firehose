@@ -13,11 +13,11 @@ Firehose is both a Rack application and JavasScript library that makes building 
 
 # Getting Started
 
-First, you'll need to install and run RabbitMQ.
+First, you'll need to install and run Redis.
 
 ```sh
-$ apt-get install rabbitmq    # Install on Ubuntu
-$ brew install rabbitmq       # Install on Mac Homebrew
+$ apt-get install redis       # Install on Ubuntu
+$ brew install redis          # Install on Mac Homebrew
 ```
 
 Then install the gem.
@@ -92,7 +92,6 @@ new Firehose.Consumer({
 ```
 
 Then publish another message.
-
 
 ```sh
 $ curl -X PUT -d "\"This is almost magical\"" "http://localhost:7474/hello"

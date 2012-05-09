@@ -14,8 +14,9 @@ module Firehose
 
       begin
         server.start!
-      rescue AMQP::TCPConnectionFailed => e
-        Firehose.logger.error "Unable to connect to AMQP, are you sure it's running?"
+      rescue RuntimeError
+        Firehose.logger.error "Unable to connect to Redis, are you sure it's running?"
+        raise
       end
     end
   end
