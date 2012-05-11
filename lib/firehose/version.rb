@@ -1,4 +1,4 @@
 module Firehose
-  VERSION = "0.1.0"
-  CODENAME = "Redis Rodeo"
+  VERSION = "0.1.1"
+  CODENAME = "Rails Ready"
 end
