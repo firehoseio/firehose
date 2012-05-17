@@ -5,28 +5,34 @@ module Firehose
     AsyncResponse = [-1, {}, []]
 
     class HttpLongPoll
+      LAST_MESSAGE_SEQUENCE_HEADER = 'Last-Message-Sequence'
+      RACK_LAST_MESSAGE_SEQUENCE_HEADER = "HTTP_#{LAST_MESSAGE_SEQUENCE_HEADER.upcase.gsub('-', '_')}"
+
       def call(env)
         req     = ::Rack::Request.new(env)
         cid     = req.params['cid']
         path    = req.path
         method  = req.request_method
-        timeout = 30
+        timeout = 20
         queue_name = "#{cid}@#{path}"
-
-        # TODO seperate out CORS logic as an async middleware with a Goliath web server.
+        last_sequence = env[RACK_LAST_MESSAGE_SEQUENCE_HEADER].to_i
         cors_origin = env['HTTP_ORIGIN']
-        cors_headers  = {
-          'Access-Control-Allow-Origin'     => cors_origin,
-          'Access-Control-Allow-Methods'    => 'GET',
-          'Access-Control-Max-Age'          => '1728000',
-          'Access-Control-Allow-Headers'    => 'Content-Type, User-Agent, If-Modified-Since, Cache-Control'
-        }
 
         case method
         # GET is how clients subscribe to the queue. When a messages comes in, we flush out a response,
         # close down the requeust, and the client then reconnects.
         when 'GET'
           EM.next_tick do
+            # TODO seperate out CORS logic as an async middleware with a Goliath web server.
+            cors_headers  = {
+              'Access-Control-Allow-Origin'     => cors_origin,
+              'Access-Control-Expose-Headers'   => LAST_MESSAGE_SEQUENCE_HEADER,
+              # TODO - Have the message backend set this up... right now this just adds 1 to whatever the
+              # client told the server what the sequence is.
+              LAST_MESSAGE_SEQUENCE_HEADER      => (last_sequence + 1).to_s
+            }
+
+
             # If the request is a CORS request, return those headers, otherwise don't worry 'bout it
             response_headers = cors_origin ? cors_headers : {}
 
@@ -75,6 +81,16 @@ module Firehose
           publisher.publish(path, body)
 
           [202, {}, []]
+        # Tell the browser that we're cool about shipping Last-Message-Sequence headers back-and-forth.
+        when 'OPTIONS'
+          # TODO seperate out CORS logic as an async middleware with a Goliath web server.
+          [200, {
+          'Access-Control-Allow-Methods'    => 'GET',
+          'Access-Control-Allow-Origin'     => cors_origin,
+          'Access-Control-Allow-Headers'    => LAST_MESSAGE_SEQUENCE_HEADER,
+          'Access-Control-Expose-Headers'   => LAST_MESSAGE_SEQUENCE_HEADER,
+          'Access-Control-Max-Age'          => '1728000'
+          }, []]
         else
           Firehose.logger.debug "HTTP #{method} not supported"
           [501, {'Content-Type' => 'text/plain'}, ["#{method} not supported."]]

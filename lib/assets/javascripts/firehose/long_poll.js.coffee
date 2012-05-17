@@ -1,4 +1,6 @@
 class Firehose.LongPoll extends Firehose.Transport
+  messageSequenceHeader: 'Last-Message-Sequence'
+
   # CORS is supported in IE 8+
   @ieSupported: =>
     $.browser.msie and parseInt($.browser.version) > 7 and window.XDomainRequest
@@ -15,7 +17,7 @@ class Firehose.LongPoll extends Firehose.Transport
     # Protocol schema we should use for talking to WS server.
     @config.longPoll.url ||= "http:#{@config.uri}"
     # How many ms should we wait before timing out the AJAX connection?
-    @config.longPoll.timeout ||= 20000
+    @config.longPoll.timeout ||= 25000
 
     # TODO - What is @_lagTime for? Can't we just use the @_timeout value?
     # We use the lag time to make the client live longer than the server.
@@ -59,12 +61,20 @@ class Firehose.LongPoll extends Firehose.Transport
   _request: =>
     $.ajax @config.longPoll.url,
       crossDomain: true
-      cache: false
       data: @config.params
       timeout: @_timeout
       success: @_success
       error: @_error
-  
+      complete: (jqXhr) =>
+        # Get the last sequence from the server if specified.
+        if jqXhr.status == 200
+          @_lastMessageSequence = jqXhr.getResponseHeader(@messageSequenceHeader)
+      beforeSend: (jqXhr) =>
+        # Tell the server what our last sequence was if we got one from the last response.
+        # TODO change this to nil or something else if no sequence is specified? Left it at -1 for now to make
+        # testing thing thing a little easier.
+        jqXhr.setRequestHeader(@messageSequenceHeader, @_lastMessageSequence ||= '-1')
+
   _success: (data, status, jqXhr) =>
     # TODO we actually want to do this when the thing calls out... mmm right now it takes
     # up to 30s before we can call this thing.
