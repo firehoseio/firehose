@@ -44,7 +44,7 @@ module Firehose
     def initialize(consumer_id, channel)
       @subscription = Subscription.new(consumer_id, channel)
       # Start the subscription and start dropping mesasge onto the queue
-      subscription.subscribe do |message|
+      subscription.subscribe do |message, _|
         queue.push message
       end
     end
