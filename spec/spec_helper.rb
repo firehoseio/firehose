@@ -1,6 +1,7 @@
 require 'logger'
 require 'em-http'
 require 'em-websocket-client'
+require 'hiredis'
 
 # Skip logging if VERBOSE isn't set to true.
 require 'firehose'
@@ -33,9 +34,32 @@ module EM::TestHelper
   end
 end
 
+module Hiredis::TestHelper
+  def redis
+    @conn ||= begin
+      conn = Hiredis::Connection.new
+      conn.connect("127.0.0.1", 6379)
+      conn
+    end
+  end
+
+  def reset_redis
+    redis_exec 'flushdb'
+  end
+
+  def redis_exec(*tokens)
+    redis.write tokens
+    redis.read
+  end
+end
+
 # Configure RSpec runner. See http://rubydoc.info/gems/rspec-core/RSpec/Core/Configuration
 RSpec.configure do |config|
   config.treat_symbols_as_metadata_keys_with_true_values = true
   config.run_all_when_everything_filtered = true
   config.filter_run :focus
+  config.include Hiredis::TestHelper
+  config.before(:each) do
+    reset_redis
+  end
 end

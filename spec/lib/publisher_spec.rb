@@ -3,24 +3,9 @@ require 'spec_helper'
 describe Firehose::Publisher do
   include EM::TestHelper
 
-  let(:redis) do 
-    # This got out of hand, but I didn't have enough time to refactor.
-    double 'redis',
-      :publish => EM::DefaultDeferrable.new,
-      :lset => EM::DefaultDeferrable.new,
-      :expire => EM::DefaultDeferrable.new,
-      :ltrim => EM::DefaultDeferrable.new,
-      :incr => EM::DefaultDeferrable.new,
-      :multi => EM::DefaultDeferrable.new,
-      :exec => EM::DefaultDeferrable.new
-  end
-  let(:publisher) do
-    publisher = Firehose::Publisher.new
-    publisher.stub(:redis => redis)
-    publisher
-  end
-  let(:channel)   { "/firehose/publisher/test/#{Time.now.to_i}" }
-  let(:message)   { "howdy friends!" }
+  let(:publisher)   { Firehose::Publisher.new }
+  let(:channel_key) { "/firehose/publisher/test/#{Time.now.to_i}" }
+  let(:message)     { "howdy friends!" }
 
   it "should have 10 MAX_MESSAGES" do
     Firehose::Publisher::MAX_MESSAGES.should == 10
@@ -32,35 +17,54 @@ describe Firehose::Publisher do
 
   describe "#publish" do
     it "should pipeline" do
-      redis.should_receive(:multi)
-      redis.should_receive(:exec)
-      publisher.publish(channel, message)
+      pending "Get rid of stubs"
     end
 
     it "should publish message change" do
-      redis.should_receive(:publish).with('firehose:channel_updates', channel)
-      publisher.publish(channel, message)
+      em do
+        hiredis = EM::Hiredis.connect
+        hiredis.subscribe "firehose:channel_updates"
+        hiredis.on(:message) {|_, msg|
+          msg.should == "#{channel_key}\n1\n#{message}"
+          em.stop
+        }
+        Firehose::Publisher.new.publish channel_key, message
+      end
     end
 
     it "should add message to list" do
-      redis.should_receive(:lset).with("firehose:#{channel}:list", message)
-      publisher.publish channel, message
+      em do
+        Firehose::Publisher.new.publish(channel_key, message).callback { em.stop }
+      end
+      redis_exec('lpop', "firehose:#{channel_key}:list").should == message
     end
 
     it "should limit list to MAX_MESSAGES messages" do
-      redis.should_receive(:ltrim).with("firehose:#{channel}:list", 0, Firehose::Publisher::MAX_MESSAGES)
-      publisher.publish channel, message
+      em do
+        Firehose::Publisher::MAX_MESSAGES.times do |n|
+          publisher.publish(channel_key, message)
+        end
+        publisher.publish(channel_key, message).callback { em.stop }
+      end
+      redis_exec('llen', "firehose:#{channel_key}:list").should == Firehose::Publisher::MAX_MESSAGES
     end
 
     it "should increment sequence" do
-      redis.should_receive(:incr).with("firehose:#{channel}:sequence")
-      publisher.publish channel, message
+      sequence_key = "firehose:#{channel_key}:sequence"
+
+      redis_exec('get', sequence_key).should be_nil
+      em do
+        publisher.publish(channel_key, message)
+        publisher.publish(channel_key, message).callback { em.stop }
+      end
+      redis_exec('get', sequence_key).to_i.should == 2
     end
 
     it "should set expirery on sequence and list keys" do
-      redis.should_receive(:expire).with("firehose:#{channel}:sequence", Firehose::Publisher::TTL)
-      redis.should_receive(:expire).with("firehose:#{channel}:list", Firehose::Publisher::TTL)
-      publisher.publish(channel, "you smell")
+      pending "Get rid of stubs"
+      # hiredis.should_receive(:expire).with("firehose:#{channel_key}:sequence", Firehose::Publisher::TTL)
+      # hiredis.should_receive(:expire).with("firehose:#{channel_key}:list", Firehose::Publisher::TTL)
+      # publisher.publish(channel_key, "you smell")
     end
   end
 end

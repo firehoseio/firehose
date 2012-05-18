@@ -2,17 +2,45 @@ module Firehose
   class Publisher
     MAX_MESSAGES = 10
     TTL = 60*60*24  # 1 day of time, yay!
+    PAYLOAD_DELIMITER = "\n"
 
-    def publish(channel, message)
-      Firehose.logger.debug "Redis publishing `#{message}` to `#{channel}`"
-      redis.multi # do
-        redis.lset    key(channel, :list), message
-        redis.ltrim   key(channel, :list), 0, MAX_MESSAGES
-        redis.incr    key(channel, :sequence)
-        redis.expire  key(channel, :sequence), TTL
-        redis.expire  key(channel, :list), TTL
-        redis.publish(key(:channel_updates), channel).errback { |msg| raise "Error publishing: #{msg}" }
-      redis.exec # end # heheheheh... talk the the em-hiredis author...
+    def publish(channel_key, message)
+      # TODO hi-redis isn't that awesome... we have to setup an errback per even for wrong
+      # commands because of the lack of a method_missing whitelist. Perhaps implement a whitelist in
+      # em-hiredis or us a diff lib?
+      deferrable = EM::DefaultDeferrable.new
+      deferrable.errback {|e| raise e }
+
+      # DRY up keys a little bit for the epic publish command to come.
+      list_key = key(channel_key, :list)
+      sequence_key = key(channel_key, :sequence)
+
+      redis.multi
+      redis.lpush(list_key, message)
+        .errback{|e| deferrable.fail e }
+      redis.ltrim(list_key, 0, MAX_MESSAGES - 1)
+        .errback{|e| deferrable.fail e }
+      redis.expire(list_key, TTL)
+        .errback{|e| deferrable.fail e }
+      redis.exec
+        .errback{|e| deferrable.fail e }
+        .callback {
+          Firehose.logger.debug "Redis stored `#{message}` to list `#{list_key}`"
+          redis.incr(sequence_key)
+            .errback{|e| deferrable.fail e }
+            .callback do |sequence|
+              redis.expire(sequence_key, TTL)
+                .errback{|e| deferrable.fail e }
+              redis.publish(key(:channel_updates), self.class.to_payload(channel_key, sequence, message))
+                .errback{|e| deferrable.fail e }
+                .callback do 
+                  Firehose.logger.debug "Redis published `#{message}` to `#{channel_key}`" 
+                  deferrable.succeed
+                end
+            end
+        }
+
+      deferrable
     end
 
   private
@@ -22,6 +50,14 @@ module Firehose
 
     def redis
       @redis ||= EM::Hiredis.connect
+    end
+
+    def self.to_payload(channel_key, sequence, message)
+      [channel_key, sequence, message].join(PAYLOAD_DELIMITER)
+    end
+
+    def self.from_payload(payload)
+      payload.split(PAYLOAD_DELIMITER, method(:to_payload).arity)
     end
   end
 end

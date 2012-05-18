@@ -10,12 +10,10 @@ module Firehose
 
       def call(env)
         req     = ::Rack::Request.new(env)
-        cid     = req.params['cid']
         path    = req.path
         method  = req.request_method
         timeout = 20
-        queue_name = "#{cid}@#{path}"
-        last_sequence = env[RACK_LAST_MESSAGE_SEQUENCE_HEADER].to_i
+        p :got, last_sequence = env[RACK_LAST_MESSAGE_SEQUENCE_HEADER].to_i
         cors_origin = env['HTTP_ORIGIN']
 
         case method
@@ -31,43 +29,37 @@ module Firehose
 
             # If the request is a CORS request, return those headers, otherwise don't worry 'bout it
             response_headers = cors_origin ? cors_headers : {}
-            # TODO - Have the message backend set this up... right now this just adds 1 to whatever the
-            # client told the server what the sequence is.
-            response_headers.merge!(LAST_MESSAGE_SEQUENCE_HEADER => (last_sequence + 1).to_s)
 
-            # Setup a subscription with a client id. We haven't subscribed yet here.
-            if queue = queues[queue_name]
-              queue.live
-            else
-              queue = queues[queue_name] = Firehose::Subscription::Queue.new(cid, path)
-            end
-
-            # Setup a timeout timer to tell clients that time out that everything is OK
-            # and they should come back for more
-            long_poll_timer = EM::Timer.new(timeout) do
-              # We send a 204 OK to tell the client to reconnect.
-              env['async.callback'].call [204, response_headers, []]
-              Firehose.logger.debug "HTTP wait `#{cid}@#{path}` timed out"
-            end
-
-            # Ok, now subscribe to the subscription.
-            queue.pop do |message, subscription|
-              long_poll_timer.cancel # Turn off the heart beat so we don't execute any of that business.
+            Channel.new(path).next_message(last_sequence).callback do |message, sequence|
+              response_headers.merge!(LAST_MESSAGE_SEQUENCE_HEADER => sequence.to_s)
               env['async.callback'].call [200, response_headers, [message]]
-              Firehose.logger.debug "HTTP sent `#{message}` to `#{cid}@#{path}`"
-            end
-            Firehose.logger.debug "HTTP subscribed to `#{cid}@#{path}`"
+            end.errback {|e| raise e }
+
+            # # Setup a timeout timer to tell clients that time out that everything is OK
+            # # and they should come back for more
+            # long_poll_timer = EM::Timer.new(timeout) do
+            #   # We send a 204 OK to tell the client to reconnect.
+            #   env['async.callback'].call [204, response_headers, []]
+            #   Firehose.logger.debug "HTTP wait `path` timed out"
+            # end
+
+            # # Ok, now subscribe to the subscription.
+            # subscription = Firehose::Subscription.new(path).subscribe(last_sequence) do |message, sequence, subscription|
+            #   long_poll_timer.cancel # Turn off the heart beat so we don't execute any of that business.
+            #   # TODO - Have the message backend set this up... right now this just adds 1 to whatever the
+            #   # client told the server what the sequence is.
+            #   response_headers.merge!(LAST_MESSAGE_SEQUENCE_HEADER => sequence.to_s)
+            #   env['async.callback'].call [200, response_headers, [message]]
+            #   Firehose.logger.debug "HTTP sent `#{message}` of sequence `#{sequence}` to `#{path}`"
+            # end
+            # Firehose.logger.debug "HTTP subscribed to `#{path}`"
 
             # Unsubscribe from the subscription if its still open and something bad happened
             # or the heart beat triggered before we could finish.
-            env['async.close'].callback do
-              # Kill queue if we don't hear back in 30s
-              queue.kill timeout do
-                Firehose.logger.debug "Deleting queue to `#{queue_name}`"
-                queues.delete queue_name
-              end
-              Firehose.logger.debug "HTTP connection `#{cid}@#{path}` closing"
-            end
+            # env['async.close'].callback do
+            #   subscription.unsubscribe
+            #   Firehose.logger.debug "HTTP connection `#{path}` closing"
+            # end
           end
 
           # Tell the web server that this will be an async response.
@@ -96,42 +88,37 @@ module Firehose
         end
       end
 
-    private 
+    private
       def publisher
         @publisher ||= Firehose::Publisher.new
-      end
-
-      def queues
-        @queues ||= {}
       end
     end
 
     class WebSocket < ::Rack::WebSocket::Application
-      attr_reader :cid, :path, :subscription
+      attr_reader :path, :subscription
       
       # Subscribe to a path and make some magic happen, mmkmay?
       def on_open(env)
         req   = ::Rack::Request.new(env)
-        @cid   = req.params['cid']
         @path  = req.path
-        @subscription = Firehose::Subscription.new(cid, path)
+        @subscription = Firehose::Subscription.new(path)
 
         subscription.subscribe do |message, subscription|
-          Firehose.logger.debug "WS sent `#{message}` to `#{cid}@#{path}`"
+          Firehose.logger.debug "WS sent `#{message}` to `#{path}`"
           send_data message
         end
-        Firehose.logger.debug "WS subscribed to `#{cid}@#{path}`"
+        Firehose.logger.debug "WS subscribed to `#{path}`"
       end
 
       # Delete the subscription if the thing even happened.
       def on_close(env)
         subscription.unsubscribe
-        Firehose.logger.debug "WS connection `#{cid}@#{path}` closing"
+        Firehose.logger.debug "WS connection `#{path}` closing"
       end
 
       # Log websocket level errors
       def on_error(env, error)
-        Firehose.logger.error "WS connection `#{cid}@#{path}` error `#{error}`: #{error.backtrace}"
+        Firehose.logger.error "WS connection `#{path}` error `#{error}`: #{error.backtrace}"
       end
     end
 

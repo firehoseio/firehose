@@ -12,18 +12,16 @@ describe Firehose::Rack do
   end
 
   let(:app)       { Firehose::Rack::App.new }
-  let(:messages)  { (1..10).map(&:to_s) }
+  let(:messages)  { (1..10).map{|n| "msg-#{n}" } }
   let(:channel)   { "/firehose/integration/#{Time.now.to_i}" }
   let(:uri)       { Firehose::Default::URI }
   let(:http_url)  { "http://#{uri.host}:#{uri.port}#{channel}" }
   let(:ws_url)    { "ws://#{uri.host}:#{uri.port}#{channel}" }
 
   it "should pub-sub http and websockets" do
-    pending "Chillax guard.."
-    
     # Setup variables that we'll use after we turn off EM to validate our
     # test assertions.
-    outgoing, received = messages.dup, {1 => [], 2 => [], 3 => [], 4 => []}
+    outgoing, received = messages.dup, Hash.new{|h,k| h[k] = []}
 
     # Our WS and Http clients call this when they have received their messages to determine
     # when to turn off EM and make the test assertion at the very bottom.
@@ -63,22 +61,23 @@ describe Firehose::Rack do
     end
 
     # Great, we have all the pieces in order, lets run this thing in the reactor.
-    em do
+    em 5 do
       # Start the server
       server = ::Thin::Server.new('0.0.0.0', uri.port, app)
       server.start
 
       # Start the http_long_poller.
-      http_long_poll.call(1)
-      http_long_poll.call(2)
-      websocket.call(3)
-      websocket.call(4)
+      # websocket.call(1)
+      # websocket.call(2)
+      # http_long_poll.call(3)
+      http_long_poll.call(4)
 
       # Wait a sec to let our http_long_poll setup.
       em.add_timer(1){ publish.call }
     end
 
     # When EM stops, these assertions will be made.
+    received.size.should == 1
     received.values.each do |arr|
       arr.should =~ messages
     end
