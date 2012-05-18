@@ -81,19 +81,30 @@ module Firehose
       def on_open(env)
         req   = ::Rack::Request.new(env)
         @path  = req.path
-        @subscription = Firehose::Subscription.new(path)
+        #@subscription = Firehose::Subscription.new(path)
 
-        subscription.subscribe do |message, subscription|
-          Firehose.logger.debug "WS sent `#{message}` to `#{path}`"
-          send_data message
-        end
+        #subscription.subscribe do |message, subscription|
+        #  Firehose.logger.debug "WS sent `#{message}` to `#{path}`"
+        #  send_data message
+        #end
         Firehose.logger.debug "WS subscribed to `#{path}`"
+
+        subscribe = Proc.new do |last_sequence|
+          Channel.new(path).next_message(last_sequence).callback do |message, sequence|
+            Firehose.logger.debug "WS sent `#{message}` to `#{path}` with sequence `#{sequence}`"
+            send_data message
+            subscribe.call(sequence)
+          end.errback { |e| raise e }
+        end
+
+        subscribe.call
+
       end
 
       # Delete the subscription if the thing even happened.
       def on_close(env)
-        subscription.unsubscribe
-        Firehose.logger.debug "WS connection `#{path}` closing"
+        #subscription.unsubscribe
+        Firehose.logger.debug "dummy WS connection `#{path}` closing"
       end
 
       # Log websocket level errors

@@ -26,7 +26,10 @@ describe Firehose::Rack do
     # Our WS and Http clients call this when they have received their messages to determine
     # when to turn off EM and make the test assertion at the very bottom.
     succeed = Proc.new do
-      em.stop if received.values.all?{|arr| arr.size == messages.size }
+      # TODO: For some weird reason the `add_timer` call causes up to 20 seconds of delay after
+      #       the test finishes running. However, without it the test will randomly fail with a
+      #       "Redis disconnected" error.
+      em.add_timer(1) { em.stop } if received.values.all?{|arr| arr.size == messages.size }
     end
 
     # Setup a publisher
@@ -46,7 +49,7 @@ describe Firehose::Rack do
         received[cid] << http.response
         if received[cid].size < messages.size
           # Add some jitter so the clients aren't syncronized
-          EM::add_timer(rand*0.003) { http_long_poll.call cid, http.response_header['Last-Message-Sequence'] }
+          EM::add_timer(rand*0.001) { http_long_poll.call cid, http.response_header['Last-Message-Sequence'] }
         else
           succeed.call cid
         end
@@ -64,14 +67,14 @@ describe Firehose::Rack do
     end
 
     # Great, we have all the pieces in order, lets run this thing in the reactor.
-    em 30 do
+    em 60 do
       # Start the server
       server = ::Thin::Server.new('0.0.0.0', uri.port, app)
       server.start
 
       # Start the http_long_poller.
-      # websocket.call(1)
-      # websocket.call(2)
+      websocket.call(1)
+      websocket.call(2)
       http_long_poll.call(3)
       http_long_poll.call(4)
 
@@ -80,7 +83,7 @@ describe Firehose::Rack do
     end
 
     # When EM stops, these assertions will be made.
-    received.size.should == 2
+    received.size.should == 4
     received.values.each do |arr|
       arr.should == messages
     end
