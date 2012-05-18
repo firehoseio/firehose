@@ -25,6 +25,7 @@ module Firehose
       deferrable.errback {|e| raise e unless e == :timeout}
 
 
+      # TODO: Use HSET so we don't have to pull 100 messages back every time.
       redis.multi
         redis.get(sequence_key)
           .errback {|e| deferrable.fail e }

@@ -1,6 +1,6 @@
 module Firehose
   class Publisher
-    MAX_MESSAGES = 10
+    MAX_MESSAGES = 100
     TTL = 60*60*24  # 1 day of time, yay!
     PAYLOAD_DELIMITER = "\n"
 
@@ -15,6 +15,7 @@ module Firehose
       list_key = key(channel_key, :list)
       sequence_key = key(channel_key, :sequence)
 
+      # TODO: Use HSET so we don't have to pull 100 messages back every time.
       redis.multi
         redis.lpush(list_key, message)
           .errback{|e| deferrable.fail e }

@@ -7,8 +7,8 @@ describe Firehose::Publisher do
   let(:channel_key) { "/firehose/publisher/test/#{Time.now.to_i}" }
   let(:message)     { "howdy friends!" }
 
-  it "should have 10 MAX_MESSAGES" do
-    Firehose::Publisher::MAX_MESSAGES.should == 10
+  it "should have 100 MAX_MESSAGES" do
+    Firehose::Publisher::MAX_MESSAGES.should == 100
   end
 
   it "should have 1 day TTL" do
