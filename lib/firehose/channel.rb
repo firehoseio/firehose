@@ -38,7 +38,7 @@ module Firehose
                   redis.get(sequence_key)
                     .errback {|e| deferrable.fail e }
                     .callback do |sequence|
-                      deferrable.succeed message, sequence
+                      deferrable.succeed message, sequence.to_i
                     end
                 else
                   # We've talked to the client before, so lets figure out how far behind they
@@ -99,7 +99,7 @@ module Firehose
         if deferrables = subscriptions.delete(channel_key)
           Firehose.logger.debug "Redis notifying #{deferrables.count} deferrable(s) at `#{channel_key}` with message `#{sequence}`"
           deferrables.each do |deferrable|
-            deferrable.succeed message, sequence
+            deferrable.succeed message, sequence.to_i
           end
         end
       end
