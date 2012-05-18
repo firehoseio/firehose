@@ -70,7 +70,7 @@ describe Firehose::Channel do
     end
 
     it "should get current message if sequence is really far behind in list" do
-      messages = ('a'..'z').to_a
+      messages = ('aa'..'zz').to_a
 
       em 3 do
         publish_messages(messages) do
