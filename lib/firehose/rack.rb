@@ -26,15 +26,14 @@ module Firehose
             # TODO seperate out CORS logic as an async middleware with a Goliath web server.
             cors_headers  = {
               'Access-Control-Allow-Origin'     => cors_origin,
-              'Access-Control-Expose-Headers'   => LAST_MESSAGE_SEQUENCE_HEADER,
-              # TODO - Have the message backend set this up... right now this just adds 1 to whatever the
-              # client told the server what the sequence is.
-              LAST_MESSAGE_SEQUENCE_HEADER      => (last_sequence + 1).to_s
+              'Access-Control-Expose-Headers'   => LAST_MESSAGE_SEQUENCE_HEADER              
             }
-
 
             # If the request is a CORS request, return those headers, otherwise don't worry 'bout it
             response_headers = cors_origin ? cors_headers : {}
+            # TODO - Have the message backend set this up... right now this just adds 1 to whatever the
+            # client told the server what the sequence is.
+            response_headers.merge!(LAST_MESSAGE_SEQUENCE_HEADER => (last_sequence + 1).to_s)
 
             # Setup a subscription with a client id. We haven't subscribed yet here.
             if queue = queues[queue_name]
