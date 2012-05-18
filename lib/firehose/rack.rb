@@ -90,7 +90,8 @@ module Firehose
         Firehose.logger.debug "WS subscribed to `#{path}`"
 
         subscribe = Proc.new do |last_sequence|
-          Channel.new(path).next_message(last_sequence).callback do |message, sequence|
+          @channel = Channel.new(path)
+          @deferrable = @channel.next_message(last_sequence).callback do |message, sequence|
             Firehose.logger.debug "WS sent `#{message}` to `#{path}` with sequence `#{sequence}`"
             send_data message
             subscribe.call(sequence)
@@ -103,8 +104,11 @@ module Firehose
 
       # Delete the subscription if the thing even happened.
       def on_close(env)
-        #subscription.unsubscribe
-        Firehose.logger.debug "dummy WS connection `#{path}` closing"
+        if @deferrable
+          @deferrable.fail :disconnect
+          @channel.unsubscribe(@deferrable) if @channel
+        end
+        Firehose.logger.debug "WS connection `#{path}` closing"
       end
 
       # Log websocket level errors

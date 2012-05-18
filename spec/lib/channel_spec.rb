@@ -5,7 +5,7 @@ describe Firehose::Channel do
 
   let(:channel_key)     { '/bears/are/mean' }
   let(:channel)         { Firehose::Channel.new(channel_key, EM::Hiredis.connect, subscriber) }
-  let(:subscriber)      { Firehose::Channel::Subscriber.new(EM::Hiredis.connect) }
+  let(:subscriber)      { Firehose::Subscriber.new(EM::Hiredis.connect) }
   let(:message)         { 'Raaaarrrrrr!!!!' }
   let(:publisher)       { Firehose::Publisher.new }
 

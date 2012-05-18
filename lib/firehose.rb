@@ -6,14 +6,14 @@ require 'logger'
 require 'firehose/rails' if defined?(::Rails::Engine)
 
 module Firehose
-  autoload :Subscription, 'firehose/subscription'
+  autoload :Subscriber,   'firehose/subscriber'
   autoload :Publisher,    'firehose/publisher'
   autoload :Producer,     'firehose/producer'
   autoload :Default,      'firehose/default'
   autoload :Rack,         'firehose/rack'
   autoload :CLI,          'firehose/cli'
   autoload :Channel,      'firehose/channel'
-  
+
   # Logging
   def self.logger
     @logger ||= Logger.new($stdout)
