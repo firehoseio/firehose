@@ -30,12 +30,6 @@ module Firehose
             # If the request is a CORS request, return those headers, otherwise don't worry 'bout it
             response_headers = cors_origin ? cors_headers : {}
 
-#            Channel.new(path).next_message(last_sequence).callback do |message, sequence|
-#              response_headers.merge!(LAST_MESSAGE_SEQUENCE_HEADER => sequence.to_s)
-#              env['async.callback'].call [200, response_headers, [message]]
-#            end.errback {|e| raise e }
-
-
             Channel.new(path).next_message(last_sequence, :timeout => 20).callback do |message, sequence|
               response_headers.merge!(LAST_MESSAGE_SEQUENCE_HEADER => sequence.to_s)
               env['async.callback'].call [200, response_headers, [message]]
@@ -46,32 +40,6 @@ module Firehose
                 raise e
               end
             end
-
-            # # Setup a timeout timer to tell clients that time out that everything is OK
-            # # and they should come back for more
-            # long_poll_timer = EM::Timer.new(timeout) do
-            #   # We send a 204 OK to tell the client to reconnect.
-            #   env['async.callback'].call [204, response_headers, []]
-            #   Firehose.logger.debug "HTTP wait `path` timed out"
-            # end
-
-            # # Ok, now subscribe to the subscription.
-            # subscription = Firehose::Subscription.new(path).subscribe(last_sequence) do |message, sequence, subscription|
-            #   long_poll_timer.cancel # Turn off the heart beat so we don't execute any of that business.
-            #   # TODO - Have the message backend set this up... right now this just adds 1 to whatever the
-            #   # client told the server what the sequence is.
-            #   response_headers.merge!(LAST_MESSAGE_SEQUENCE_HEADER => sequence.to_s)
-            #   env['async.callback'].call [200, response_headers, [message]]
-            #   Firehose.logger.debug "HTTP sent `#{message}` of sequence `#{sequence}` to `#{path}`"
-            # end
-            # Firehose.logger.debug "HTTP subscribed to `#{path}`"
-
-            # Unsubscribe from the subscription if its still open and something bad happened
-            # or the heart beat triggered before we could finish.
-            # env['async.close'].callback do
-            #   subscription.unsubscribe
-            #   Firehose.logger.debug "HTTP connection `#{path}` closing"
-            # end
           end
 
           # Tell the web server that this will be an async response.
