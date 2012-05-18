@@ -24,16 +24,28 @@ module Firehose
             # TODO seperate out CORS logic as an async middleware with a Goliath web server.
             cors_headers  = {
               'Access-Control-Allow-Origin'     => cors_origin,
-              'Access-Control-Expose-Headers'   => LAST_MESSAGE_SEQUENCE_HEADER              
+              'Access-Control-Expose-Headers'   => LAST_MESSAGE_SEQUENCE_HEADER
             }
 
             # If the request is a CORS request, return those headers, otherwise don't worry 'bout it
             response_headers = cors_origin ? cors_headers : {}
 
-            Channel.new(path).next_message(last_sequence).callback do |message, sequence|
+#            Channel.new(path).next_message(last_sequence).callback do |message, sequence|
+#              response_headers.merge!(LAST_MESSAGE_SEQUENCE_HEADER => sequence.to_s)
+#              env['async.callback'].call [200, response_headers, [message]]
+#            end.errback {|e| raise e }
+
+
+            Channel.new(path).next_message(last_sequence, :timeout => 20).callback do |message, sequence|
               response_headers.merge!(LAST_MESSAGE_SEQUENCE_HEADER => sequence.to_s)
               env['async.callback'].call [200, response_headers, [message]]
-            end.errback {|e| raise e }
+            end.errback do |e|
+              if e == :timeout
+                env['async.callback'].call [204, response_headers, []]
+              else
+                raise e
+              end
+            end
 
             # # Setup a timeout timer to tell clients that time out that everything is OK
             # # and they should come back for more
@@ -96,7 +108,7 @@ module Firehose
 
     class WebSocket < ::Rack::WebSocket::Application
       attr_reader :path, :subscription
-      
+
       # Subscribe to a path and make some magic happen, mmkmay?
       def on_open(env)
         req   = ::Rack::Request.new(env)

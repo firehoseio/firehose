@@ -31,8 +31,10 @@ describe Firehose::Rack do
 
     # Setup a publisher
     publish = Proc.new do
-      Firehose::Producer.new.publish(outgoing.pop).to(channel) do
+      Firehose::Producer.new.publish(outgoing.shift).to(channel) do
         publish.call unless outgoing.empty?
+
+        #EM::add_timer(1) { publish.call } unless outgoing.empty?
       end
     end
 
@@ -61,7 +63,7 @@ describe Firehose::Rack do
     end
 
     # Great, we have all the pieces in order, lets run this thing in the reactor.
-    em 5 do
+    em 15 do
       # Start the server
       server = ::Thin::Server.new('0.0.0.0', uri.port, app)
       server.start
