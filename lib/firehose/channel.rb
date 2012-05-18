@@ -24,25 +24,35 @@ module Firehose
       # TODO - Think this through a little harder... maybe some tests ol buddy!
       deferrable.errback {|e| raise e unless e == :timeout}
 
-      redis.get(sequence_key)
-        .errback {|e| deferrable.fail e }
-        .callback do |sequence|
-          sequence = sequence.to_i
 
-          if sequence.nil? || (diff = sequence - last_sequence).zero?
-            # Either this resource has never been seen before or we are all caught up.
-            # Subscribe and hope something gets published to this end-point.
-            subscribe(deferrable, options[:timeout])
-          elsif diff < Firehose::Publisher::MAX_MESSAGES
-            # The client is kinda-sorta running behind, but has a chance to catch
-            # up. Catch them up FTW.
-            succeed deferrable, diff, last_sequence + 1
-          else
-            # The client is hopelessly behind and underwater. Just reset
-            # their whole world with the lastest message.
-            succeed deferrable, 0, sequence
-          end
+      redis.multi
+        redis.get(sequence_key)
+          .errback {|e| deferrable.fail e }
+        redis.lrange(list_key, 0, Firehose::Publisher::MAX_MESSAGES)
+          .errback {|e| deferrable.fail e }
+      redis.exec.callback do |(sequence, message_list)|
+        Firehose.logger.debug "exec returened: `#{sequence}` and `#{message_list.inspect}`"
+        sequence = sequence.to_i
+
+        if sequence.nil? || (diff = sequence - last_sequence).zero?
+          Firehose.logger.debug "No message available yet, subscribing. sequence: `#{sequence}`"
+          # Either this resource has never been seen before or we are all caught up.
+          # Subscribe and hope something gets published to this end-point.
+          subscribe(deferrable, options[:timeout])
+        elsif diff < Firehose::Publisher::MAX_MESSAGES
+          # The client is kinda-sorta running behind, but has a chance to catch
+          # up. Catch them up FTW.
+          message = message_list[diff-1]
+          Firehose.logger.debug "Sending old message `#{message}` and sequence `#{sequence}` to client directly. Client is `#{diff}` behind, at `#{last_sequence}`."
+          deferrable.succeed message, last_sequence + 1
+        else
+          # The client is hopelessly behind and underwater. Just reset
+          # their whole world with the lastest message.
+          message = message_list[0]
+          Firehose.logger.debug "Sending latest message `#{message}` and sequence `#{sequence}` to client directly."
+          deferrable.succeed message, sequence
         end
+      end.errback {|e| deferrable.fail e }
 
       deferrable
     end
@@ -62,14 +72,6 @@ module Firehose
         deferrable.callback { timer.cancel }
       end
     end
-
-    def succeed(deferrable, index, sequence)
-      redis.lindex(list_key, index)
-        .errback {|e| deferrable.fail e }
-        .callback do |message|
-          deferrable.succeed message, sequence
-        end
-    end
   end
 
   # Setups a connetion to Redis to listen for new resources...
@@ -88,6 +90,7 @@ module Firehose
         if deferrables = subscriptions.delete(channel_key)
           Firehose.logger.debug "Redis notifying #{deferrables.count} deferrable(s) at `#{channel_key}` with sequence `#{sequence}` and message `#{message}`"
           deferrables.each do |deferrable|
+            Firehose.logger.debug "Sending message #{message} and sequence #{sequence} to client from subscriber"
             deferrable.succeed message, sequence.to_i
           end
         end

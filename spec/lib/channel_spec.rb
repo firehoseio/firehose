@@ -30,7 +30,9 @@ describe Firehose::Channel do
         channel.next_message.callback do |msg, seq|
           msg.should == message
           seq.should == 100
-          em.stop
+
+          # This must happen _after_ the callback runs in order to pass consistently.
+          EM.next_tick { em.stop }
         end
       end
     end
@@ -55,18 +57,13 @@ describe Firehose::Channel do
       messages = %w[a b c d e]
 
       em 3 do
-        messages.each do |msg|
-          publisher.publish(channel_key, msg)
-        end
-
-        # We could speed up this test (and make it more reliable) by setting up
-        # a deferrable that is called when all messages have finished being
-        # published.
-        EM::add_timer(1) do
+        publish_messages(messages) do
           channel.next_message(2).callback do |msg, seq|
-            msg.should == 'b'
+            msg.should == 'c'
             seq.should == 3
-            em.stop
+
+            # This must happen _after_ the callback runs in order to pass consistently.
+            EM.next_tick { em.stop }
           end
         end
       end
@@ -76,18 +73,13 @@ describe Firehose::Channel do
       messages = ('a'..'z').to_a
 
       em 3 do
-        messages.each do |msg|
-          publisher.publish(channel_key, msg)
-        end
-
-        # We could speed up this test (and make it more reliable) by setting up
-        # a deferrable that is called when all messages have finished being
-        # published.
-        EM::add_timer(1) do
+        publish_messages(messages) do
           channel.next_message(2).callback do |msg, seq|
             msg.should == messages.last
             seq.should == messages.size
-            em.stop
+
+            # This must happen _after_ the callback runs in order to pass consistently.
+            EM.next_tick { em.stop }
           end
         end
       end
@@ -135,5 +127,24 @@ describe Firehose::Channel do
         end
       end
     end
+  end
+
+
+  # Publishes the given messages and executes the given block when finished.
+  def publish_messages(all_messages)
+    publish = Proc.new do |messages_to_publish|
+      msg = messages_to_publish.shift
+      publisher.publish(channel_key, msg).callback do
+        if messages_to_publish.empty?
+          # Publishing is done, proceed with the test
+          yield
+        else
+          # Publish the next message
+          publish.call messages_to_publish
+        end
+      end
+    end
+
+    publish.call all_messages.dup
   end
 end

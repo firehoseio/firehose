@@ -16,27 +16,25 @@ module Firehose
       sequence_key = key(channel_key, :sequence)
 
       redis.multi
-      redis.lpush(list_key, message)
-        .errback{|e| deferrable.fail e }
-      redis.ltrim(list_key, 0, MAX_MESSAGES - 1)
-        .errback{|e| deferrable.fail e }
-      redis.expire(list_key, TTL)
-        .errback{|e| deferrable.fail e }
+        redis.lpush(list_key, message)
+          .errback{|e| deferrable.fail e }
+        redis.ltrim(list_key, 0, MAX_MESSAGES - 1)
+          .errback{|e| deferrable.fail e }
+        redis.expire(list_key, TTL)
+          .errback{|e| deferrable.fail e }
+        redis.incr(sequence_key)
+          .errback{|e| deferrable.fail e }
+        redis.expire(sequence_key, TTL)
+          .errback{|e| deferrable.fail e }
       redis.exec
         .errback{|e| deferrable.fail e }
-        .callback {
-          Firehose.logger.debug "Redis stored `#{message}` to list `#{list_key}`"
-          redis.incr(sequence_key)
+        .callback { |(_, _, _, sequence, _)|
+          Firehose.logger.debug "Redis stored `#{message}` to list `#{list_key}` with sequence `#{sequence}`"
+          redis.publish(key(:channel_updates), self.class.to_payload(channel_key, sequence, message))
             .errback{|e| deferrable.fail e }
-            .callback do |sequence|
-              redis.expire(sequence_key, TTL)
-                .errback{|e| deferrable.fail e }
-              redis.publish(key(:channel_updates), self.class.to_payload(channel_key, sequence, message))
-                .errback{|e| deferrable.fail e }
-                .callback do 
-                  Firehose.logger.debug "Redis published `#{message}` to `#{channel_key}`" 
-                  deferrable.succeed
-                end
+            .callback do
+              Firehose.logger.debug "Redis published `#{message}` to `#{channel_key}`"
+              deferrable.succeed
             end
         }
 

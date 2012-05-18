@@ -12,7 +12,7 @@ describe Firehose::Rack do
   end
 
   let(:app)       { Firehose::Rack::App.new }
-  let(:messages)  { (1..10).map{|n| "msg-#{n}" } }
+  let(:messages)  { (1..2000).map{|n| "msg-#{n}" } }
   let(:channel)   { "/firehose/integration/#{Time.now.to_i}" }
   let(:uri)       { Firehose::Default::URI }
   let(:http_url)  { "http://#{uri.host}:#{uri.port}#{channel}" }
@@ -32,9 +32,9 @@ describe Firehose::Rack do
     # Setup a publisher
     publish = Proc.new do
       Firehose::Producer.new.publish(outgoing.shift).to(channel) do
-        publish.call unless outgoing.empty?
-
-        #EM::add_timer(1) { publish.call } unless outgoing.empty?
+        # The random timer ensures that sometimes the clients will be behind
+        # and sometimes they will be caught up.
+        EM::add_timer(rand*0.005) { publish.call } unless outgoing.empty?
       end
     end
 
@@ -45,7 +45,8 @@ describe Firehose::Rack do
       http.callback do
         received[cid] << http.response
         if received[cid].size < messages.size
-          http_long_poll.call cid, http.response_header['Last-Message-Sequence']
+          # Add some jitter so the clients aren't syncronized
+          EM::add_timer(rand*0.003) { http_long_poll.call cid, http.response_header['Last-Message-Sequence'] }
         else
           succeed.call cid
         end
@@ -63,7 +64,7 @@ describe Firehose::Rack do
     end
 
     # Great, we have all the pieces in order, lets run this thing in the reactor.
-    em 15 do
+    em 30 do
       # Start the server
       server = ::Thin::Server.new('0.0.0.0', uri.port, app)
       server.start
@@ -71,7 +72,7 @@ describe Firehose::Rack do
       # Start the http_long_poller.
       # websocket.call(1)
       # websocket.call(2)
-      # http_long_poll.call(3)
+      http_long_poll.call(3)
       http_long_poll.call(4)
 
       # Wait a sec to let our http_long_poll setup.
@@ -79,9 +80,9 @@ describe Firehose::Rack do
     end
 
     # When EM stops, these assertions will be made.
-    received.size.should == 1
+    received.size.should == 2
     received.values.each do |arr|
-      arr.should =~ messages
+      arr.should == messages
     end
   end
 end

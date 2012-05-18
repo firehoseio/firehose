@@ -13,7 +13,7 @@ module Firehose
         path    = req.path
         method  = req.request_method
         timeout = 20
-        p :got, last_sequence = env[RACK_LAST_MESSAGE_SEQUENCE_HEADER].to_i
+        last_sequence = env[RACK_LAST_MESSAGE_SEQUENCE_HEADER].to_i
         cors_origin = env['HTTP_ORIGIN']
 
         case method
