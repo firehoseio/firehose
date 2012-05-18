@@ -6,9 +6,9 @@ module Firehose
     def initialize(redis)
       @redis = redis
 
-      redis.subscribe('firehose:channel_updates')
-        .errback{|e| raise e }
-        .callback { Firehose.logger.debug "Redis subscribed to `firehose:channel_updates`" }
+      redis.subscribe('firehose:channel_updates').
+        errback{|e| raise e }.
+        callback { Firehose.logger.debug "Redis subscribed to `firehose:channel_updates`" }
       redis.on(:message) do |_, payload|
         channel_key, sequence, message = Firehose::Publisher.from_payload(payload)
 

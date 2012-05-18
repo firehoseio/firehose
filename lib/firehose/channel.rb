@@ -27,10 +27,10 @@ module Firehose
 
       # TODO: Use HSET so we don't have to pull 100 messages back every time.
       redis.multi
-        redis.get(sequence_key)
-          .errback {|e| deferrable.fail e }
-        redis.lrange(list_key, 0, Firehose::Publisher::MAX_MESSAGES)
-          .errback {|e| deferrable.fail e }
+        redis.get(sequence_key).
+          errback {|e| deferrable.fail e }
+        redis.lrange(list_key, 0, Firehose::Publisher::MAX_MESSAGES).
+          errback {|e| deferrable.fail e }
       redis.exec.callback do |(sequence, message_list)|
         Firehose.logger.debug "exec returened: `#{sequence}` and `#{message_list.inspect}`"
         sequence = sequence.to_i

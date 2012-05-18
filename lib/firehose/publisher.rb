@@ -17,30 +17,30 @@ module Firehose
 
       sequence = nil
       # TODO: Use HSET so we don't have to pull 100 messages back every time.
-      redis.watch(sequence_key)
-        .errback{|e| deferrable.fail e }
-        .callback do
-          redis.get(sequence_key)
-            .errback{|e| deferrable.fail e }
-            .callback do |current_sequence|
+      redis.watch(sequence_key).
+        errback{|e| deferrable.fail e }.
+        callback do
+          redis.get(sequence_key).
+            errback{|e| deferrable.fail e }.
+            callback do |current_sequence|
               sequence = current_sequence.to_i + 1
 
               redis.multi
-                redis.lpush(list_key, message)
-                  .errback{|e| deferrable.fail e }
-                redis.ltrim(list_key, 0, MAX_MESSAGES - 1)
-                  .errback{|e| deferrable.fail e }
-                redis.expire(list_key, TTL)
-                  .errback{|e| deferrable.fail e }
-                redis.set(sequence_key, sequence)
-                  .errback{|e| deferrable.fail e }
-                redis.expire(sequence_key, TTL)
-                  .errback{|e| deferrable.fail e }
-                redis.publish(key(:channel_updates), self.class.to_payload(channel_key, sequence, message))
-                  .errback{|e| deferrable.fail e }
-              redis.exec
-                .errback{|e| deferrable.fail e }  # TODO: handle retries if WATCH causes a transaction rollback
-                .callback do
+                redis.lpush(list_key, message).
+                  errback{|e| deferrable.fail e }
+                redis.ltrim(list_key, 0, MAX_MESSAGES - 1).
+                  errback{|e| deferrable.fail e }
+                redis.expire(list_key, TTL).
+                  errback{|e| deferrable.fail e }
+                redis.set(sequence_key, sequence).
+                  errback{|e| deferrable.fail e }
+                redis.expire(sequence_key, TTL).
+                  errback{|e| deferrable.fail e }
+                redis.publish(key(:channel_updates), self.class.to_payload(channel_key, sequence, message)).
+                  errback{|e| deferrable.fail e }
+              redis.exec.
+                errback{|e| deferrable.fail e }.  # TODO: handle retries if WATCH causes a transaction rollback
+                callback do
                   Firehose.logger.debug "Redis stored/published `#{message}` to list `#{list_key}` with sequence `#{sequence}`"
                   deferrable.succeed
                 end
