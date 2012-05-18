@@ -95,7 +95,7 @@ module Firehose
             Firehose.logger.debug "WS sent `#{message}` to `#{path}` with sequence `#{sequence}`"
             send_data message
             subscribe.call(sequence)
-          end.errback { |e| raise e }
+          end.errback { |e| raise e.inspect unless e == :disconnect }
         end
 
         subscribe.call
