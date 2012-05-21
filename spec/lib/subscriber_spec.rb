@@ -18,12 +18,15 @@ describe Firehose::Subscriber do
 
     it "should call succeed on the deferrable when a message is published" do
       deferrable = EM::DefaultDeferrable.new
-      deferrable.should_receive(:succeed).with(message, 1) # The publisher is fresh, so the sequence ID will be 1.
+      deferrable.callback do |msg, sequence|
+        msg.should == message
+        sequence.should == 1 # The publisher is fresh, so the sequence ID will be 1.
+        em.stop
+      end
+
       em do
         subscriber.subscribe(channel_key, deferrable)
-        publisher.publish(channel_key, message).callback do
-          em.stop
-        end
+        publisher.publish(channel_key, message)
       end
     end
 

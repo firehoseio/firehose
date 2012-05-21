@@ -16,10 +16,6 @@ describe Firehose::Publisher do
   end
 
   describe "#publish" do
-    it "should pipeline" do
-      pending "Get rid of stubs"
-    end
-
     it "should publish message change" do
       em do
         hiredis = EM::Hiredis.connect
@@ -50,22 +46,27 @@ describe Firehose::Publisher do
     end
 
     it "should increment sequence" do
-      pending 'need to get public retry logic working'
+      #pending 'need to get public retry logic working'
       sequence_key = "firehose:#{channel_key}:sequence"
 
       redis_exec('get', sequence_key).should be_nil
       em do
-        publisher.publish(channel_key, message).callback
+        publisher.publish(channel_key, message)
         publisher.publish(channel_key, message).callback { em.stop }
       end
+  p redis_exec('lrange', "firehose:#{channel_key}:list", 0, 2)
       redis_exec('get', sequence_key).to_i.should == 2
     end
 
     it "should set expirery on sequence and list keys" do
-      pending "Get rid of stubs"
-      # hiredis.should_receive(:expire).with("firehose:#{channel_key}:sequence", Firehose::Publisher::TTL)
-      # hiredis.should_receive(:expire).with("firehose:#{channel_key}:list", Firehose::Publisher::TTL)
-      # publisher.publish(channel_key, "you smell")
+      em do
+        publisher.publish(channel_key, message).callback do
+          # Allow for 1 second of slippage/delay
+          redis_exec('TTL', "firehose:#{channel_key}:sequence").should > (Firehose::Publisher::TTL - 1)
+          redis_exec('TTL', "firehose:#{channel_key}:list").should > (Firehose::Publisher::TTL - 1)
+          em.stop
+        end
+      end
     end
   end
 end
