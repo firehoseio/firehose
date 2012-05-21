@@ -46,7 +46,7 @@ describe Firehose::Publisher do
     end
 
     it "should increment sequence" do
-      #pending 'need to get public retry logic working'
+      pending 'need to get public retry logic working'
       sequence_key = "firehose:#{channel_key}:sequence"
 
       redis_exec('get', sequence_key).should be_nil
@@ -54,7 +54,6 @@ describe Firehose::Publisher do
         publisher.publish(channel_key, message)
         publisher.publish(channel_key, message).callback { em.stop }
       end
-  p redis_exec('lrange', "firehose:#{channel_key}:list", 0, 2)
       redis_exec('get', sequence_key).to_i.should == 2
     end
 
