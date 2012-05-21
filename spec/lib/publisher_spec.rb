@@ -22,7 +22,7 @@ describe Firehose::Publisher do
         hiredis.subscribe "firehose:channel_updates"
         hiredis.on(:message) {|_, msg|
           msg.should == "#{channel_key}\n1\n#{message}"
-          em.stop
+          em.next_tick { em.stop }
         }
         Firehose::Publisher.new.publish channel_key, message
       end
@@ -46,13 +46,13 @@ describe Firehose::Publisher do
     end
 
     it "should increment sequence" do
-      pending 'need to get public retry logic working'
       sequence_key = "firehose:#{channel_key}:sequence"
 
+      @done_counter = 0
       redis_exec('get', sequence_key).should be_nil
       em do
-        publisher.publish(channel_key, message)
-        publisher.publish(channel_key, message).callback { em.stop }
+        publisher.publish(channel_key, message).callback { @done_counter += 1; em.next_tick { em.stop } if @done_counter > 1 }
+        publisher.publish(channel_key, message).callback { @done_counter += 1; em.next_tick { em.stop } if @done_counter > 1 }
       end
       redis_exec('get', sequence_key).to_i.should == 2
     end

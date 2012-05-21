@@ -15,37 +15,25 @@ module Firehose
       list_key = key(channel_key, :list)
       sequence_key = key(channel_key, :sequence)
 
-      sequence = nil
-      # TODO: Use HSET so we don't have to pull 100 messages back every time.
-      redis.watch(sequence_key).
-        errback{|e| deferrable.fail e }.
-        callback do
-          redis.get(sequence_key).
-            errback{|e| deferrable.fail e }.
-            callback do |current_sequence|
-              sequence = current_sequence.to_i + 1
-
-              redis.multi
-                redis.lpush(list_key, message).
-                  errback{|e| deferrable.fail e }
-                redis.ltrim(list_key, 0, MAX_MESSAGES - 1).
-                  errback{|e| deferrable.fail e }
-                redis.expire(list_key, TTL).
-                  errback{|e| deferrable.fail e }
-                redis.set(sequence_key, sequence).
-                  errback{|e| deferrable.fail e }
-                redis.expire(sequence_key, TTL).
-                  errback{|e| deferrable.fail e }
-                redis.publish(key(:channel_updates), self.class.to_payload(channel_key, sequence, message)).
-                  errback{|e| deferrable.fail e }
-              redis.exec.
-                errback{|e| deferrable.fail e }.  # TODO: handle retries if WATCH causes a transaction rollback
-                callback do
-                  Firehose.logger.debug "Redis stored/published `#{message}` to list `#{list_key}` with sequence `#{sequence}`"
-                  deferrable.succeed
-                end
+      redis.eval(%(local current_sequence = redis.call('get', KEYS[1])
+                   if (current_sequence == nil) or (current_sequence == false)
+                   then
+                     current_sequence = 0
+                   end
+                   local sequence = current_sequence + 1
+                   redis.call('set', KEYS[1], sequence)
+                   redis.call('expire', KEYS[1], #{TTL})
+                   redis.call('lpush', KEYS[2], "#{lua_escape(message)}")
+                   redis.call('ltrim', KEYS[2], 0, #{MAX_MESSAGES - 1})
+                   redis.call('expire', KEYS[2], #{TTL})
+                   redis.call('publish', KEYS[3], "#{lua_escape(channel_key + PAYLOAD_DELIMITER)}" .. sequence .. "#{lua_escape(PAYLOAD_DELIMITER + message)}")
+                   return sequence
+                  ), 3, sequence_key, list_key, key(:channel_updates)).
+        errback{|e| deferrable.fail e }.  # TODO: handle retries if WATCH causes a transaction rollback
+        callback do |sequence|
+          Firehose.logger.debug "Redis stored/published `#{message}` to list `#{list_key}` with sequence `#{sequence}`"
+          deferrable.succeed
         end
-      end
 
       deferrable
     end
@@ -65,6 +53,13 @@ module Firehose
 
     def self.from_payload(payload)
       payload.split(PAYLOAD_DELIMITER, method(:to_payload).arity)
+    end
+
+    # TODO: Make this FAR more robust. Ideally we'd whitelist the permitted
+    #       characters and then escape or remove everything else.
+    #       See: http://en.wikibooks.org/wiki/Lua_Programming/How_to_Lua/escape_sequence
+    def lua_escape(str)
+      str.gsub(/"/,'\"').gsub(/\n/,'\n')
     end
   end
 end
