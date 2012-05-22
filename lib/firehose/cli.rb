@@ -19,7 +19,7 @@ module Firehose
 
       begin
         server.start!
-      rescue
+      rescue => e
         Firehose.logger.error "#{e.message}: #{e.backtrace}"
         raise
       end
