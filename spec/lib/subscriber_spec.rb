@@ -21,7 +21,7 @@ describe Firehose::Subscriber do
       deferrable.callback do |msg, sequence|
         msg.should == message
         sequence.should == 1 # The publisher is fresh, so the sequence ID will be 1.
-        em.stop
+        em.next_tick { em.stop }
       end
 
       em do
