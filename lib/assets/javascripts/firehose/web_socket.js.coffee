@@ -18,7 +18,8 @@ class Firehose.WebSocket extends Firehose.Transport
     @config.webSocket.swf_path ||= "/assets/firehose/WebSocketMain.swf"
 
     # Set flash socket path for the WS SWF polyfill.
-    WebSocket.__swfLocation = @config.webSocket.swf_path
+    #WebSocket.__swfLocation = @config.webSocket.swf_path
+    #window.WEB_SOCKET_SWF_LOCATION = @config.webSocket.swf_path
 
     # Mozilla decided to have their own implementation of Web Sockets so detect for that.
     window.WebSocket = window.MozWebSocket if window["MozWebSocket"] and window.MozWebSocket
