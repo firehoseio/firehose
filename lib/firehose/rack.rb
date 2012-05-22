@@ -30,14 +30,18 @@ module Firehose
             # If the request is a CORS request, return those headers, otherwise don't worry 'bout it
             response_headers = cors_origin ? cors_headers : {}
 
-            Channel.new(path).next_message(last_sequence, :timeout => 20).callback do |message, sequence|
-              response_headers.merge!(LAST_MESSAGE_SEQUENCE_HEADER => sequence.to_s)
-              env['async.callback'].call [200, response_headers, [message]]
-            end.errback do |e|
-              if e == :timeout
-                env['async.callback'].call [204, response_headers, []]
-              else
-                raise e
+            if last_sequence < 0
+              env['async.callback'].call [400, response_headers, ["Header '#{LAST_MESSAGE_SEQUENCE_HEADER}' may not be less than zero"]]
+            else
+              Channel.new(path).next_message(last_sequence, :timeout => 20).callback do |message, sequence|
+                response_headers.merge!(LAST_MESSAGE_SEQUENCE_HEADER => sequence.to_s)
+                env['async.callback'].call [200, response_headers, [message]]
+              end.errback do |e|
+                if e == :timeout
+                  env['async.callback'].call [204, response_headers, []]
+                else
+                  raise e
+                end
               end
             end
           end

@@ -88,4 +88,19 @@ describe Firehose::Rack do
       arr.should == messages
     end
   end
+
+
+  it "should return 400 error for long-polling when using http long polling and sequence header is < 0" do
+    em 5 do
+      server = ::Thin::Server.new('0.0.0.0', uri.port, app)
+      server.start
+
+      http = EM::HttpRequest.new(http_url).get(:head => {'Last-Message-Sequence' => -1})
+      http.errback { |e| raise e.inspect }
+      http.callback do
+        http.response_header.status.should == 400
+        em.stop
+      end
+    end
+  end
 end
