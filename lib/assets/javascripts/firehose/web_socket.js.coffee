@@ -15,7 +15,7 @@ class Firehose.WebSocket extends Firehose.Transport
     # Protocol schema we should use for talking to WS server.
     @config.webSocket.url ||= "ws:#{@config.uri}?#{$.param(@config.params)}"
     # Path of the swf WebSocket that we use in non-WS flash browsers.
-    @config.webSocket.swf_path ||= "/flash/firehose/WebSocketMain.swf"
+    @config.webSocket.swf_path ||= "/assets/firehose/WebSocketMain.swf"
 
     # Set flash socket path for the WS SWF polyfill.
     WebSocket.__swfLocation = @config.webSocket.swf_path
