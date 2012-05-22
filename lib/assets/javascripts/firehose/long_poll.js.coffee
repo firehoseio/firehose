@@ -71,9 +71,8 @@ class Firehose.LongPoll extends Firehose.Transport
           @_lastMessageSequence = jqXhr.getResponseHeader(@messageSequenceHeader)
       beforeSend: (jqXhr) =>
         # Tell the server what our last sequence was if we got one from the last response.
-        # TODO change this to nil or something else if no sequence is specified? Left it at -1 for now to make
-        # testing thing thing a little easier.
-        jqXhr.setRequestHeader(@messageSequenceHeader, @_lastMessageSequence ||= '-1')
+        # Zero means we have no sequence number.
+        jqXhr.setRequestHeader(@messageSequenceHeader, @_lastMessageSequence ||= '0')
 
   _success: (data, status, jqXhr) =>
     # TODO we actually want to do this when the thing calls out... mmm right now it takes
