@@ -1,1 +1,1 @@
-firehose: firehose server
+firehose: ./bin/firehose server -p $PORT

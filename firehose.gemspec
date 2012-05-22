@@ -26,6 +26,7 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency "faraday"
   s.add_runtime_dependency "websocket-rack"
   s.add_runtime_dependency "em-http-request", "~> 1.0.0"
+  s.add_runtime_dependency "foreman"
 
   s.add_development_dependency "rspec"
   s.add_development_dependency "webmock"
