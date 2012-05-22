@@ -50,7 +50,21 @@ describe Firehose::Channel do
 
         publisher.publish(channel_key, message)
       end
+    end
 
+    it "should wait for message if a future sequence is given" do
+      redis_exec 'lpush', "firehose:#{channel_key}:list", message
+      redis_exec 'set', "firehose:#{channel_key}:sequence", '100'
+
+      em 3 do
+        channel.next_message(101).callback do |msg, seq|
+          msg.should == message
+          seq.should == 101
+          em.stop
+        end.errback
+
+        publisher.publish(channel_key, message)
+      end
     end
 
     it "should immediatly get a message if message sequence is behind and in list" do

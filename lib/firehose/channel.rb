@@ -35,7 +35,7 @@ module Firehose
         Firehose.logger.debug "exec returened: `#{sequence}` and `#{message_list.inspect}`"
         sequence = sequence.to_i
 
-        if sequence.nil? || (diff = sequence - last_sequence).zero?
+        if sequence.nil? || (diff = sequence - last_sequence) <= 0
           Firehose.logger.debug "No message available yet, subscribing. sequence: `#{sequence}`"
           # Either this resource has never been seen before or we are all caught up.
           # Subscribe and hope something gets published to this end-point.
