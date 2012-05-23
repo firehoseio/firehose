@@ -14,12 +14,6 @@ class Firehose.WebSocket extends Firehose.Transport
     @config.webSocket ||= {}
     # Protocol schema we should use for talking to WS server.
     @config.webSocket.url ||= "ws:#{@config.uri}?#{$.param(@config.params)}"
-    # Path of the swf WebSocket that we use in non-WS flash browsers.
-    @config.webSocket.swf_path ||= "/assets/firehose/WebSocketMain.swf"
-
-    # Set flash socket path for the WS SWF polyfill.
-    #WebSocket.__swfLocation = @config.webSocket.swf_path
-    #window.WEB_SOCKET_SWF_LOCATION = @config.webSocket.swf_path
 
     # Mozilla decided to have their own implementation of Web Sockets so detect for that.
     window.WebSocket = window.MozWebSocket if window["MozWebSocket"] and window.MozWebSocket
