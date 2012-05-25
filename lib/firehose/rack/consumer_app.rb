@@ -2,9 +2,6 @@ require 'rack/websocket'
 
 module Firehose
   module Rack
-    AsyncResponse = [-1, {}, []]
-    TIMEOUT = 20
-
     class ConsumerApp
       def call(env)
         websocket_request?(env) ? websocket.call(env) : http_long_poll.call(env)
@@ -24,6 +21,13 @@ module Firehose
       end
 
       class HttpLongPoll
+        # Evented web servers recognize this as a response deferral.
+        ASYNC_RESPONSE = [-1, {}, []]
+
+        # How long should we wait before closing out the consuming clients web connection 
+        # for long polling? Most browsers timeout after a connection has been idle for 30s.
+        TIMEOUT = 20
+
         def call(env)
           req     = env['parsed_request'] ||= ::Rack::Request.new(env)
           path    = req.path
@@ -62,7 +66,7 @@ module Firehose
             end
 
             # Tell the web server that this will be an async response.
-            Firehose::Rack::AsyncResponse
+            ASYNC_RESPONSE
 
           # Tell the browser that we're cool about shipping Last-Message-Sequence headers back-and-forth.
           when 'OPTIONS'
