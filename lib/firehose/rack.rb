@@ -1,6 +1,6 @@
 module Firehose
   module Rack
-    autoload :ConsumerApp,   'firehose/rack/consumer_app'
+    autoload :ConsumerApp,    'firehose/rack/consumer_app'
     autoload :PublisherApp,   'firehose/rack/publisher_app'
 
     LAST_MESSAGE_SEQUENCE_HEADER = 'Last-Message-Sequence'
@@ -21,10 +21,12 @@ module Firehose
         end
       end
 
+
       private
       def publisher
         @publisher ||= PublisherApp.new
       end
+      
       def consumer
         @consumer ||= ConsumerApp.new
       end
