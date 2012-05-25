@@ -80,25 +80,14 @@ shared_examples_for 'Firehose::Rack::App' do
 
     # Great, we have all the pieces in order, lets run this thing in the reactor.
     em 60 do
-      # If the 1st request is a ws request, then (it seems) the ws handshake
-      # won't work. This dummy request overcomes that.
-      # Note that this dummy request uses an invalid sequence number. That is
-      # to be sure the request returns immediately rather than waiting for a
-      # timeout because there is no data.
-      http = EM::HttpRequest.new(http_url).get(:head => {'Last-Message-Sequence' => -1})
-      http.errback { |e| raise 'dummy request failed: ' + e.inspect }
-      http.callback do
-        # The dummy request finished, so the server can now accept ws requests.
+      # Start the clients.
+      websocket.call(1)
+      websocket.call(2)
+      http_long_poll.call(3)
+      http_long_poll.call(4)
 
-        # Start the clients.
-        websocket.call(1)
-        websocket.call(2)
-        http_long_poll.call(3)
-        http_long_poll.call(4)
-
-        # Wait a sec to let our clients set up.
-        em.add_timer(1){ publish.call }
-      end
+      # Wait a sec to let our clients set up.
+      em.add_timer(1){ publish.call }
     end
 
     # When EM stops, these assertions will be made.
