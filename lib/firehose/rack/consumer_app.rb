@@ -1,5 +1,3 @@
-require 'faye/websocket'
-
 module Firehose
   module Rack
     class ConsumerApp

@@ -21,7 +21,6 @@ Gem::Specification.new do |s|
   # specify any dependencies here; for example:
   s.add_runtime_dependency "eventmachine", ">= 1.0.0.beta"
   s.add_runtime_dependency "em-hiredis"
-  s.add_runtime_dependency "thin"
   s.add_runtime_dependency "thor"
   s.add_runtime_dependency "faraday"
   s.add_runtime_dependency "faye-websocket"
@@ -33,5 +32,6 @@ Gem::Specification.new do |s|
   s.add_development_dependency "guard-rspec"
   s.add_development_dependency "guard-bundler"
   s.add_development_dependency "guard-coffeescript"
-  s.add_development_dependency "em-websocket-client"
+  s.add_development_dependency "rainbows"
+  s.add_development_dependency "thin"
 end

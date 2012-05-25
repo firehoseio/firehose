@@ -1,7 +1,7 @@
 ENV['RACK_ENV'] ||= 'development'
 
-Firehose.logger.level = if ENV['FIREHOSE_LOG_LEVEL']
-  Logger.const_get(ENV['FIREHOSE_LOG_LEVEL'].upcase)
+Firehose.logger.level = if ENV['LOG_LEVEL']
+  Logger.const_get(ENV['LOG_LEVEL'].upcase)
 else
   case ENV['RACK_ENV']
     when 'test'         then Logger::ERROR
@@ -11,8 +11,8 @@ else
 end
 
 Firehose.logger.formatter = lambda do |severity, time, name, msg|
-  out_time = time.utc.strftime "%Y-%m-%d %H:%M:%S"
-  "[#{out_time}] #{severity} : #{msg}\n"
+  out_time = time.utc.strftime "%Y-%m-%d %H:%M:%S.%L"
+  "[#{out_time} ##$$] #{severity} : #{msg}\n"
 end
 
 # stdout gets "lost" in Foreman if this isn't here

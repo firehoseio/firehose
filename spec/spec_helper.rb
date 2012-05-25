@@ -1,18 +1,16 @@
+ENV['RACK_ENV'] ||= 'test'
+
 require 'logger'
 require 'em-http'
-require 'em-websocket-client'
+require 'faye/websocket'
 require 'hiredis'
 
-# Skip logging if VERBOSE isn't set to true.
 require 'firehose'
-Firehose.logger = Logger.new('/dev/null') unless ENV['VERBOSE']
 
-# Lets skip the verbosity of the thin for the test output.
-require 'thin'
-Thin::Logging.silent = true unless ENV['VERBOSE']
 
 # We use both EM::Http and Net::Http in this test lib. When EM:Http is fired up
-# we're usually hitting thins for integrations, and when Net::Http we want to mock that up.
+# we're usually hitting Rainbows! for integrations, and when Net::Http we want
+# to mock that up.
 require 'webmock/rspec'
 WebMock.allow_net_connect!
 
@@ -62,4 +60,23 @@ RSpec.configure do |config|
   config.before(:each) do
     reset_redis
   end
+end
+
+
+
+
+# Allow async responses to get through rack/lint
+require 'rack/lint'
+class Rack::Lint
+  def check_status_with_async(status)
+    check_status_without_async(status) unless status == -1
+  end
+  alias_method :check_status_without_async, :check_status
+  alias_method :check_status, :check_status_with_async
+
+  def check_content_type_with_async(status, headers)
+    check_content_type_without_async(status, headers) unless status == -1
+  end
+  alias_method :check_content_type_without_async, :check_content_type
+  alias_method :check_content_type, :check_content_type_with_async
 end

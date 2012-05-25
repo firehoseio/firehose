@@ -15,7 +15,7 @@ describe Firehose::Channel do
         channel.next_message.callback do |msg, seq|
           msg.should == message
           seq.should == 1
-          em.stop
+          em.next_tick { em.stop }
         end
 
         publisher.publish(channel_key, message)
@@ -32,7 +32,7 @@ describe Firehose::Channel do
           seq.should == 100
 
           # This must happen _after_ the callback runs in order to pass consistently.
-          EM.next_tick { em.stop }
+          em.next_tick { em.stop }
         end
       end
     end
@@ -45,7 +45,7 @@ describe Firehose::Channel do
         channel.next_message(100).callback do |msg, seq|
           msg.should == message
           seq.should == 101
-          em.stop
+          em.next_tick { em.stop }
         end.errback
 
         publisher.publish(channel_key, message)
@@ -60,7 +60,7 @@ describe Firehose::Channel do
         channel.next_message(101).callback do |msg, seq|
           msg.should == message
           seq.should == 101
-          em.stop
+          em.next_tick { em.stop }
         end.errback
 
         publisher.publish(channel_key, message)
@@ -77,7 +77,7 @@ describe Firehose::Channel do
             seq.should == 3
 
             # This must happen _after_ the callback runs in order to pass consistently.
-            EM.next_tick { em.stop }
+            em.next_tick { em.stop }
           end
         end
       end
@@ -93,7 +93,7 @@ describe Firehose::Channel do
             seq.should == messages.size
 
             # This must happen _after_ the callback runs in order to pass consistently.
-            EM.next_tick { em.stop }
+            em.next_tick { em.stop }
           end
         end
       end
@@ -109,7 +109,7 @@ describe Firehose::Channel do
             raise 'test failed'
           end.errback do |e|
             e.should == :timeout
-            em.stop
+            em.next_tick { em.stop }
           end
 
           EM::add_timer(2) do

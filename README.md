@@ -37,7 +37,7 @@ $ firehose server
 >> Listening on 127.0.0.1:7474, CTRL+C to stop
 ```
 
-In case you're wondering, the Firehose application server runs the Rack app `Firehose::Rack::App.new` inside of Thin.
+In case you're wondering, the Firehose application server runs the Rack app `Firehose::Rack::App.new` inside of Thin or Rainbows!.
 
 ## Publish a message to a bunch of subscribers
 
@@ -108,3 +108,7 @@ Finally, Firehose attempts to solve data consistency issues and authentication b
 # Configuration
 
 Most configuration happens inside the `.env` file. Take a look at `.env.sample` for more info.
+
+# Web Server
+
+Firehose currently supports Thin and Rainbows! (which is the default). Neither is listed as a dependency in the gemspec so that you don't need to install whichever one you aren't using. You can set which server to use via the `.env` file (recommended) or with the `-s` option to `bin/firehose`.

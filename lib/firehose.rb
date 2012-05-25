@@ -12,6 +12,7 @@ module Firehose
   autoload :Default,      'firehose/default'
   autoload :Rack,         'firehose/rack'
   autoload :CLI,          'firehose/cli'
+  autoload :Server,       'firehose/server'
   autoload :Channel,      'firehose/channel'
 
   # Logging

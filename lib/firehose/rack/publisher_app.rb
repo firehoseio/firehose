@@ -6,8 +6,7 @@ module Firehose
         path    = req.path
         method  = req.request_method
 
-        case method
-        when 'PUT'
+        if method == 'PUT'
           body = env['rack.input'].read
           Firehose.logger.debug "HTTP published `#{body}` to `#{path}`"
           publisher.publish(path, body)
