@@ -3,6 +3,7 @@ require 'rack/websocket'
 module Firehose
   module Rack
     AsyncResponse = [-1, {}, []]
+    TIMEOUT = 20
 
     class ConsumerApp
       def call(env)
@@ -22,13 +23,11 @@ module Firehose
         env['HTTP_UPGRADE'] =~ /websocket/i
       end
 
-
       class HttpLongPoll
         def call(env)
           req     = env['parsed_request'] ||= ::Rack::Request.new(env)
           path    = req.path
           method  = req.request_method
-          timeout = 20
           last_sequence = env[RACK_LAST_MESSAGE_SEQUENCE_HEADER].to_i
           cors_origin = env['HTTP_ORIGIN']
 
@@ -49,7 +48,7 @@ module Firehose
               if last_sequence < 0
                 env['async.callback'].call [400, response_headers, ["Header '#{LAST_MESSAGE_SEQUENCE_HEADER}' may not be less than zero"]]
               else
-                Channel.new(path).next_message(last_sequence, :timeout => 20).callback do |message, sequence|
+                Channel.new(path).next_message(last_sequence, :timeout => TIMEOUT).callback do |message, sequence|
                   response_headers.merge!(LAST_MESSAGE_SEQUENCE_HEADER => sequence.to_s)
                   env['async.callback'].call [200, response_headers, [message]]
                 end.errback do |e|
