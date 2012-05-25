@@ -40,9 +40,11 @@ module Firehose
           # Either this resource has never been seen before or we are all caught up.
           # Subscribe and hope something gets published to this end-point.
           subscribe(deferrable, options[:timeout])
-        elsif diff < Firehose::Publisher::MAX_MESSAGES
+        elsif last_sequence > 0 && diff < Firehose::Publisher::MAX_MESSAGES
           # The client is kinda-sorta running behind, but has a chance to catch
           # up. Catch them up FTW.
+          # But we won't "catch them up" if last_sequence was zero/nil because
+          # that implies the client is connecting for the 1st time.
           message = message_list[diff-1]
           Firehose.logger.debug "Sending old message `#{message}` and sequence `#{sequence}` to client directly. Client is `#{diff}` behind, at `#{last_sequence}`."
           deferrable.succeed message, last_sequence + 1
