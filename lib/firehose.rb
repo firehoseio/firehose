@@ -23,3 +23,6 @@ module Firehose
     @logger = logger
   end
 end
+
+# Require the environment/config
+require File.expand_path('../../config/environment', __FILE__)

@@ -9,7 +9,7 @@
 
 # What is Firehose?
 
-Firehose is both a Rack application and JavasScript library that makes building scalable real-time web applications possible.
+Firehose is both a Rack application and JavaScript library that makes building scalable real-time web applications possible.
 
 # Getting Started
 
@@ -104,3 +104,7 @@ socket.io attempts to store connection state per node instance. Firehose makes n
 Also, socket.io attempts to abstract a low-latency full-duplex port. Firehose assumes that its impossible to simulate this in older web browsers that don't support WebSockets. As such, Firehose focuses on low-latency server-to-client connections and encourages the use of existing HTTP transports, like POST and PUT, for client-to-server communications.
 
 Finally, Firehose attempts to solve data consistency issues and authentication by encourage the use of proxying to the web application.
+
+# Configuration
+
+Most configuration happens inside the `.env` file. Take a look at `.env.sample` for more info.
