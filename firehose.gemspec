@@ -24,7 +24,7 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency "thin"
   s.add_runtime_dependency "thor"
   s.add_runtime_dependency "faraday"
-  s.add_runtime_dependency "websocket-rack"
+  s.add_runtime_dependency "faye-websocket"
   s.add_runtime_dependency "em-http-request", "~> 1.0.0"
   s.add_runtime_dependency "foreman"
 

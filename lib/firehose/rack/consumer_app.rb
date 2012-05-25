@@ -1,4 +1,4 @@
-require 'rack/websocket'
+require 'faye/websocket'
 
 module Firehose
   module Rack
@@ -17,7 +17,7 @@ module Firehose
       end
 
       def websocket_request?(env)
-        env['HTTP_UPGRADE'] =~ /websocket/i
+        Faye::WebSocket.websocket?(env)
       end
 
       class HttpLongPoll
@@ -90,40 +90,51 @@ module Firehose
       end
 
 
-      class WebSocket < ::Rack::WebSocket::Application
-        attr_reader :path, :subscription
-
-        # Subscribe to a path and make some magic happen, mmkmay?
-        def on_open(env)
+      # It _may_ be more memory efficient if we used the same instance of this
+      # class (or even if we just used a proc/lambda) for every
+      # request/connection. However, we couldn't use instance variables, and
+      # so I'd need to confirm that local variables would be accessible from
+      # the callback blocks.
+      class WebSocket
+        def call(env)
           req   = ::Rack::Request.new(env)
           @path  = req.path
+          ws = Faye::WebSocket.new(env)
 
-          Firehose.logger.debug "WS subscribed to `#{path}`"
+          ws.onopen = lambda do |event|
+            Firehose.logger.debug "WS subscribed to `#{@path}`"
 
-          subscribe = Proc.new do |last_sequence|
-            @channel = Channel.new(path)
-            @deferrable = @channel.next_message(last_sequence).callback do |message, sequence|
-              Firehose.logger.debug "WS sent `#{message}` to `#{path}` with sequence `#{sequence}`"
-              send_data message
-              subscribe.call(sequence)
-            end.errback { |e| raise e.inspect unless e == :disconnect }
+            subscribe = Proc.new do |last_sequence|
+              @channel = Channel.new(@path)
+              @deferrable = @channel.next_message(last_sequence).callback do |message, sequence|
+                Firehose.logger.debug "WS sent `#{message}` to `#{@path}` with sequence `#{sequence}`"
+                ws.send message
+                subscribe.call(sequence)
+              end.errback { |e| raise e.inspect unless e == :disconnect }
+            end
+
+            subscribe.call
           end
 
-          subscribe.call
-        end
+          #ws.onmessage = lambda do |event|
+          #  event.data
+          #end
 
-        # Delete the subscription if the thing even happened.
-        def on_close(env)
-          if @deferrable
-            @deferrable.fail :disconnect
-            @channel.unsubscribe(@deferrable) if @channel
+          ws.onclose = lambda do |event|
+            if @deferrable
+              @deferrable.fail :disconnect
+              @channel.unsubscribe(@deferrable) if @channel
+            end
+            Firehose.logger.debug "WS connection `#{@path}` closing. Code: #{event.code.inspect}; Reason #{event.reason.inspect}"
           end
-          Firehose.logger.debug "WS connection `#{path}` closing"
-        end
 
-        # Log websocket level errors
-        def on_error(env, error)
-          Firehose.logger.error "WS connection `#{path}` error `#{error}`: #{error.backtrace}"
+          ws.onerror = lambda do |event|
+            Firehose.logger.error "WS connection `#{@path}` error `#{error}`: #{error.backtrace}"
+          end
+
+
+          # Return async Rack response
+          ws.rack_response
         end
       end
     end
