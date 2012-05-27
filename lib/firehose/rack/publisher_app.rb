@@ -12,7 +12,7 @@ module Firehose
           Firehose.logger.debug "HTTP published `#{body}` to `#{path}`"
           publisher.publish(path, body)
 
-          [202, {}, []]
+          [202, {'Content-Type' => 'text/plain'}, []]
         else
           Firehose.logger.debug "HTTP #{method} not supported"
           [501, {'Content-Type' => 'text/plain'}, ["#{method} not supported."]]
