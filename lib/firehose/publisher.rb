@@ -29,7 +29,7 @@ module Firehose
                    redis.call('publish', KEYS[3], "#{lua_escape(channel_key + PAYLOAD_DELIMITER)}" .. sequence .. "#{lua_escape(PAYLOAD_DELIMITER + message)}")
                    return sequence
                   ), 3, sequence_key, list_key, key(:channel_updates)).
-        errback{|e| deferrable.fail e }.  # TODO: handle retries if WATCH causes a transaction rollback
+        errback{|e| deferrable.fail e }.
         callback do |sequence|
           Firehose.logger.debug "Redis stored/published `#{message}` to list `#{list_key}` with sequence `#{sequence}`"
           deferrable.succeed

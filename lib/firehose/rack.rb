@@ -26,7 +26,7 @@ module Firehose
       def publisher
         @publisher ||= PublisherApp.new
       end
-      
+
       def consumer
         @consumer ||= ConsumerApp.new
       end
