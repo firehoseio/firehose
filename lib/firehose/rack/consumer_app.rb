@@ -22,7 +22,7 @@ module Firehose
 
       class HttpLongPoll
         # Evented web servers recognize this as a response deferral.
-        ASYNC_RESPONSE = [-1, {}, []]
+        ASYNC_RESPONSE = [-1, {}, []].freeze
 
         # How long should we wait before closing out the consuming clients web connection 
         # for long polling? Most browsers timeout after a connection has been idle for 30s.
