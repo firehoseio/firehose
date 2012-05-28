@@ -53,8 +53,11 @@ module Firehose
                 env['async.callback'].call [400, response_headers, ["Header '#{LAST_MESSAGE_SEQUENCE_HEADER}' may not be less than zero"]]
               else
                 Channel.new(path).next_message(last_sequence, :timeout => TIMEOUT).callback do |message, sequence|
-                  response_headers.merge!(LAST_MESSAGE_SEQUENCE_HEADER => sequence.to_s)
-                  env['async.callback'].call [200, response_headers, [message]]
+                  message_headers = {
+                    'Content-Length' => message.size.to_s,          # We need this for HTTP keep-alive connections.
+                    LAST_MESSAGE_SEQUENCE_HEADER => sequence.to_s   # Used for long-poll client to sync message stream.
+                  }
+                  env['async.callback'].call [200, response_headers.merge(message_headers), [message]]
                 end.errback do |e|
                   if e == :timeout
                     env['async.callback'].call [204, response_headers, []]
@@ -76,7 +79,8 @@ module Firehose
             'Access-Control-Allow-Origin'     => cors_origin,
             'Access-Control-Allow-Headers'    => LAST_MESSAGE_SEQUENCE_HEADER,
             'Access-Control-Expose-Headers'   => LAST_MESSAGE_SEQUENCE_HEADER,
-            'Access-Control-Max-Age'          => '1728000'
+            'Access-Control-Max-Age'          => '1728000',
+            'Content-Length'                  => '0'
             }, []]
           else
             Firehose.logger.debug "HTTP #{method} not supported"
