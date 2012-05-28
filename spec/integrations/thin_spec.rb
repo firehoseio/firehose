@@ -114,4 +114,7 @@ describe Firehose::Rack do
       end
     end
   end
+
+  it "should have Content-Length in consumer_app on OPTIONS request"
+  it "should have Content-Length in consumer_app on GET request"
 end
