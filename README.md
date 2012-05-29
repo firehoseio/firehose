@@ -112,3 +112,16 @@ Most configuration happens inside the `.env` file. Take a look at `.env.sample` 
 # Web Server
 
 Firehose currently supports Thin and Rainbows! (which is the default). Neither is listed as a dependency in the gemspec so that you don't need to install whichever one you aren't using. You can set which server to use via the `.env` file (recommended) or with the `-s` option to `bin/firehose`.
+
+# Exception Notification #
+
+If you'd like to be notified of exceptions, add something like this in your custom config.ru file.
+
+    # Use exceptional to handle anything missed by Rack::Exceptional
+    if exceptional_key = ENV['EXCEPTIONAL_KEY']
+      require 'exceptional'
+      EM.error_handler do |e|
+        Firehose.logger.error "Unhandled exception: #{e.class} #{e.message}\n#{e.backtrace.join "\n"}"
+        ::Exceptional.handle(e)
+      end
+    end
