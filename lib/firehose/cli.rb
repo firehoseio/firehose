@@ -1,5 +1,4 @@
 require 'thor'
-require 'rainbows'
 
 module Firehose
   class CLI < Thor
