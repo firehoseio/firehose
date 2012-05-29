@@ -1,7 +1,8 @@
-require 'firehose/version'
+ENV['RACK_ENV'] ||= 'development'
 
+require 'firehose/version'
+require 'firehose/logging'
 require 'em-hiredis'
-require 'logger'
 
 require 'firehose/rails' if defined?(::Rails::Engine)
 
@@ -14,16 +15,4 @@ module Firehose
   autoload :CLI,          'firehose/cli'
   autoload :Server,       'firehose/server'
   autoload :Channel,      'firehose/channel'
-
-  # Logging
-  def self.logger
-    @logger ||= Logger.new($stdout)
-  end
-
-  def self.logger=(logger)
-    @logger = logger
-  end
 end
-
-# Require the environment/config
-require File.expand_path('../../config/environment', __FILE__)
