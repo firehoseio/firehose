@@ -28,6 +28,17 @@ describe Firehose::Publisher do
       end
     end
 
+
+    "\"'\r\t\n!@\#$%^&*()[]\v\f\a\b\e{}/=?+\\|".each_char do |char|
+      it "should publish messages with the '#{char.inspect}' character" do
+        msg = [char, message, char].join
+        em 1 do
+          Firehose::Publisher.new.publish(channel_key, msg).callback { em.stop }
+        end
+        redis_exec('lpop', "firehose:#{channel_key}:list").should == msg
+      end
+    end
+
     it "should add message to list" do
       em do
         Firehose::Publisher.new.publish(channel_key, message).callback { em.stop }

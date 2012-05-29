@@ -59,7 +59,7 @@ module Firehose
     #       characters and then escape or remove everything else.
     #       See: http://en.wikibooks.org/wiki/Lua_Programming/How_to_Lua/escape_sequence
     def lua_escape(str)
-      str.gsub(/"/,'\"').gsub(/\n/,'\n')
+      str.gsub(/\\/,'\\\\\\').gsub(/"/,'\"').gsub(/\n/,'\n').gsub(/\r/,'\r')
     end
   end
 end
