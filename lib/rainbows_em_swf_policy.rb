@@ -32,10 +32,7 @@ class Rainbows::EventMachine::Client
       EOS
 
       send_data policy
-
-      @onclose = nil
       close_connection_after_writing
-
       return false
     else
       receive_data_without_swf_policy(data)
