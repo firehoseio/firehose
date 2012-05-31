@@ -15,4 +15,5 @@ module Firehose
   autoload :CLI,          'firehose/cli'
   autoload :Server,       'firehose/server'
   autoload :Channel,      'firehose/channel'
+  autoload :SwfPolicyRequest, 'firehose/swf_policy_request'
 end
