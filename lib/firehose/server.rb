@@ -29,6 +29,8 @@ module Firehose
 
     def start_thin
       require 'thin'
+      require 'thin_em_swf_policy' if ENV['RACK_ENV'] == 'development'
+
       Faye::WebSocket.load_adapter('thin')
 
       # TODO: See if we can just set Thin to use Firehose.logger instead of
