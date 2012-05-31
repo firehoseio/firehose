@@ -1,9 +1,4 @@
-# This file file monkeypatches Rainbows! to return a proper SWF policy file.
-# Enable this with something like this in your config/rainbows.rb file:
-#
-#     after_fork do |server, worker|
-#       require 'rainbows_em_swf_policy'
-#     end if ENV['RACK_ENV'] == 'development'
+# This file file monkeypatches Thin to return a proper SWF policy file.
 #
 # You should only use this in development. It has not been well tested in a
 # production environment.
@@ -14,7 +9,7 @@
 # http://www.adobe.com/devnet/flashplayer/articles/socket_policy_files.html
 # http://blog.vokle.com/index.php/2009/06/10/dealing-with-adobe-and-serving-socket-policy-servers-via-nginx-and-10-lines-of-code/
 
-require 'rainbows'
+require 'thin'
 # Ensure the class already exists so we are overwriting it.
 Thin::Connection
 
