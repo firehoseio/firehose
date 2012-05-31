@@ -14,3 +14,7 @@ end
 worker_processes [ENV['WORKER_PROCESSES'].to_i, 1].max # Default to 1
 working_directory ENV['WORKING_DIRECTORY'] if ENV['WORKING_DIRECTORY']
 logger Firehose.logger
+
+after_fork do |server, worker|
+  require 'rainbows_em_swf_policy'
+end if ENV['RACK_ENV'] == 'development'
