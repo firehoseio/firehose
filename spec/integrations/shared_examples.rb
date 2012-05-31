@@ -108,7 +108,4 @@ shared_examples_for 'Firehose::Rack::App' do
       end
     end
   end
-
-  it "should have Content-Length in consumer_app on OPTIONS request"
-  it "should have Content-Length in consumer_app on GET request"
 end
