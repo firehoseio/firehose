@@ -1,11 +1,9 @@
 class Firehose.WebSocket extends Firehose.Transport
-  @flashSupported: =>
-    $.browser.msie
-
   @supported: =>
     # Compatibility reference: http://caniuse.com/websockets
-    # Native websocket support + Flash web socket
-    !!(window.WebSocket || (window["MozWebSocket"] and window.MozWebSocket) || WebSocket.flashSupported())
+    # We don't need to explicitly check for Flash web socket or MozWebSocket
+    # because web_socket.js has already handled that.
+    !!(window.WebSocket)
 
   constructor: (args) ->
     super args
@@ -14,9 +12,6 @@ class Firehose.WebSocket extends Firehose.Transport
     @config.webSocket ||= {}
     # Protocol schema we should use for talking to WS server.
     @config.webSocket.url ||= "ws:#{@config.uri}?#{$.param(@config.params)}"
-
-    # Mozilla decided to have their own implementation of Web Sockets so detect for that.
-    window.WebSocket = window.MozWebSocket if window["MozWebSocket"] and window.MozWebSocket
 
   _request: =>
     @socket = new window.WebSocket(@config.webSocket.url)
