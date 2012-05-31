@@ -1,3 +1,6 @@
+# TODO Does this HAVE to be a global? I wonder if there's some way we can 
+window.WEB_SOCKET_SWF_LOCATION = '/assets/firehose/WebSocketMain.swf'
+
 class Firehose.WebSocket extends Firehose.Transport
   @supported: =>
     # Compatibility reference: http://caniuse.com/websockets

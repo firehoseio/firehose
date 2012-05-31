@@ -72,6 +72,9 @@ Firehose doesn't just stop at curl; it has a full-featured JavaScript client tha
 Still have the server running? Copy and paste the code below into Firebug or the WebKit console.
 
 ```javascript
+// You'll need to set for WS to work in IE. The value here is the default.
+window.WEB_SOCKET_SWF_LOCATION = '/assets/firehose/WebSocketMain.swf';
+
 new Firehose.Consumer({
   message: function(msg){
     console.log(msg);
