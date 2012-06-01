@@ -5,6 +5,8 @@ module Firehose
 
     LAST_MESSAGE_SEQUENCE_HEADER = 'Last-Message-Sequence'
     RACK_LAST_MESSAGE_SEQUENCE_HEADER = "HTTP_#{LAST_MESSAGE_SEQUENCE_HEADER.upcase.gsub('-', '_')}"
+    # Don't cache in development mode
+    CORS_OPTIONS_MAX_AGE = ENV['RACK_ENV'] == 'development' ? '1' : '1728000'
 
     # Allows the publisher and consumer to be mounted on the same port.
     class App

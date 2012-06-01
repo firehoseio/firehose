@@ -30,6 +30,8 @@ class Firehose.LongPoll extends Firehose.Transport
     super(delay)
 
   _request: =>
+    # TODO: Some of these options will be deprecated in jQurey 1.8
+    #       See: http://api.jquery.com/jQuery.ajax/#jqXHR
     $.ajax @config.longPoll.url,
       crossDomain: true
       data: @config.params
@@ -56,7 +58,7 @@ class Firehose.LongPoll extends Firehose.Transport
       # 
       # Why did we use a 204 and not a 408? Because FireFox is really stupid about 400 level error
       # codes and would claims its a 0 error code, which we use for something else. Firefox is IE
-      # in thise case
+      # in this case
       @connect(@_okInterval)
     else
       @config.message(@config.parse(data))

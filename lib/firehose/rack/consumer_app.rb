@@ -24,7 +24,7 @@ module Firehose
         # Evented web servers recognize this as a response deferral.
         ASYNC_RESPONSE = [-1, {}, []].freeze
 
-        # How long should we wait before closing out the consuming clients web connection 
+        # How long should we wait before closing out the consuming clients web connection
         # for long polling? Most browsers timeout after a connection has been idle for 30s.
         TIMEOUT = 20
 
@@ -39,6 +39,7 @@ module Firehose
           # GET is how clients subscribe to the queue. When a messages comes in, we flush out a response,
           # close down the requeust, and the client then reconnects.
           when 'GET'
+            Firehose.logger.debug "HTTP GET with last_sequence #{last_sequence} for path #{path}"
             EM.next_tick do
               # TODO seperate out CORS logic as an async middleware with a Goliath web server.
               cors_headers  = {
@@ -73,13 +74,15 @@ module Firehose
 
           # Tell the browser that we're cool about shipping Last-Message-Sequence headers back-and-forth.
           when 'OPTIONS'
+            Firehose.logger.debug "HTTP OPTIONS request for origin '#{cors_origin}' and path '#{path}'"
+
             # TODO seperate out CORS logic as an async middleware with a Goliath web server.
             [200, {
             'Access-Control-Allow-Methods'    => 'GET',
             'Access-Control-Allow-Origin'     => cors_origin,
             'Access-Control-Allow-Headers'    => LAST_MESSAGE_SEQUENCE_HEADER,
             'Access-Control-Expose-Headers'   => LAST_MESSAGE_SEQUENCE_HEADER,
-            'Access-Control-Max-Age'          => '1728000',
+            'Access-Control-Max-Age'          => CORS_OPTIONS_MAX_AGE,
             'Content-Length'                  => '0'
             }, []]
           else
