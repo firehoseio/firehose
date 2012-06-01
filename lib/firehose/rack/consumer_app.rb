@@ -116,7 +116,7 @@ module Firehose
               end.errback { |e| raise e.inspect unless e == :disconnect }
             end
 
-            subscribe.call
+            subscribe.call nil
           end
 
           #ws.onmessage = lambda do |event|

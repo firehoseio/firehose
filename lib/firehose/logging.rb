@@ -31,7 +31,7 @@ end
 
 # stdout gets "lost" in Foreman if this isn't here
 # https://github.com/ddollar/foreman/wiki/Missing-Output
-$stdout.sync = true if ENV['RACK_ENV'] == 'development'
+$stdout.sync = true if ENV['RACK_ENV'] == 'development' || ENV['SYNC_LOGGING']
 
 
 Firehose.logger.info "Starting #{Firehose::VERSION} '#{Firehose::CODENAME}', in #{ENV['RACK_ENV']}"
