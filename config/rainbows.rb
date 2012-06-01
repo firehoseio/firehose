@@ -16,5 +16,5 @@ working_directory ENV['WORKING_DIRECTORY'] if ENV['WORKING_DIRECTORY']
 logger Firehose.logger
 
 after_fork do |server, worker|
-  require 'firehose/rainbows_em_swf_policy'
+  require 'rainbows_em_swf_policy'
 end if ENV['RACK_ENV'] == 'development'

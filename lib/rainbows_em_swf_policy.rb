@@ -2,7 +2,7 @@
 # Enable this with something like this in your config/rainbows.rb file:
 #
 #     after_fork do |server, worker|
-#       require 'firehose/rainbows_em_swf_policy'
+#       require 'rainbows_em_swf_policy'
 #     end if ENV['RACK_ENV'] == 'development'
 #
 # You should only use this in development. It has not been well tested in a
