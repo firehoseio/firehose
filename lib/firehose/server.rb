@@ -29,7 +29,7 @@ module Firehose
 
     def start_thin
       require 'thin'
-      require 'thin_em_swf_policy' if ENV['RACK_ENV'] == 'development'
+      require 'firehose/thin_em_swf_policy' if ENV['RACK_ENV'] == 'development'
 
       Faye::WebSocket.load_adapter('thin')
 
