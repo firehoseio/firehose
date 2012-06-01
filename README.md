@@ -116,7 +116,7 @@ Most configuration happens inside the `.env` file. Take a look at `.env.sample` 
 
 Firehose currently supports Thin and Rainbows! (which is the default). Neither is listed as a dependency in the gemspec so that you don't need to install whichever one you aren't using. You can set which server to use via the `.env` file (recommended) or with the `-s` option to `bin/firehose`.
 
-# Exception Notification #
+# Exception Notification
 
 If you'd like to be notified of exceptions, add something like this in your custom config.ru file.
 
@@ -128,3 +128,9 @@ If you'd like to be notified of exceptions, add something like this in your cust
         ::Exceptional.handle(e)
       end
     end
+
+# Flash Policy File
+
+This works out of the box in development if you use the included Procfile with Foreman. However, that solution doesn't work well with a lot production setups, so it is disabled in other environments.
+
+TODO: Add details here about setting something up on port 843.
