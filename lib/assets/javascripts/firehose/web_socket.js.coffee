@@ -1,5 +1,6 @@
-# TODO Does this HAVE to be a global? I wonder if there's some way we can 
-window.WEB_SOCKET_SWF_LOCATION = '/assets/firehose/WebSocketMain.swf'
+# Unfortunately this needs to a global variable. The only other option is to
+# hack into the internals of the web_socket.js plugin we are using.
+window.WEB_SOCKET_SWF_LOCATION = '/assets/firehose/WebSocketMain.swf' if !window.WEB_SOCKET_SWF_LOCATION
 
 class Firehose.WebSocket extends Firehose.Transport
   @supported: =>
