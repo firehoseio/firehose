@@ -64,8 +64,23 @@ class Firehose.LongPoll extends Firehose.Transport
       @config.message(@config.parse(data))
       @connect(@_okInterval)
 
+  _ping: =>
+    # Ping long poll server to verify internet connectivity
+    # jQuery CORS doesn't support timeouts and there is no way to access xhr2 object
+    # directly so we can't manually set a timeout.
+    $.ajax @config.longPoll.url,
+      method: 'OPTIONS'
+      crossDomain: true
+      data: @config.params
+      success: @config.connected
+
   # We need this custom handler to have the connection status
   # properly displayed
   _error: (jqXhr, status, error) =>
     @config.disconnected()
+    
+    # Ping the server to make sure this isn't a network connectivity error
+    setTimeout @_ping, @_retryDelay + @_lagTime
+
+    # Reconnect with delay
     setTimeout @_request, @_retryDelay
