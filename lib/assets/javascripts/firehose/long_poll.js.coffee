@@ -1,5 +1,5 @@
 class Firehose.LongPoll extends Firehose.Transport
-  messageSequenceHeader: 'Last-Message-Sequence'
+  messageSequenceHeader: 'pragma'
 
   # CORS is supported in IE 8+
   @ieSupported: =>
@@ -24,7 +24,7 @@ class Firehose.LongPoll extends Firehose.Transport
     @_lagTime = 5000
     @_timeout = @config.longPoll.timeout + @_lagTime
     @_okInterval = 0
-    
+   
   connect: (delay = 0) =>
     @config.connected()
     super(delay)
@@ -61,7 +61,7 @@ class Firehose.LongPoll extends Firehose.Transport
       # in this case
       @connect(@_okInterval)
     else
-      @config.message(@config.parse(data))
+      @config.message(@config.parse(jqXhr.responseText))
       @connect(@_okInterval)
 
   _ping: =>
