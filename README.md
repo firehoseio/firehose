@@ -133,4 +133,12 @@ If you'd like to be notified of exceptions, add something like this in your cust
 
 This works out of the box in development if you use the included Procfile with Foreman. However, that solution doesn't work well with a lot production setups, so it is disabled in other environments.
 
-TODO: Add details here about setting something up on port 843.
+Here is a hack to server your policy file via Nginx:
+* http://blog.vokle.com/index.php/2009/06/10/dealing-with-adobe-and-serving-socket-policy-servers-via-nginx-and-10-lines-of-code/
+
+You can also add a similar hack to HAProxy to serve your policy file.
+    listen swf_policy_requests 0.0.0.0:843
+      # Be careful here. This needs to be an absolute path.
+      errorfile 400 /path/to/my/crossdomain.xml
+
+In either case, you'll want to be careful about using these hacks on ports that you are also using for genuine HTTP traffic.
