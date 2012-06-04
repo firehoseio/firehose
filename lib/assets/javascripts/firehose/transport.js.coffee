@@ -32,7 +32,7 @@ class Firehose.Transport
   # Default connection established handler
   _open: (event) =>
     @_succeeded = true
-    @config.connected()
+    @config.connected(@)
 
   # Default connection closed handler
   _close: (event) =>
