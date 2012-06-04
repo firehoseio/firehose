@@ -3,6 +3,9 @@ module Firehose
     autoload :ConsumerApp,    'firehose/rack/consumer_app'
     autoload :PublisherApp,   'firehose/rack/publisher_app'
 
+    # Normally we'd want to use a custom header to reduce the likelihood of some
+    # HTTP middleware clobbering the value. But Safari seems to ignore our CORS
+    # header instructions, so we are using 'pragma' because it is always allowed.
     LAST_MESSAGE_SEQUENCE_HEADER = 'pragma'
     RACK_LAST_MESSAGE_SEQUENCE_HEADER = "HTTP_#{LAST_MESSAGE_SEQUENCE_HEADER.upcase.gsub('-', '_')}"
     # Don't cache in development mode

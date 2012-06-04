@@ -72,7 +72,7 @@ module Firehose
             # Tell the web server that this will be an async response.
             ASYNC_RESPONSE
 
-          # Tell the browser that we're cool about shipping Last-Message-Sequence headers back-and-forth.
+          # Tell the browser that we're cool about shipping LAST_MESSAGE_SEQUENCE_HEADER back-and-forth.
           when 'OPTIONS'
             Firehose.logger.debug "HTTP OPTIONS request for origin '#{cors_origin}' and path '#{path}'"
 
