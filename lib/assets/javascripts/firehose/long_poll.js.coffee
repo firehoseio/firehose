@@ -30,11 +30,16 @@ class Firehose.LongPoll extends Firehose.Transport
     super(delay)
 
   _request: =>
+    # Set the Last Message Sequence in a query string.
+    # Ideally we'd use an HTTP header, but android devices don't let us
+    # set any HTTP headers for CORS requests.
+    data = @config.params
+    data.last_message_sequence = @_lastMessageSequence
     # TODO: Some of these options will be deprecated in jQurey 1.8
     #       See: http://api.jquery.com/jQuery.ajax/#jqXHR
     $.ajax @config.longPoll.url,
       crossDomain: true
-      data: @config.params
+      data: data
       timeout: @_timeout
       success: @_success
       error: @_error
@@ -42,10 +47,8 @@ class Firehose.LongPoll extends Firehose.Transport
         # Get the last sequence from the server if specified.
         if jqXhr.status == 200
           @_lastMessageSequence = jqXhr.getResponseHeader(@messageSequenceHeader)
-      beforeSend: (jqXhr) =>
-        # Tell the server what our last sequence was if we got one from the last response.
-        # Zero means we have no sequence number.
-        jqXhr.setRequestHeader(@messageSequenceHeader, @_lastMessageSequence ||= '0')
+          if @_lastMessageSequence == null
+            console.log 'ERROR: Unable to get last message sequnce from header'
 
   _success: (data, status, jqXhr) =>
     # TODO we actually want to do this when the thing calls out... mmm right now it takes

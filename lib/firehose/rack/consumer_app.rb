@@ -32,7 +32,10 @@ module Firehose
           req     = env['parsed_request'] ||= ::Rack::Request.new(env)
           path    = req.path
           method  = req.request_method
-          last_sequence = env[RACK_LAST_MESSAGE_SEQUENCE_HEADER].to_i
+          # Get the Last Message Sequence from the query string.
+          # Ideally we'd use an HTTP header, but android devices don't let us
+          # set any HTTP headers for CORS requests.
+          last_sequence = req.params['last_message_sequence'].to_i
           cors_origin = env['HTTP_ORIGIN']
 
           case method
