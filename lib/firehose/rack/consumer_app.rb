@@ -42,7 +42,7 @@ module Firehose
           # GET is how clients subscribe to the queue. When a messages comes in, we flush out a response,
           # close down the requeust, and the client then reconnects.
           when 'GET'
-            Firehose.logger.debug "HTTP GET with last_sequence #{last_sequence} for path #{path}"
+            Firehose.logger.debug "HTTP GET with last_sequence #{last_sequence} for path #{path} with query #{env["QUERY_STRING"].inspect} and params #{req.params.inspect}"
             EM.next_tick do
               # TODO seperate out CORS logic as an async middleware with a Goliath web server.
               cors_headers  = {
