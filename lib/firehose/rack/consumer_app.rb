@@ -76,18 +76,10 @@ module Firehose
             ASYNC_RESPONSE
 
           # Tell the browser that we're cool about shipping LAST_MESSAGE_SEQUENCE_HEADER back-and-forth.
-          when 'OPTIONS'
-            Firehose.logger.debug "HTTP OPTIONS request for origin '#{cors_origin}' and path '#{path}'"
-
-            # TODO seperate out CORS logic as an async middleware with a Goliath web server.
-            [200, {
-            'Access-Control-Allow-Methods'    => 'GET',
-            'Access-Control-Allow-Origin'     => cors_origin,
-            'Access-Control-Allow-Headers'    => LAST_MESSAGE_SEQUENCE_HEADER,
-            'Access-Control-Expose-Headers'   => LAST_MESSAGE_SEQUENCE_HEADER,
-            'Access-Control-Max-Age'          => CORS_OPTIONS_MAX_AGE,
-            'Content-Length'                  => '0'
-            }, []]
+          when 'HEAD'
+            # This is our health check ping
+            Firehose.logger.debug "HTTP PING request for path '#{path}'"
+            [200, {'Content-Length' => '0'}, []]
           else
             Firehose.logger.debug "HTTP #{method} not supported"
             [501, {'Content-Type' => 'text/plain'}, ["#{method} not supported."]]

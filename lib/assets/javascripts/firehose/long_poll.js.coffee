@@ -72,7 +72,7 @@ class Firehose.LongPoll extends Firehose.Transport
     # jQuery CORS doesn't support timeouts and there is no way to access xhr2 object
     # directly so we can't manually set a timeout.
     $.ajax @config.longPoll.url,
-      method: 'OPTIONS'
+      method: 'HEAD'
       crossDomain: true
       data: @config.params
       success: @config.connected
