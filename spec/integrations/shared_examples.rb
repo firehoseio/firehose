@@ -50,7 +50,7 @@ shared_examples_for 'Firehose::Rack::App' do
 
     # Lets have an HTTP Long poll client
     http_long_poll = Proc.new do |cid, last_sequence|
-      http = EM::HttpRequest.new(http_url).get(:head => {'pragma' => last_sequence})
+      http = EM::HttpRequest.new(http_url).get(:query => {'last_message_sequence' => last_sequence})
       http.errback { em.stop }
       http.callback do
         received[cid] << http.response
@@ -100,7 +100,7 @@ shared_examples_for 'Firehose::Rack::App' do
 
   it "should return 400 error for long-polling when using http long polling and sequence header is < 0" do
     em 5 do
-      http = EM::HttpRequest.new(http_url).get(:head => {'pragma' => -1})
+      http = EM::HttpRequest.new(http_url).get(:query => {'last_message_sequence' => -1})
       http.errback { |e| raise e.inspect }
       http.callback do
         http.response_header.status.should == 400
