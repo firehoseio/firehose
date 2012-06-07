@@ -24,9 +24,13 @@ class Firehose.LongPoll extends Firehose.Transport
     @_lagTime = 5000
     @_timeout = @config.longPoll.timeout + @_lagTime
     @_okInterval = 0
+
+    @_isConnected = false
    
   connect: (delay = 0) =>
-    @config.connected()
+    unless @_isConnected
+      @_isConnected = true
+      @config.connected()
     super(delay)
 
   _request: =>
@@ -80,6 +84,7 @@ class Firehose.LongPoll extends Firehose.Transport
   # We need this custom handler to have the connection status
   # properly displayed
   _error: (jqXhr, status, error) =>
+    @_isConnected = false
     @config.disconnected()
     
     # Ping the server to make sure this isn't a network connectivity error
