@@ -13,7 +13,7 @@ Firehose is both a Rack application and JavaScript library that makes building r
 
 # Getting Started
 
-First, you'll need to install and run Redis 2.6 from http://redis.io/download
+First, you'll need to [install and run Redis 2.6](http://redis.io/download).
 Version 2.6 is required because Firehose uses [Lua/EVAL](http://redis.io/commands/eval) for its transactions, which is not available in earlier versions of Redis.
 
 Then install the gem.
@@ -26,7 +26,7 @@ $ gem install firehose
 
 Now fire up the server.
 
-```ruby
+```
 $ firehose server
 >> Thin web server (v1.3.1 codename Triple Espresso)
 >> Maximum connections set to 1024
