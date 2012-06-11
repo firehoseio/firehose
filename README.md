@@ -5,16 +5,16 @@
     | | | | | |  __/ | | | (_) \__ \  __/
     |_| |_|_|  \___|_| |_|\___/|___/\___|
     
-    Build Realtime web applications in Ruby
+    Build realtime web applications in Ruby and JS
 
 # What is Firehose?
 
-Firehose is both a Rack application and JavaScript library that makes building scalable real-time web applications possible.
+Firehose is both a Rack application and JavaScript library that makes building real-time web applications possible.
 
 # Getting Started
 
 First, you'll need to install and run Redis 2.6 from http://redis.io/download
-2.6 is required for Lua/EVAL support.
+Version 2.6 is required because Firehose uses [Lua/EVAL](http://redis.io/commands/eval) for its transactions, which is not available in earlier versions of Redis.
 
 Then install the gem.
 
@@ -102,7 +102,19 @@ socket.io attempts to store connection state per node instance. Firehose makes n
 
 Also, socket.io attempts to abstract a low-latency full-duplex port. Firehose assumes that its impossible to simulate this in older web browsers that don't support WebSockets. As such, Firehose focuses on low-latency server-to-client connections and encourages the use of existing HTTP transports, like POST and PUT, for client-to-server communications.
 
-Finally, Firehose attempts to solve data consistency issues and authentication by encourage the use of proxying to the web application.
+Finally, Firehose attempts to solve data consistency issues and authentication by encouraging the use of proxying to the web application.
+
+# The Ruby Publisher
+
+While you can certainly make your own PUT requests when publishing messages, Firehose includes a Ruby client for easy publishing.
+
+```ruby
+require 'firehose'
+require 'json'
+json = {'hello'=> 'world'}.to_json
+firehose = Firehose::Producer.new('//127.0.0.1:7474')
+firehose.publish(json).to("/my/messages/path")
+```
 
 # Configuration
 
@@ -167,8 +179,7 @@ end
 
 This works out of the box in development if you use the included Procfile with Foreman. However, that solution doesn't work well with a lot production setups, so it is disabled in other environments.
 
-Here is a hack to server your policy file via Nginx:
-* http://blog.vokle.com/index.php/2009/06/10/dealing-with-adobe-and-serving-socket-policy-servers-via-nginx-and-10-lines-of-code/
+[Here is a hack to server your policy file via Nginx](http://blog.vokle.com/index.php/2009/06/10/dealing-with-adobe-and-serving-socket-policy-servers-via-nginx-and-10-lines-of-code/)
 
 You can also add a similar hack to HAProxy to serve your policy file.
 
