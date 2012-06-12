@@ -22,7 +22,7 @@ module Firehose
 
       deferrable = EM::DefaultDeferrable.new
       # TODO - Think this through a little harder... maybe some tests ol buddy!
-      deferrable.errback {|e| raise e unless [:timeout, :disconnect].include?(e) }
+      deferrable.errback {|e| EM.next_tick { raise e } unless [:timeout, :disconnect].include?(e) }
 
 
       # TODO: Use HSET so we don't have to pull 100 messages back every time.

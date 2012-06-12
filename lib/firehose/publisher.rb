@@ -9,7 +9,7 @@ module Firehose
       # commands because of the lack of a method_missing whitelist. Perhaps implement a whitelist in
       # em-hiredis or us a diff lib?
       deferrable = EM::DefaultDeferrable.new
-      deferrable.errback {|e| raise e }
+      deferrable.errback {|e| EM.next_tick { raise e } }
 
       # DRY up keys a little bit for the epic publish command to come.
       list_key = key(channel_key, :list)

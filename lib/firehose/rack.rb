@@ -3,6 +3,9 @@ module Firehose
     autoload :ConsumerApp,    'firehose/rack/consumer_app'
     autoload :PublisherApp,   'firehose/rack/publisher_app'
 
+    # Evented web servers recognize this as a response deferral.
+    ASYNC_RESPONSE = [-1, {}, []].freeze
+
     # Normally we'd want to use a custom header to reduce the likelihood of some
     # HTTP middleware clobbering the value. But Safari seems to ignore our CORS
     # header instructions, so we are using 'pragma' because it is always allowed.

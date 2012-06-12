@@ -35,4 +35,5 @@ Gem::Specification.new do |s|
   s.add_development_dependency "rainbows"
   s.add_development_dependency "thin"
   s.add_development_dependency "rack-test"
+  s.add_development_dependency "async_rack_test"
 end

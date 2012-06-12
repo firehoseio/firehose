@@ -6,8 +6,18 @@ module Firehose
     def initialize(redis)
       @redis = redis
 
+      # TODO: Instead of just raising an exception, it would probably be better
+      #       for the errback to set some sort of 'disconnected' state. Then
+      #       whenever a deferrable was 'subscribed' we could instantly fail
+      #       the deferrable with whatever connection error we had.
+      #       An alternative which would have a similar result would be to
+      #       subscribe lazily (i.e. not until we have a deferrable to subscribe).
+      #       Then, if connecting failed, it'd be super easy to fail the deferrable
+      #       with the same error.
+      #       The final goal is to allow the failed deferrable bubble back up
+      #       so we can send back a nice, clean 500 error to the client.
       redis.subscribe('firehose:channel_updates').
-        errback{|e| raise e }.
+        errback{|e| EM.next_tick { raise e } }.
         callback { Firehose.logger.debug "Redis subscribed to `firehose:channel_updates`" }
       redis.on(:message) do |_, payload|
         channel_key, sequence, message = Firehose::Publisher.from_payload(payload)
