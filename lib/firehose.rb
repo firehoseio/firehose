@@ -1,9 +1,8 @@
 ENV['RACK_ENV'] ||= 'development'
 
 require 'firehose/version'
-require 'firehose/logging'
 require 'em-hiredis'
-
+require 'firehose/logging'
 require 'firehose/rails' if defined?(::Rails::Engine)
 
 module Firehose
