@@ -3,18 +3,12 @@ module Firehose
     class PingApp
       attr_reader :redis
 
-      def self.redis
-        @redis ||= EM::Hiredis.connect
-      end
-
-      def initialize(redis=self.class.redis)
+      def initialize(redis=nil)
         @redis = redis
       end
 
       def call(env)
         PingCheck.new(env, redis).call
-
-        # Tell the web server that this will be an async response.
         ASYNC_RESPONSE
       end
 
@@ -28,8 +22,12 @@ module Firehose
         TEST_VALUE = 'Firehose Healthcheck Test Value'
         SECONDS_TO_EXPIRE = 60
 
-        def initialize(env, redis)
-          @redis = redis
+        def self.redis
+          @redis ||= EM::Hiredis.connect
+        end
+
+        def initialize(env, redis=nil)
+          @redis = redis || self.class.redis
           @env   = env
           @req   = env['parsed_request'] ||= ::Rack::Request.new(env)
           @key   = "/firehose/ping/#{Time.now.to_i}/#{rand}"
