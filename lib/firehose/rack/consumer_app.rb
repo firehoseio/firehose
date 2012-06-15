@@ -21,6 +21,8 @@ module Firehose
       end
 
       class HttpLongPoll
+        include Firehose::Rack::Helpers
+
         # How long should we wait before closing out the consuming clients web connection
         # for long polling? Most browsers timeout after a connection has been idle for 30s.
         TIMEOUT = 20
@@ -61,11 +63,6 @@ module Firehose
             # Tell the web server that this will be an async response.
             ASYNC_RESPONSE
 
-          # Tell the browser that we're cool about shipping LAST_MESSAGE_SEQUENCE_HEADER back-and-forth.
-          when 'HEAD'
-            # This is our health check ping
-            Firehose.logger.debug "HTTP PING request for path '#{path}'"
-            response(200)
           else
             Firehose.logger.debug "HTTP #{method} not supported"
             response(501, "#{method} not supported.")
@@ -74,12 +71,6 @@ module Firehose
 
 
         private
-
-        def response(status, body='', headers={})
-          message = 'Unexpected error'
-          headers = {'Content-Length' => body.size.to_s}.merge(headers)
-          [status, headers, [body]]
-        end
 
         # If the request is a CORS request, return those headers, otherwise don't worry 'bout it
         def response_headers(env)

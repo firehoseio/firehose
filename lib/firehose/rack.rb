@@ -2,6 +2,7 @@ module Firehose
   module Rack
     autoload :ConsumerApp,    'firehose/rack/consumer_app'
     autoload :PublisherApp,   'firehose/rack/publisher_app'
+    autoload :PingApp,        'firehose/rack/ping_app'
 
     # Evented web servers recognize this as a response deferral.
     ASYNC_RESPONSE = [-1, {}, []].freeze
@@ -22,8 +23,11 @@ module Firehose
         req     = env['parsed_request'] ||= ::Rack::Request.new(env)
         method  = req.request_method
 
-        if method == 'PUT'
+        case method
+        when 'PUT'
           publisher.call(env)
+        when 'HEAD'
+          ping.call(env)
         else
           consumer.call(env)
         end
@@ -37,6 +41,18 @@ module Firehose
 
       def consumer
         @consumer ||= ConsumerApp.new
+      end
+
+      def ping
+        @ping ||= PingApp.new
+      end
+    end
+
+    module Helpers
+      # Calculates the content length for you
+      def response(status, body='', headers={})
+        headers = {'Content-Length' => body.size.to_s}.merge(headers)
+        [status, headers, [body]]
       end
     end
   end
