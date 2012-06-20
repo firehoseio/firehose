@@ -28,7 +28,7 @@ module Firehose
       end
     end
 
-    desc "consume URI", "Benchmark firehose resource consumption."
+    desc "consume URI", "Consume messages from a firehose resource."
     method_option :concurrency, :type => :numeric, :default => 1, :aliases => '-c'
     def consume(uri)
       EM.run do
@@ -36,7 +36,7 @@ module Firehose
       end
     end
 
-    desc "publish URI [PAYLOAD]", "Publish message to a firehose resource."
+    desc "publish URI [PAYLOAD]", "Publish messages to a firehose resource."
     method_option :interval, :type => :numeric, :aliases => '-i'
     method_option :times, :type => :numeric, :aliases => '-n'
     def publish(uri, payload=nil)
