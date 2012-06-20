@@ -10,12 +10,12 @@ module Firehose
       $stdout.sync = true
     end
 
-    desc "version", "display the current version"
+    desc "version", "Display the current version."
     def version
       puts %[Firehose #{Firehose::VERSION} "#{Firehose::CODENAME}"]
     end
 
-    desc "server", "starts the firehose server"
+    desc "server", "Start an instance of a server."
     method_option :port,   :type => :numeric, :default => ENV['PORT'] || Firehose::Default::URI.port, :required => false, :aliases => '-p'
     method_option :host,   :type => :string,  :default => ENV['HOST'] || Firehose::Default::URI.host, :required => false, :aliases => '-h'
     method_option :server, :type => :string,  :default => ENV['SERVER'] ||'rainbows', :required => false, :aliases => '-s'
@@ -28,7 +28,7 @@ module Firehose
       end
     end
 
-    desc "consume URI", "Consume messages from a firehose resource."
+    desc "consume URI", "Consume messages from a resource."
     method_option :concurrency, :type => :numeric, :default => 1, :aliases => '-c'
     def consume(uri)
       EM.run do
@@ -36,7 +36,7 @@ module Firehose
       end
     end
 
-    desc "publish URI [PAYLOAD]", "Publish messages to a firehose resource."
+    desc "publish URI [PAYLOAD]", "Publish messages to a resource."
     method_option :interval, :type => :numeric, :aliases => '-i'
     method_option :times, :type => :numeric, :aliases => '-n'
     def publish(uri, payload=nil)
