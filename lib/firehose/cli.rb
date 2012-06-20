@@ -35,5 +35,34 @@ module Firehose
         options[:concurrency].times { Firehose::Client::Consumer.parse(uri).request }
       end
     end
+
+    desc "publish URI [PAYLOAD]", "Publish message to a firehose resource."
+    method_option :interval, :type => :numeric, :aliases => '-i'
+    method_option :times, :type => :numeric, :aliases => '-n'
+    def publish(uri, payload=nil)
+      payload     ||= $stdin.read
+      client      = Firehose::Producer.new(uri)
+      path        = URI.parse(uri).path
+      times       = options[:times]
+
+      EM.run do
+        # TODO I think this can be cleaned up so the top-level if/else can be ditched.
+        if interval = options[:interval]
+          # Publish messages at a forced interval.
+          EM.add_periodic_timer interval do 
+            client.publish(payload).to(path)
+            EM.stop if times && (times-=1).zero?
+          end
+        else
+          # Publish messages as soon as the last message was published.
+          worker = Proc.new do
+            client.publish(payload).to(path)
+            times && (times-=1).zero? ? EM.stop : worker.call
+          end
+          worker.call
+        end
+      end
+
+    end
   end
 end

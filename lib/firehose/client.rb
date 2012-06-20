@@ -49,7 +49,7 @@ module Firehose
       class LongPoll
         JITTER = 0.003
 
-        attr_accessor :url, :successes, :failures, :logger
+        attr_reader :url, :logger
 
         def initialize(url, logger = Firehose.logger)
           @url, @logger = url, logger
