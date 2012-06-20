@@ -2,12 +2,16 @@ require 'em-http'
 require 'faye/websocket'
 
 module Firehose
+  # Ruby clients that connect to Firehose to either publish or consume messages.
   module Client
-    # Ruby clients that connect to Firehose to either publish or consume messages.
+    # TODO - Move the Firehose producer.rb file/class in here and rename to Firehose::Client::Producer::Http.new() ..
     module Producer
-      # TODO - Move the Firehose producer.rb file/class in here and rename to Firehose::Client::Producer::Http.new() ..
     end
 
+    # TODO - Test this libs. I had to throw these quickly into our app so that we could get 
+    #        some stress testing out of the way.
+    # TODO - Replace the integration test clients with these guys. You'll want to refactor each
+    #        transport to use on(:message), on(:conncect), and on(:disconnect) callbacks.
     module Consumer
       TransportNotSupportedError = Class.new(RuntimeError)
 
@@ -17,7 +21,7 @@ module Firehose
         when 'ws'
           Consumer::WebSocket.new(uri)
         when 'http'
-          Consumer::LongPoll.new(uri)
+          Consumer::HttpLongPoll.new(uri)
         else
           raise TransportNotSupportedError.new("Transport #{transport.inspect} not supported.")
         end
@@ -46,7 +50,7 @@ module Firehose
       end
 
       # Connect to Firehose via HTTP Long Polling and consume messages.
-      class LongPoll
+      class HttpLongPoll
         JITTER = 0.003
 
         attr_reader :url, :logger
