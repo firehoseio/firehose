@@ -5,8 +5,8 @@ require "firehose/version"
 Gem::Specification.new do |s|
   s.name        = "firehose"
   s.version     = Firehose::VERSION
-  s.authors     = ["Brad Gessler", "Steel Fu"]
-  s.email       = ["brad@polleverywhere.com", "steel@polleverywhere.com"]
+  s.authors     = ["Brad Gessler", "Steel Fu", "Paul Cortens"]
+  s.email       = ["brad@polleverywhere.com", "steel@polleverywhere.com", "paul@polleverywhere.com"]
   s.homepage    = "http://firehose.io/"
   s.summary     = %q{Build realtime Ruby web applications}
   s.description = %q{Firehose is a realtime web application toolkit for building realtime Ruby web applications.}
@@ -19,7 +19,7 @@ Gem::Specification.new do |s|
   s.require_paths = ["lib"]
 
   # specify any dependencies here; for example:
-  s.add_runtime_dependency "eventmachine", ">= 1.0.0.beta"
+  s.add_runtime_dependency "eventmachine", ">= 1.0.0.rc"
   s.add_runtime_dependency "em-hiredis"
   s.add_runtime_dependency "thor"
   s.add_runtime_dependency "faraday"
