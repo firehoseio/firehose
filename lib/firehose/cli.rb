@@ -2,6 +2,10 @@ require 'thor'
 require 'eventmachine'
 require 'uri'
 
+# Enable native 
+EM.kqueue if EM.kqueue?
+EM.epoll  if EM.epoll?
+
 module Firehose
   class CLI < Thor
     def initialize(*args)
@@ -62,7 +66,7 @@ module Firehose
           worker.call
         end
       end
-
     end
+
   end
 end
