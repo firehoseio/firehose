@@ -1,3 +1,4 @@
+# TODO Move this into the Firehose::Client:Producer namespace and rename the class to Http (its an HTTP publisher dumby!)
 require "faraday"
 require "uri"
 

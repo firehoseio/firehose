@@ -6,12 +6,15 @@ module Firehose
       @port   = opts[:port]   || Firehose::Default::URI.port
       @host   = opts[:host]   || Firehose::Default::URI.host
       @server = opts[:server] || :rainbows
+
+      Firehose.logger.info "Starting #{Firehose::VERSION} '#{Firehose::CODENAME}', in #{ENV['RACK_ENV']}"
     end
 
     def start
       self.send("start_#{@server}")
     end
 
+  private
     def start_rainbows
       require 'rainbows'
       Faye::WebSocket.load_adapter('rainbows')
