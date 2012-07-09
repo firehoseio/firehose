@@ -36,4 +36,5 @@ Gem::Specification.new do |s|
   s.add_development_dependency "rack-test"
   s.add_development_dependency "async_rack_test"
   s.add_development_dependency "foreman"
+  s.add_development_dependency "sprockets"
 end

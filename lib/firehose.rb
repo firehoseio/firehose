@@ -10,6 +10,7 @@ module Firehose
   autoload :Publisher,    'firehose/publisher'
   autoload :Producer,     'firehose/producer' # TODO Move this into the Firehose::Client namespace.
   autoload :Default,      'firehose/default'
+  autoload :Assets,       'firehose/assets'
   autoload :Rack,         'firehose/rack'
   autoload :CLI,          'firehose/cli'
   autoload :Client,       'firehose/client'
