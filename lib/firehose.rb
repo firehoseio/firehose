@@ -18,3 +18,6 @@ module Firehose
   autoload :Channel,      'firehose/channel'
   autoload :SwfPolicyRequest, 'firehose/swf_policy_request'
 end
+
+# Detect if Sprockets is loaded. If it is, lets configure Firehose to use it!
+Firehose::Assets::Sprockets.auto_detect_configuration

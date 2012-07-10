@@ -12,6 +12,12 @@ module Firehose
         env.append_path Assets.path('javascripts')
         env
       end
+
+      def self.auto_detect_configuration
+        if defined? ::Sprockets
+          Firehose::Assets::Sprockets.configure
+        end
+      end
     end
   end
 end
