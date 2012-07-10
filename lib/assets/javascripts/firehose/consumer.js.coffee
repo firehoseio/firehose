@@ -24,7 +24,7 @@ class Firehose.Consumer
     # Do stuff before we send the message into config.message. The sensible
     # default on the webs is to parse JSON.
     config.parse ||= (body) ->
-      $.parseJSON(body)
+      JSON.parse(body)
 
     # Hang on to these config for when we connect.
     @config = config
@@ -34,7 +34,7 @@ class Firehose.Consumer
   connect: =>
     # Get a list of transports that the browser supports
     supportedTransports = (transport for transport in @config.transports when transport.supported())
-    # Mmmkay, we've got transports supported by the browser, now lets try connecting 
+    # Mmmkay, we've got transports supported by the browser, now lets try connecting
     # to them and dealing with failed connections that might be caused by firewalls,
     # or other network connectivity issues.
     transports = for transport in supportedTransports
