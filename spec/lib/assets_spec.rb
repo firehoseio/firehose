@@ -12,14 +12,10 @@ describe Firehose::Assets do
     end
   end
 
-  describe ".sprockets" do
+  describe "Sprockets.configure" do
     it "should configure environment" do
-      env = Firehose::Assets::Sprockets.configure(Sprockets::Environment.new)
+      env = Firehose::Assets::Sprockets.configure Sprockets::Environment.new
       env.paths.should include(Firehose::Assets.path('flash'),  Firehose::Assets.path('javascripts'))
-    end
-
-    it "should configure default sprockets environment" do
-      Firehose::Assets::Sprockets.configure.paths.should include(Firehose::Assets.path('flash'),  Firehose::Assets.path('javascripts'))
     end
   end
 end

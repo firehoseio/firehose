@@ -7,15 +7,16 @@ module Firehose
 
     module Sprockets
       # Drop flash and javascript paths to Firehose assets into a sprockets environment.
-      def self.configure(env = ::Sprockets)
-        env.append_path Assets.path('flash')
-        env.append_path Assets.path('javascripts')
+      def self.configure(env)
+        env.append_path Firehose::Assets.path('flash')
+        env.append_path Firehose::Assets.path('javascripts')
         env
       end
 
-      def self.auto_detect_configuration
+      # Try to automatically configure Sprockets if its detected in the project.
+      def self.auto_detect
         if defined? ::Sprockets
-          Firehose::Assets::Sprockets.configure
+          Firehose::Assets::Sprockets.configure ::Sprockets
         end
       end
     end
