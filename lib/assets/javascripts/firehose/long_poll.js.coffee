@@ -7,7 +7,9 @@ class Firehose.LongPoll extends Firehose.Transport
 
   @supported: =>
     # IE 8+, FF 3.5+, Chrome 4+, Safari 4+, Opera 12+, iOS 3.2+, Android 2.1+
-    $.support.cors || Firehose.LongPoll.ieSupported()
+    xhr = $.ajaxSettings.xhr()
+
+    (!!xhr && ( "withCredentials" in xhr )) || Firehose.LongPoll.ieSupported()
 
   constructor: (args) ->
     super args
@@ -26,7 +28,7 @@ class Firehose.LongPoll extends Firehose.Transport
     @_okInterval = 0
 
     @_isConnected = false
-   
+
   connect: (delay = 0) =>
     unless @_isConnected
       @_isConnected = true
@@ -62,7 +64,7 @@ class Firehose.LongPoll extends Firehose.Transport
     if jqXhr.status == 204
       # If we get a 204 back, that means the server timed-out and sent back a 204 with a
       # X-Http-Next-Request header
-      # 
+      #
       # Why did we use a 204 and not a 408? Because FireFox is really stupid about 400 level error
       # codes and would claims its a 0 error code, which we use for something else. Firefox is IE
       # in this case
@@ -86,7 +88,7 @@ class Firehose.LongPoll extends Firehose.Transport
   _error: (jqXhr, status, error) =>
     @_isConnected = false
     @config.disconnected()
-    
+
     # Ping the server to make sure this isn't a network connectivity error
     setTimeout @_ping, @_retryDelay + @_lagTime
 

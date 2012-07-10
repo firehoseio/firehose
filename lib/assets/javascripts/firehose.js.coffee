@@ -1,3 +1,4 @@
+#= require firehose/json2
 #= require firehose/base
 #= require firehose/transport
 #= require firehose/long_poll
