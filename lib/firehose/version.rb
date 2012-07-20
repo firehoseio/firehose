@@ -1,4 +1,4 @@
 module Firehose
-  VERSION = "0.2.alpha.2"
-  CODENAME = "Tricked-out Tools"
+  VERSION = "0.2.alpha.3"
+  CODENAME = "Timeout!"
 end
