@@ -9,6 +9,7 @@ module Firehose
     # Exception gets raised when a 202 is _not_ received from the server after a message is published.
     PublishError = Class.new(RuntimeError)
     TimeoutError = Class.new(Faraday::Error::TimeoutError)
+    Timeout = 1 # How many seconds should we wait for a publish to take?
 
     # A DSL for publishing requests. This doesn't so much, but lets us call
     # Firehose::Producer#publish('message').to('channel'). Slick eh? If you don't like it,
@@ -40,6 +41,7 @@ module Firehose
     # Publish the message via HTTP.
     def put(message, channel, &block)
       response = conn.put do |req|
+        req.options[:timeout] = Timeout
         req.path = channel
         req.body = message
       end
