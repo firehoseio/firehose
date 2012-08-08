@@ -11,7 +11,6 @@ class Firehose.WebSocket extends Firehose.Transport
 
   constructor: (args) ->
     super args
-
     # Configrations specifically for web sockets
     @config.webSocket ||= {}
     # Protocol schema we should use for talking to WS server.
@@ -25,15 +24,28 @@ class Firehose.WebSocket extends Firehose.Transport
     @socket.onmessage = @_message
 
   _message: (event) =>
-    @config.message(@config.parse(event.data))
+    console.log new Date, "_message", event
+    unless @_succeeded
+      @config.connected @
+      @_succeeded = true # I'm a success!
+    # Give the connected callback a chance to finish before sending a message
+    setTimeout =>
+      @config.message @config.parse event.data
+    , 0
+
+  _open: (event) =>
+    console.log new Date, "_open", event
+    # Unfortunately, receiving an open event isn't as meaningful as you'd
+    # think. So let's not get ahead of ourselves here...
+    @_succeeded = false
 
   _close: (event) =>
-    if !event || (event and !event.wasClean)
-      # This was not a clean disconnect. An error occurred somewhere
-      # Lets try to reconnect
-      @_error(event)
+    console.log new Date, "_close", event
+    # This was not a clean disconnect. Let's try to reconnect
+    @_error event unless event?.wasClean
 
   _error: (event) =>
+    console.log new Date, "_error", event
     # Cleanup the current connection
     if @socket
       @socket.onopen = null
@@ -42,5 +54,4 @@ class Firehose.WebSocket extends Firehose.Transport
       @socket.onmessage = null
       @socket.close()
       delete(@socket)
-    
     super
