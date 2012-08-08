@@ -7,9 +7,8 @@ class Firehose.LongPoll extends Firehose.Transport
 
   @supported: =>
     # IE 8+, FF 3.5+, Chrome 4+, Safari 4+, Opera 12+, iOS 3.2+, Android 2.1+
-    xhr = $.ajaxSettings.xhr()
-
-    (!!xhr && ( "withCredentials" in xhr )) || Firehose.LongPoll.ieSupported()
+    if xhr = $.ajaxSettings.xhr()
+      "withCredentials" of xhr || Firehose.LongPoll.ieSupported()
 
   constructor: (args) ->
     super args
