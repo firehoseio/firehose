@@ -24,13 +24,14 @@ class Firehose.WebSocket extends Firehose.Transport
     @socket.onmessage = @_message
 
   _message: (event) =>
-    unless @_succeeded
+    if @_succeeded then @config.message @config.parse event.data
+    else
       @config.connected @
       @_succeeded = true # I'm a success!
-    # Give the connected callback a chance to finish before sending a message
-    setTimeout =>
-      @config.message @config.parse event.data
-    , 0
+      # Give the connected callback a chance to finish before sending a message
+      setTimeout =>
+        @config.message @config.parse event.data
+      , 0
 
   _open: (event) =>
     # Unfortunately, receiving an open event isn't as meaningful as you'd
