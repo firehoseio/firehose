@@ -24,7 +24,6 @@ class Firehose.WebSocket extends Firehose.Transport
     @socket.onmessage = @_message
 
   _message: (event) =>
-    console.log new Date, "_message", event
     unless @_succeeded
       @config.connected @
       @_succeeded = true # I'm a success!
@@ -34,18 +33,15 @@ class Firehose.WebSocket extends Firehose.Transport
     , 0
 
   _open: (event) =>
-    console.log new Date, "_open", event
     # Unfortunately, receiving an open event isn't as meaningful as you'd
     # think. So let's not get ahead of ourselves here...
     @_succeeded = false
 
   _close: (event) =>
-    console.log new Date, "_close", event
     # This was not a clean disconnect. Let's try to reconnect
     @_error event unless event?.wasClean
 
   _error: (event) =>
-    console.log new Date, "_error", event
     # Cleanup the current connection
     if @socket
       @socket.onopen = null
