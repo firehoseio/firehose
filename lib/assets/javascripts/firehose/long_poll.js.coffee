@@ -27,6 +27,7 @@ class Firehose.LongPoll extends Firehose.Transport
     @_okInterval = 0
 
     @_isConnected = false
+    @_stopRequestLoop = false
 
   connect: (delay = 0) =>
     unless @_isConnected
@@ -77,11 +78,15 @@ class Firehose.LongPoll extends Firehose.Transport
           if @_lastMessageSequence == null
             console.log 'ERROR: Unable to get last message sequnce from header'
 
+  stop: =>
+    @_stopRequestLoop = true
+
   _success: (data, status, jqXhr) =>
     # TODO we actually want to do this when the thing calls out... mmm right now it takes
     # up to 30s before we can call this thing.
     # Call the 'connected' callback if the connection succeeds.
     @_open(data) unless @_succeeded
+    return if @_stopRequestLoop
     if jqXhr.status == 204
       # If we get a 204 back, that means the server timed-out and sent back a 204 with a
       # X-Http-Next-Request header

@@ -23,6 +23,9 @@ class Firehose.WebSocket extends Firehose.Transport
     @socket.onerror = @_error
     @socket.onmessage = @_message
 
+  stop: =>
+    @cleanUp()
+
   _message: (event) =>
     if @_succeeded then @config.message @config.parse event.data
     else
@@ -43,12 +46,14 @@ class Firehose.WebSocket extends Firehose.Transport
     @_error event unless event?.wasClean
 
   _error: (event) =>
-    # Cleanup the current connection
+    @cleanUp()
+    super
+
+  cleanUp: ->
     if @socket
-      @socket.onopen = null
-      @socket.onclose = null
-      @socket.onerror = null
+      @socket.onopen    = null
+      @socket.onclose   = null
+      @socket.onerror   = null
       @socket.onmessage = null
       @socket.close()
-      delete(@socket)
-    super
+      delete @socket

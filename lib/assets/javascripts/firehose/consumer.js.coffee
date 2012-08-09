@@ -5,6 +5,8 @@ class Firehose.Consumer
   constructor: (config = {}) ->
     # List of transport stragies we have to use.
     config.transports   ||= Firehose.Consumer.transports
+    unless config.transports.length > 0
+      throw 'You must provide at least one tranport for Firehose.Consumer'
     # Empty handler for messages.
     config.message      ||= ->
     # Empty handler for error handling.
