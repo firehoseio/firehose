@@ -34,7 +34,6 @@ class Firehose.WebSocket extends Firehose.Transport
     @pingTimeout = setTimeout @_error, 1000
 
   _waitForPong: (event) =>
-    console.log "Message received", event.data
     o = try JSON.parse event.data catch e then {}
     if o.pong is 'PONG'
       clearTimeout @pingTimeout

@@ -119,8 +119,6 @@ module Firehose
           end
 
           ws.onmessage = lambda do |event|
-            STDERR.puts "WS message received => #{event.data.inspect}"
-            #!=!#
             o = JSON.parse(event.data, :symbolize_names => true) rescue {}
             ws.send(JSON.generate(:pong => 'PONG')) if o[:ping] == 'PING'
           end
