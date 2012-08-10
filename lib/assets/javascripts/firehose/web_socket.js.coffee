@@ -18,14 +18,27 @@ class Firehose.WebSocket extends Firehose.Transport
     @config.webSocket.url ||= "ws:#{@config.uri}?#{$.param(@config.params)}"
 
   _request: =>
-    @socket = new window.WebSocket(@config.webSocket.url)
-    @socket.onopen = @_open
-    @socket.onclose = @_close
-    @socket.onerror = @_error
-    @socket.onmessage = @_message
+    @socket = new window.WebSocket @config.webSocket.url
+    @socket.onopen    = @_open
+    @socket.onclose   = @_close
+    @socket.onerror   = @_error
+    @socket.onmessage = @_waitForPong
 
   stop: =>
     @cleanUp()
+
+  _open: =>
+    # TODO: include JSON client-side script for less awesome browsers
+    @socket.send JSON.stringify ping: 'PING'
+    # TODO: consider making this timeout configurable somehow...
+    @pingTimeout = setTimeout @_error, 1000
+
+  _waitForPong: (event) =>
+    console.log "Message received", event.data
+    o = try JSON.parse event.data catch e then {}
+    if o.pong is 'PONG'
+      clearTimeout @pingTimeout
+      @socket.onmessage = @_message
 
   _message: (event) =>
     @config.message(@config.parse(event.data))

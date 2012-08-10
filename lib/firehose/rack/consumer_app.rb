@@ -1,4 +1,5 @@
 require 'faye/websocket'
+require 'json'
 
 module Firehose
   module Rack
@@ -117,9 +118,12 @@ module Firehose
             subscribe.call nil
           end
 
-          #ws.onmessage = lambda do |event|
-          #  event.data
-          #end
+          ws.onmessage = lambda do |event|
+            STDERR.puts "WS message received => #{event.data.inspect}"
+            #!=!#
+            o = JSON.parse(event.data, :symbolize_names => true) rescue {}
+            ws.send(JSON.generate(:pong => 'PONG')) if o[:ping] == 'PING'
+          end
 
           ws.onclose = lambda do |event|
             if @deferrable
