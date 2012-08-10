@@ -16,6 +16,8 @@ class Firehose.Transport
     , delay
     this
 
+  stop: ->
+
   # Sub classes need to implement this method to handle requests
   _request: =>
 
