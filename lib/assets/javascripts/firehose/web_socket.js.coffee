@@ -31,11 +31,12 @@ class Firehose.WebSocket extends Firehose.Transport
     # TODO: include JSON client-side script for less awesome browsers
     @socket.send JSON.stringify ping: 'PING'
     # TODO: consider making this timeout configurable somehow...
-    @pingTimeout = setTimeout @_error, 1000
+    @pingTimeout = setTimeout @_error, 2000
 
   _waitForPong: (event) =>
     o = try JSON.parse event.data catch e then {}
     if o.pong is 'PONG'
+      Firehose.Transport::_open.apply @, event
       clearTimeout @pingTimeout
       @socket.onmessage = @_message
 
