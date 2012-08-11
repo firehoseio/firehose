@@ -21,6 +21,14 @@ describe Firehose::Producer do
     WebMock.should have_requested(:put, url).with { |req| req.body == message }
   end
 
+  it "should publish message to channel with expiry headers" do
+    publish_stub.to_return(:body => "", :status => 202)
+    ttl = 20
+
+    Firehose::Producer.new.publish(message).to(channel, :ttl => ttl)
+    WebMock.should have_requested(:put, url).with { |req| req.body == message and req.headers['Cache-Control'] == "max-age=#{ttl}" }
+  end
+
   describe "connection error handling" do
     it "should raise PublishError if not 201" do
       publish_stub.to_return(:body => "", :status => 500)

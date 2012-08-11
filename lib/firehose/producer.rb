@@ -20,8 +20,8 @@ module Firehose
         self
       end
 
-      def to(channel, &callback)
-        @producer.put(@message, channel, &callback)
+      def to(channel, opts={}, &callback)
+        @producer.put(@message, channel, opts, &callback)
       end
     end
 
@@ -39,11 +39,12 @@ module Firehose
     end
 
     # Publish the message via HTTP.
-    def put(message, channel, &block)
+    def put(message, channel, opts, &block)
       response = conn.put do |req|
         req.options[:timeout] = Timeout
         req.path = channel
         req.body = message
+        req['Cache-Control'] = "max-age=#{opts[:ttl].to_i}" if opts[:ttl]
       end
       response.on_complete do
         case response.status
