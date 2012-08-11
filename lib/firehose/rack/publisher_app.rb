@@ -18,11 +18,15 @@ module Firehose
           end
         end
 
+        # Read the max-age directive from the cache so that we can set a TTL on the redis key. This will
+        # prevent stale content from being served up to the client.
+        ttl = cache_control['max-age']
+
         if method == 'PUT'
           EM.next_tick do
             body = env['rack.input'].read
-            Firehose.logger.debug "HTTP published `#{body}` to `#{path}`"
-            publisher.publish(path, body, :ttl => cache_control['max-age']).callback do
+            Firehose.logger.debug "HTTP published #{body.inspect} to #{path.inspect} with ttl #{ttl.inspect}"
+            publisher.publish(path, body, :ttl => ttl).callback do
               env['async.callback'].call [202, {'Content-Type' => 'text/plain', 'Content-Length' => '0'}, []]
               env['async.callback'].call response(202, '', 'Content-Type' => 'text/plain')
             end.errback do |e|
