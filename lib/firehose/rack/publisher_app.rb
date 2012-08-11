@@ -7,12 +7,22 @@ module Firehose
         req     = env['parsed_request'] ||= ::Rack::Request.new(env)
         path    = req.path
         method  = req.request_method
+        cache_control = {}
+
+        # Parse out cache control directives from the Cache-Control header.
+        if cache_control_header = env['Cache-Control']
+          cache_control = cache_control_header.split(',').map(&:strip).inject({}) do |memo, directive|
+            key, value = directive.split('=')
+            memo[key.downcase] = value
+            memo
+          end
+        end
 
         if method == 'PUT'
           EM.next_tick do
             body = env['rack.input'].read
             Firehose.logger.debug "HTTP published `#{body}` to `#{path}`"
-            publisher.publish(path, body).callback do
+            publisher.publish(path, body, :ttl => cache_control['max-age']).callback do
               env['async.callback'].call [202, {'Content-Type' => 'text/plain', 'Content-Length' => '0'}, []]
               env['async.callback'].call response(202, '', 'Content-Type' => 'text/plain')
             end.errback do |e|
@@ -30,8 +40,7 @@ module Firehose
         end
       end
 
-
-      private
+    private
       def publisher
         @publisher ||= Firehose::Publisher.new
       end

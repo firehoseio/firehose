@@ -4,7 +4,10 @@ module Firehose
     TTL = 60*60*24  # 1 day of time, yay!
     PAYLOAD_DELIMITER = "\n"
 
-    def publish(channel_key, message)
+    def publish(channel_key, message, opts={})
+      # How long should we hang on to the resource once is published?
+      ttl = (opts[:ttl] || TTL).to_i
+
       # TODO hi-redis isn't that awesome... we have to setup an errback per even for wrong
       # commands because of the lack of a method_missing whitelist. Perhaps implement a whitelist in
       # em-hiredis or us a diff lib?
@@ -22,10 +25,10 @@ module Firehose
                    end
                    local sequence = current_sequence + 1
                    redis.call('set', KEYS[1], sequence)
-                   redis.call('expire', KEYS[1], #{TTL})
+                   redis.call('expire', KEYS[1], #{ttl})
                    redis.call('lpush', KEYS[2], "#{lua_escape(message)}")
                    redis.call('ltrim', KEYS[2], 0, #{MAX_MESSAGES - 1})
-                   redis.call('expire', KEYS[2], #{TTL})
+                   redis.call('expire', KEYS[2], #{ttl})
                    redis.call('publish', KEYS[3], "#{lua_escape(channel_key + PAYLOAD_DELIMITER)}" .. sequence .. "#{lua_escape(PAYLOAD_DELIMITER + message)}")
                    return sequence
                   ), 3, sequence_key, list_key, key(:channel_updates)).

@@ -22,5 +22,13 @@ describe Firehose::Rack::PublisherApp, :type => :request do
       aput path, :body => "some nice little message"
       last_response.headers['Content-Length'].should == '0'
     end
+
+    it "should parse Cache-Control max-age" do
+      body = "howdy dude!"
+      ttl = '92'
+
+      Firehose::Publisher.any_instance.stub(:publish).with(path, body, :ttl => ttl).and_return(deferrable)
+      aput path, body, 'Cache-Control' => 'max-age=92'
+    end
   end
 end

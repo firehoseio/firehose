@@ -28,7 +28,6 @@ describe Firehose::Publisher do
       end
     end
 
-
     "\"'\r\t\n!@\#$%^&*()[]\v\f\a\b\e{}/=?+\\|".each_char do |char|
       it "should publish messages with the '#{char.inspect}' character" do
         msg = [char, message, char].join
@@ -69,14 +68,17 @@ describe Firehose::Publisher do
     end
 
     it "should set expirery on sequence and list keys" do
+      ttl = 78 # Why 78? Why not!
+
       em do
-        publisher.publish(channel_key, message).callback do
+        publisher.publish(channel_key, message, :ttl => 78).callback do
           # Allow for 1 second of slippage/delay
-          redis_exec('TTL', "firehose:#{channel_key}:sequence").should > (Firehose::Publisher::TTL - 1)
-          redis_exec('TTL', "firehose:#{channel_key}:list").should > (Firehose::Publisher::TTL - 1)
+          redis_exec('TTL', "firehose:#{channel_key}:sequence").should > (ttl- 1)
+          redis_exec('TTL', "firehose:#{channel_key}:list").should > (ttl - 1)
           em.stop
         end
       end
     end
+
   end
 end
