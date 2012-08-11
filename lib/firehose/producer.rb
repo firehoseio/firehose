@@ -40,11 +40,13 @@ module Firehose
 
     # Publish the message via HTTP.
     def put(message, channel, opts, &block)
+      ttl = opts[:ttl]
+
       response = conn.put do |req|
         req.options[:timeout] = Timeout
         req.path = channel
         req.body = message
-        req['Cache-Control'] = "max-age=#{opts[:ttl].to_i}" if opts[:ttl]
+        req.headers['Cache-Control'] = "max-age=#{ttl.to_i}" if ttl
       end
       response.on_complete do
         case response.status
