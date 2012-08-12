@@ -10,7 +10,7 @@ module Firehose
         cache_control = {}
 
         # Parse out cache control directives from the Cache-Control header.
-        if cache_control_header = env['Cache-Control']
+        if cache_control_header = env['HTTP_CACHE_CONTROL']
           cache_control = cache_control_header.split(',').map(&:strip).inject({}) do |memo, directive|
             key, value = directive.split('=')
             memo[key.downcase] = value

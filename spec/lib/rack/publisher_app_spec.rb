@@ -28,7 +28,7 @@ describe Firehose::Rack::PublisherApp, :type => :request do
       ttl = '92'
 
       Firehose::Publisher.any_instance.stub(:publish).with(path, body, :ttl => ttl).and_return(deferrable)
-      aput path, body, 'Cache-Control' => 'max-age=92'
+      aput path, body, 'HTTP_CACHE_CONTROL' => 'max-age=92'
     end
   end
 end
