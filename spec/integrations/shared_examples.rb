@@ -79,7 +79,7 @@ shared_examples_for 'Firehose::Rack::App' do
     end
 
     # Great, we have all the pieces in order, lets run this thing in the reactor.
-    em 60 do
+    em 180 do
       # Start the clients.
       websocket.call(1)
       websocket.call(2)
