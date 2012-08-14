@@ -47,7 +47,7 @@ class Firehose.Consumer
         # Map the next transport to connect inside of the current transport failures
         if nextTransport = supportedTransports.pop()
           new nextTransport(@config).connect()
-        else originalFailFun()
+        else originalFailFun?()
       new transport(@config)
     # Fire off the first connection attempt.
     transports[0].connect()
