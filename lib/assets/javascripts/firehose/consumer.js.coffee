@@ -40,16 +40,14 @@ class Firehose.Consumer
     # to them and dealing with failed connections that might be caused by firewalls,
     # or other network connectivity issues.
     transports = for transport in supportedTransports
-      # Copy the config so we can modify it with a failed callback.
-      config = @config
+      originalFailFun = @config.failed
       # Map the next transport into the existing transports connectionError
       # If the connection fails, try the next transport supported by the browser.
-      config.failed = =>
-        # Map the next transport to connect insie of the current transport failures
+      @config.failed = =>
+        # Map the next transport to connect inside of the current transport failures
         if nextTransport = supportedTransports.pop()
-          new nextTransport(config).connect()
-        else
-          @config.failed() # Call the original fail method passed into the Firehose.Consumer
-      new transport(config)
+          new nextTransport(@config).connect()
+        else originalFailFun()
+      new transport(@config)
     # Fire off the first connection attempt.
     transports[0].connect()
