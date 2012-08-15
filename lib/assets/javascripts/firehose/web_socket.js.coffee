@@ -38,7 +38,11 @@ class Firehose.WebSocket extends Firehose.Transport
     o = try JSON.parse event.data catch e then {}
     if o.pong is 'PONG'
       console?.log "Got PONG!", event.data
-      Firehose.Transport::_open.apply @, event
+      # Not quite sure why this doesn't work in IE8:
+      # (Throws "TypeError: Array or arguments object expected")
+      # Firehose.Transport::_open.apply @, event
+      @_succeeded = true
+      @config.connected @
       clearTimeout @pingTimeout
       @socket.onmessage = @_message
       console?.log "[end of _waitForPong]"
