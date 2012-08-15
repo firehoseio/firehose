@@ -98,12 +98,11 @@ class Firehose.LongPoll extends Firehose.Transport
     console?.log "_error", arguments
     @_isConnected = false
     @config.disconnected()
-
-    # Ping the server to make sure this isn't a network connectivity error
-    setTimeout @_ping, @_retryDelay + @_lagTime
-
-    # Reconnect with delay
-    setTimeout @_request, @_retryDelay
+    unless @_stopRequestLoop
+      # Ping the server to make sure this isn't a network connectivity error
+      setTimeout @_ping, @_retryDelay + @_lagTime
+      # Reconnect with delay
+      setTimeout @_request, @_retryDelay
 
 # NB: This is a stupid hack to deal with CORS short-comings in jQuery in
 # Firefox. There is a ticket for this: http://bugs.jquery.com/ticket/10338
