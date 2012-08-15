@@ -37,14 +37,16 @@ class Firehose.WebSocket extends Firehose.Transport
   _waitForPong: (event) =>
     o = try JSON.parse event.data catch e then {}
     if o.pong is 'PONG'
-      console?.log "Got PONG!", event
+      console?.log "Got PONG!", event.data
       Firehose.Transport::_open.apply @, event
       clearTimeout @pingTimeout
       @socket.onmessage = @_message
+      console?.log "[end of _waitForPong]"
 
   _message: (event) =>
-    console?.log "Received message", event
+    console?.log "Received message", event.data
     @config.message(@config.parse(event.data))
+    console?.log "[end of _message]"
 
   _close: (event) =>
     if !event || (event and !event.wasClean)
