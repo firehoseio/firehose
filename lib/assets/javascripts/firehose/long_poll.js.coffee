@@ -39,7 +39,7 @@ class Firehose.LongPoll extends Firehose.Transport
     # set any HTTP headers for CORS requests.
     data = @config.params
     data.last_message_sequence = @_lastMessageSequence
-    # TODO: Some of these options will be deprecated in jQurey 1.8
+    # TODO: Some of these options will be deprecated in jQuery 1.8
     #       See: http://api.jquery.com/jQuery.ajax/#jqXHR
     $.ajax @config.longPoll.url,
       crossDomain:  true
@@ -48,14 +48,16 @@ class Firehose.LongPoll extends Firehose.Transport
       success:      @_success
       error:        @_error
       xhr:          hackedXHR
-      complete: (jqXhr) =>
-        console?.log "XHR complete", arguments
-        # Get the last sequence from the server if specified.
-        if jqXhr.status == 200
-          @_lastMessageSequence = jqXhr.getResponseHeader @messageSequenceHeader
-          if @_lastMessageSequence == null
-            console?.log 'ERROR: Unable to get last message sequnce from header'
+      complete:     @_xhrComplete
     console?.log "_request END"
+
+  _xhrComplete: (jqXhr) =>
+    console?.log "XHR complete", arguments
+    # Get the last sequence from the server if specified.
+    if jqXhr.status == 200
+      @_lastMessageSequence = jqXhr.getResponseHeader @messageSequenceHeader
+      if @_lastMessageSequence == null
+        console?.log 'ERROR: Unable to get last message sequnce from header'
 
   stop: =>
     @_stopRequestLoop = true
