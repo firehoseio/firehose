@@ -41,6 +41,7 @@ class Firehose.WebSocket extends Firehose.Transport
       Firehose.Transport::_open.apply @, event
       clearTimeout @pingTimeout
       @socket.onmessage = @_message
+      @_message event
       console?.log "[end of _waitForPong]"
 
   _message: (event) =>
