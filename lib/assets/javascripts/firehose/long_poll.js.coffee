@@ -12,21 +12,18 @@ class Firehose.LongPoll extends Firehose.Transport
 
   constructor: (args) ->
     super args
-
     # Configrations specifically for web sockets
-    @config.longPoll ||= {}
+    @config.LongPoll         ||= {}
     # Protocol schema we should use for talking to WS server.
-    @config.longPoll.url ||= "http:#{@config.uri}"
+    @config.longPoll.url     ||= "http:#{@config.uri}"
     # How many ms should we wait before timing out the AJAX connection?
     @config.longPoll.timeout ||= 25000
-
     # TODO - What is @_lagTime for? Can't we just use the @_timeout value?
     # We use the lag time to make the client live longer than the server.
-    @_lagTime = 5000
-    @_timeout = @config.longPoll.timeout + @_lagTime
-    @_okInterval = 0
-
-    @_isConnected = false
+    @_lagTime         = 5000
+    @_timeout         = @config.longPoll.timeout + @_lagTime
+    @_okInterval      = 0
+    @_isConnected     = false
     @_stopRequestLoop = false
 
   connect: (delay = 0) =>
@@ -45,17 +42,17 @@ class Firehose.LongPoll extends Firehose.Transport
     # TODO: Some of these options will be deprecated in jQurey 1.8
     #       See: http://api.jquery.com/jQuery.ajax/#jqXHR
     $.ajax @config.longPoll.url,
-      crossDomain: true
-      data: data
-      timeout: @_timeout
-      success: @_success
-      error: @_error
-      xhr: hackedXHR
+      crossDomain:  true
+      data:         data
+      timeout:      @_timeout
+      success:      @_success
+      error:        @_error
+      xhr:          hackedXHR
       complete: (jqXhr) =>
         console?.log "XHR complete", arguments
         # Get the last sequence from the server if specified.
         if jqXhr.status == 200
-          @_lastMessageSequence = jqXhr.getResponseHeader(@messageSequenceHeader)
+          @_lastMessageSequence = jqXhr.getResponseHeader @messageSequenceHeader
           if @_lastMessageSequence == null
             console?.log 'ERROR: Unable to get last message sequnce from header'
     console?.log "_request END"
