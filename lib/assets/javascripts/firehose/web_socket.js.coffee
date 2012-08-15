@@ -32,12 +32,10 @@ class Firehose.WebSocket extends Firehose.Transport
     @socket.send JSON.stringify ping: 'PING'
     # TODO: consider making this timeout configurable somehow...
     @pingTimeout = setTimeout @_error, 2000
-    console?.log "Sent PING..."
 
   _waitForPong: (event) =>
     o = try JSON.parse event.data catch e then {}
     if o.pong is 'PONG'
-      console?.log "Got PONG!", event.data
       # Not quite sure why this doesn't work in IE8:
       # (Throws "TypeError: Array or arguments object expected")
       # Firehose.Transport::_open.apply @, event
@@ -45,12 +43,9 @@ class Firehose.WebSocket extends Firehose.Transport
       @config.connected @
       clearTimeout @pingTimeout
       @socket.onmessage = @_message
-      console?.log "[end of _waitForPong]"
 
   _message: (event) =>
-    console?.log "Received message", event.data
     @config.message(@config.parse(event.data))
-    console?.log "[end of _message]"
 
   _close: (event) =>
     if !event || (event and !event.wasClean)
