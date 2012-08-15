@@ -32,15 +32,18 @@ class Firehose.WebSocket extends Firehose.Transport
     @socket.send JSON.stringify ping: 'PING'
     # TODO: consider making this timeout configurable somehow...
     @pingTimeout = setTimeout @_error, 2000
+    console?.log "Sent PING..."
 
   _waitForPong: (event) =>
     o = try JSON.parse event.data catch e then {}
     if o.pong is 'PONG'
+      console?.log "Got PONG!", event
       Firehose.Transport::_open.apply @, event
       clearTimeout @pingTimeout
       @socket.onmessage = @_message
 
   _message: (event) =>
+    console?.log "Received message", event
     @config.message(@config.parse(event.data))
 
   _close: (event) =>
