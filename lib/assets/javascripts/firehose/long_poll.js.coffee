@@ -13,7 +13,7 @@ class Firehose.LongPoll extends Firehose.Transport
   constructor: (args) ->
     super args
     # Configrations specifically for web sockets
-    @config.LongPoll         ||= {}
+    @config.longPoll         ||= {}
     # Protocol schema we should use for talking to WS server.
     @config.longPoll.url     ||= "http:#{@config.uri}"
     # How many ms should we wait before timing out the AJAX connection?
