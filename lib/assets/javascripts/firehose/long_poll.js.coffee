@@ -50,33 +50,14 @@ class Firehose.LongPoll extends Firehose.Transport
       timeout: @_timeout
       success: @_success
       error: @_error
-      xhr: ->
-        # TODO - This while `xrh` attr is a stupid hack to deal with CORS short-comings in jQuery in Firefox.
-        # This ticket can be viewed at http://bugs.jquery.com/ticket/10338. Once jQuery is 
-        # upgraded to this version, we can probably remove this, but be sure you test the 
-        # crap out of Firefox!
-        #
-        # Its also worth noting that I had to localize this monkey-patch to the Firehose.LongPoll
-        # consumer because a previous global patch on jQuery.ajaxSettings.xhr was breaking regular IE7
-        # loading. I figured its better to localize this anyway to solve that problem and loading order issues.
-        xhr = jQuery.ajaxSettings.xhr()
-        getAllResponseHeaders = xhr.getAllResponseHeaders
-        xhr.getAllResponseHeaders = ->
-          allHeaders = getAllResponseHeaders.call(xhr)
-          return allHeaders if allHeaders
-          allHeaders = ""
-          for headerName in [ "Cache-Control", "Content-Language", "Content-Type", "Expires", "Last-Modified", "Pragma" ]
-            do (headerName) ->
-              allHeaders += headerName + ": " + xhr.getResponseHeader(headerName) + "\n"  if xhr.getResponseHeader(headerName)
-          allHeaders
-        xhr
+      xhr: hackedXHR
 
       complete: (jqXhr) =>
         # Get the last sequence from the server if specified.
         if jqXhr.status == 200
           @_lastMessageSequence = jqXhr.getResponseHeader(@messageSequenceHeader)
           if @_lastMessageSequence == null
-            console.log 'ERROR: Unable to get last message sequnce from header'
+            console?.log 'ERROR: Unable to get last message sequnce from header'
 
   stop: =>
     @_stopRequestLoop = true
@@ -120,3 +101,26 @@ class Firehose.LongPoll extends Firehose.Transport
 
     # Reconnect with delay
     setTimeout @_request, @_retryDelay
+
+# NB: This is a stupid hack to deal with CORS short-comings in jQuery in
+# Firefox. There is a ticket for this: http://bugs.jquery.com/ticket/10338
+# Once jQuery is upgraded to this version we can probably remove this, but be
+# sure you test the crap out of Firefox!
+#
+# Its also worth noting that I had to localize this monkey-patch to the
+# Firehose.LongPoll consumer because a previous global patch on
+# jQuery.ajaxSettings.xhr was breaking regular IE7 loading. Better to localize
+# this anyway to solve that problem and loading order issues.
+hackedXHR = ->
+  xhr = jQuery.ajaxSettings.xhr()
+  originalFun = xhr.getAllResponseHeaders
+  xhr.getAllResponseHeaders = ->
+    XHR_HEADERS = [
+      "Cache-Control", "Content-Language", "Content-Type"
+      "Expires", "Last-Modified", "Pragma"
+    ]
+    return allHeaders if (allHeaders = originalFun.call xhr)?
+    lines = for name in XHR_HEADERS when xhr.getResponseHeader(name)?
+      "#{name}: #{xhr.getResponseHeader name}"
+    lines.join '\n'
+  xhr
