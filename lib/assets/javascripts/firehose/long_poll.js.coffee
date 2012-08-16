@@ -39,6 +39,7 @@ class Firehose.LongPoll extends Firehose.Transport
     # set any HTTP headers for CORS requests.
     data = @config.params
     data.last_message_sequence = @_lastMessageSequence
+    $.support.cors = true
     # TODO: Some of these options will be deprecated in jQuery 1.8
     #       See: http://api.jquery.com/jQuery.ajax/#jqXHR
     $.ajax @config.longPoll.url,
