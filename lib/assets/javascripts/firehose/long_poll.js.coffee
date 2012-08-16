@@ -39,7 +39,6 @@ class Firehose.LongPoll extends Firehose.Transport
     # set any HTTP headers for CORS requests.
     data = @config.params
     data.last_message_sequence = @_lastMessageSequence
-    $.support.cors = true
     # TODO: Some of these options will be deprecated in jQuery 1.8
     #       See: http://api.jquery.com/jQuery.ajax/#jqXHR
     $.ajax @config.longPoll.url,
@@ -105,25 +104,27 @@ class Firehose.LongPoll extends Firehose.Transport
       # Reconnect with delay
       setTimeout @_request, @_retryDelay
 
-# NB: This is a stupid hack to deal with CORS short-comings in jQuery in
-# Firefox. There is a ticket for this: http://bugs.jquery.com/ticket/10338
-# Once jQuery is upgraded to this version we can probably remove this, but be
-# sure you test the crap out of Firefox!
-#
 # Its also worth noting that I had to localize this monkey-patch to the
 # Firehose.LongPoll consumer because a previous global patch on
 # jQuery.ajaxSettings.xhr was breaking regular IE7 loading. Better to localize
 # this anyway to solve that problem and loading order issues.
 hackedXHR = ->
-  xhr = jQuery.ajaxSettings.xhr()
-  originalFun = xhr.getAllResponseHeaders
-  xhr.getAllResponseHeaders = ->
-    XHR_HEADERS = [
-      "Cache-Control", "Content-Language", "Content-Type"
-      "Expires", "Last-Modified", "Pragma"
-    ]
-    return allHeaders if (allHeaders = originalFun.call xhr)?
-    lines = for name in XHR_HEADERS when xhr.getResponseHeader(name)?
-      "#{name}: #{xhr.getResponseHeader name}"
-    lines.join '\n'
-  xhr
+  # HACK: use XDomainRequest instead for IE8+
+  if window.XDomainRequest? then new XDomainRequest()
+  else
+    # NB: This is a stupid hack to deal with CORS short-comings in jQuery in
+    # Firefox. There is a ticket for this: http://bugs.jquery.com/ticket/10338
+    # Once jQuery is upgraded to this version we can probably remove this, but be
+    # sure you test the crap out of Firefox!
+    xhr = jQuery.ajaxSettings.xhr()
+    originalFun = xhr.getAllResponseHeaders
+    xhr.getAllResponseHeaders = ->
+      XHR_HEADERS = [
+        "Cache-Control", "Content-Language", "Content-Type"
+        "Expires", "Last-Modified", "Pragma"
+      ]
+      return allHeaders if (allHeaders = originalFun.call xhr)?
+      lines = for name in XHR_HEADERS when xhr.getResponseHeader(name)?
+        "#{name}: #{xhr.getResponseHeader name}"
+      lines.join '\n'
+    xhr
