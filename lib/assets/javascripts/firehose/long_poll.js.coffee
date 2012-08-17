@@ -127,7 +127,9 @@ hackAroundFirefoxXhrHeadersBug = ->
   xhr
 
 # Let's try to hack in support for IE8+ via the XDomainRequest object!
-if window.XDomainRequest?
+# This code was shamelessly stolen from:
+# https://github.com/jaubourg/ajaxHooks/blob/master/src/ajax/xdr.js
+if $.browser.msie and parseInt($.browser.version, 10) in [8, 9]
   jQuery.ajaxTransport (s) ->
     if s.crossDomain and s.async
       if s.timeout
