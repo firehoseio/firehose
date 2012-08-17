@@ -11,9 +11,7 @@ class Firehose.Transport
 
   # Lets rock'n'roll! Connect to the server.
   connect: (delay = 0) =>
-    setTimeout =>
-      @_request()
-    , delay
+    setTimeout @_request, delay
     this
 
   stop: ->
