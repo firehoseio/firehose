@@ -2,10 +2,10 @@ class Firehose.LongPoll extends Firehose.Transport
   messageSequenceHeader: 'pragma'
 
   # CORS is supported in IE 8+
-  @ieSupported: =>
+  @ieSupported: ->
     $.browser.msie and parseInt($.browser.version) > 7 and window.XDomainRequest
 
-  @supported: =>
+  @supported: ->
     # IE 8+, FF 3.5+, Chrome 4+, Safari 4+, Opera 12+, iOS 3.2+, Android 2.1+
     if xhr = $.ajaxSettings.xhr()
       "withCredentials" of xhr || Firehose.LongPoll.ieSupported()
@@ -27,6 +27,7 @@ class Firehose.LongPoll extends Firehose.Transport
     @_stopRequestLoop = false
 
   connect: (delay = 0) =>
+    console?.log "connect", delay
     unless @_isConnected
       @_isConnected = true
       @config.connected()
@@ -49,17 +50,18 @@ class Firehose.LongPoll extends Firehose.Transport
       error:        @_error
       xhr:          hackAroundFirefoxXhrHeadersBug if $.browser is 'mozilla'
       complete:     @_xhrComplete
-    console?.log "_request END"
 
   _xhrComplete: (jqXhr) =>
     console?.log "XHR complete", arguments
     # Get the last sequence from the server if specified.
     if jqXhr.status == 200
       @_lastMessageSequence = jqXhr.getResponseHeader @messageSequenceHeader
+      console?.log "@_lastMessageSequence => #{@_lastMessageSequence}"
       if @_lastMessageSequence == null
         console?.log 'ERROR: Unable to get last message sequnce from header'
 
   stop: =>
+    console?.log "stop"
     @_stopRequestLoop = true
 
   _success: (data, status, jqXhr) =>
