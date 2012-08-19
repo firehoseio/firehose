@@ -64,10 +64,7 @@ class Firehose.LongPoll extends Firehose.Transport
 
   _success: (data, status, jqXhr) =>
     console?.log "_success", arguments
-    # TODO we actually want to do this when the thing calls out... mmm right now it takes
-    # up to 30s before we can call this thing.
-    # Call the 'connected' callback if the connection succeeds.
-    @_open(data) unless @_succeeded
+    @_open data
     return if @_stopRequestLoop
     if jqXhr.status == 204
       # If we get a 204 back, that means the server timed-out and sent back a 204 with a
