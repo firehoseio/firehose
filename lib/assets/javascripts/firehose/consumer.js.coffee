@@ -33,7 +33,8 @@ class Firehose.Consumer
     # Make sure we return ourself out of the constructor so we can chain.
     this
 
-  connect: =>
+  connect: (delay=0) =>
+    console?.log "Consumer#connect", delay
     # Get a list of transports that the browser supports
     supportedTransports = (transport for transport in @config.transports when transport.supported())
     # Mmmkay, we've got transports supported by the browser, now lets try connecting
@@ -46,8 +47,8 @@ class Firehose.Consumer
       @config.failed = =>
         # Map the next transport to connect inside of the current transport failures
         if nextTransport = supportedTransports.pop()
-          new nextTransport(@config).connect()
+          new nextTransport(@config).connect delay
         else originalFailFun?()
       new transport(@config)
     # Fire off the first connection attempt.
-    transports[0].connect()
+    transports[0].connect delay
