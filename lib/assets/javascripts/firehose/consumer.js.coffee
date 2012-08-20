@@ -36,7 +36,7 @@ class Firehose.Consumer
   connect: (delay=0) =>
     console?.log "Consumer#connect", delay
     # Get a list of transports that the browser supports
-    supportedTransports = (transport for transport in @config.transports when transport.supported())
+    supportedTransports = (t for t in @config.transports when t.supported())
     # Mmmkay, we've got transports supported by the browser, now lets try connecting
     # to them and dealing with failed connections that might be caused by firewalls,
     # or other network connectivity issues.
@@ -46,9 +46,13 @@ class Firehose.Consumer
       # If the connection fails, try the next transport supported by the browser.
       @config.failed = =>
         # Map the next transport to connect inside of the current transport failures
-        if nextTransport = supportedTransports.pop()
-          new nextTransport(@config).connect delay
+        if nextTransportType = supportedTransports.pop()
+          nextTransport = new nextTransportType @config
+          console?.log "Attempting to fail over to transport: #{nextTransport.name()}"
+          .connect delay
         else originalFailFun?()
       new transport(@config)
     # Fire off the first connection attempt.
-    transports[0].connect delay
+    [firstTransport] = transports
+    console?.log "Attempting to connect via transport: #{firstTransport.name()}"
+    firstTransport.connect delay
