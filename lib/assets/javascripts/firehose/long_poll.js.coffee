@@ -42,21 +42,24 @@ class Firehose.LongPoll extends Firehose.Transport
     data.last_message_sequence = @_lastMessageSequence
     # TODO: Some of these options will be deprecated in jQuery 1.8
     #       See: http://api.jquery.com/jQuery.ajax/#jqXHR
-    $.ajax @config.longPoll.url,
+    opts =
       crossDomain:  true
       data:         data
       timeout:      @_timeout
       success:      @_success
       error:        @_error
-      xhr:          hackAroundFirefoxXhrHeadersBug if $.browser is 'mozilla'
       complete:     @_xhrComplete
+    opts.xhr = hackAroundFirefoxXhrHeadersBug if $.browser.mozilla
+    $.ajax @config.longPoll.url, opts
 
   _xhrComplete: (jqXhr) =>
     console?.log "XHR complete", arguments
     # Get the last sequence from the server if specified.
+    console?.log "status #{jqXhr.status}"
     if jqXhr.status == 200
-      @_lastMessageSequence = jqXhr.getResponseHeader @messageSequenceHeader
-      console?.log "@_lastMessageSequence => #{@_lastMessageSequence}"
+      val = jqXhr.getResponseHeader @messageSequenceHeader
+      @_lastMessageSequence = val if val?
+      console?.log "Header #{@messageSequenceHeader} => #{val}"
       if @_lastMessageSequence == null
         console?.log 'ERROR: Unable to get last message sequnce from header'
 
@@ -68,11 +71,12 @@ class Firehose.LongPoll extends Firehose.Transport
     console?.log "_success", arguments
     @_open data
     return if @_stopRequestLoop
+    console?.log "status #{jqXhr.status}"
     if jqXhr.status == 204
       # If we get a 204 back, that means the server timed-out and sent back a 204 with a
       # X-Http-Next-Request header
       #
-      # Why did we use a 204 and not a 408? Because FireFox is really stupid about 400 level error
+      # Why did we use a 204 and not a 408? Because Firefox is really stupid about 400 level error
       # codes and would claims its a 0 error code, which we use for something else. Firefox is IE
       # in this case
       @connect(@_okInterval)
@@ -112,14 +116,15 @@ class Firehose.LongPoll extends Firehose.Transport
 # jQuery.ajaxSettings.xhr was breaking regular IE7 loading. Better to localize
 # this anyway to solve that problem and loading order issues.
 hackAroundFirefoxXhrHeadersBug = ->
+  console?.log "Hacking AJAX response headers for Firefox"
+  XHR_HEADERS = [
+    "Cache-Control", "Content-Language", "Content-Type"
+    "Expires", "Last-Modified", "Pragma"
+  ]
   xhr = jQuery.ajaxSettings.xhr()
   originalFun = xhr.getAllResponseHeaders
   xhr.getAllResponseHeaders = ->
-    XHR_HEADERS = [
-      "Cache-Control", "Content-Language", "Content-Type"
-      "Expires", "Last-Modified", "Pragma"
-    ]
-    return allHeaders if (allHeaders = originalFun.call xhr)?
+    return allHeaders if allHeaders = originalFun.call xhr
     lines = for name in XHR_HEADERS when xhr.getResponseHeader(name)?
       "#{name}: #{xhr.getResponseHeader name}"
     lines.join '\n'
@@ -129,6 +134,7 @@ hackAroundFirefoxXhrHeadersBug = ->
 # This code was shamelessly stolen from:
 # https://github.com/jaubourg/ajaxHooks/blob/master/src/ajax/xdr.js
 if $.browser.msie and parseInt($.browser.version, 10) in [8, 9]
+  console?.log "Hacking AJAX CORS for Internet Explorer"
   jQuery.ajaxTransport (s) ->
     if s.crossDomain and s.async
       if s.timeout
