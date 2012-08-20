@@ -3,6 +3,8 @@
 window.WEB_SOCKET_SWF_LOCATION = '/assets/firehose/WebSocketMain.swf' if !window.WEB_SOCKET_SWF_LOCATION
 
 class Firehose.WebSocket extends Firehose.Transport
+  name: -> 'WebSocket'
+
   @supported: =>
     # Compatibility reference: http://caniuse.com/websockets
     # We don't need to explicitly check for Flash web socket or MozWebSocket

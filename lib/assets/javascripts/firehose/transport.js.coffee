@@ -16,8 +16,9 @@ class Firehose.Transport
     this
 
   # Hey subclasses:
-  stop: ->     # implement this method to stop receiving messages
-  _request: -> # implement this method to handle requests
+  name: ->     throw 'not implemented in base Transport' # implement this to identify transport type
+  stop: ->     throw 'not implemented in base Transport' # implement this to stop receiving messages
+  _request: -> throw 'not implemented in base Transport' # implement this to handle requests
 
   # Default error handler
   _error: (event) =>

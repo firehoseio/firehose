@@ -1,5 +1,6 @@
 class Firehose.LongPoll extends Firehose.Transport
   messageSequenceHeader: 'pragma'
+  name: -> 'LongPoll'
 
   # CORS is supported in IE 8+
   @ieSupported: ->
