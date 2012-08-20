@@ -53,9 +53,8 @@ class Firehose.LongPoll extends Firehose.Transport
     $.ajax @config.longPoll.url, opts
 
   _xhrComplete: (jqXhr) =>
-    console?.log "XHR complete", arguments
+    console?.log "XHR complete", "status #{jqXhr.status}", arguments
     # Get the last sequence from the server if specified.
-    console?.log "status #{jqXhr.status}"
     if jqXhr.status == 200
       val = jqXhr.getResponseHeader @messageSequenceHeader
       @_lastMessageSequence = val if val?
@@ -68,10 +67,9 @@ class Firehose.LongPoll extends Firehose.Transport
     @_stopRequestLoop = true
 
   _success: (data, status, jqXhr) =>
-    console?.log "_success", arguments
-    @_open data
+    console?.log "_success", "status #{jqXhr.status}", arguments
+    @_open data unless @_succeeded
     return if @_stopRequestLoop
-    console?.log "status #{jqXhr.status}"
     if jqXhr.status == 204
       # If we get a 204 back, that means the server timed-out and sent back a 204 with a
       # X-Http-Next-Request header
