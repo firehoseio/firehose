@@ -49,7 +49,7 @@ class Firehose.Consumer
         if nextTransportType = supportedTransports.pop()
           nextTransport = new nextTransportType @config
           console?.log "Attempting to fail over to transport: #{nextTransport.name()}"
-          .connect delay
+          nextTransport.connect delay
         else originalFailFun?()
       new transport(@config)
     # Fire off the first connection attempt.
