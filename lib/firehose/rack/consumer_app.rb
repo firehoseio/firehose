@@ -4,8 +4,6 @@ require 'json'
 module Firehose
   module Rack
     class ConsumerApp
-      ALTERNATE_LAST_MESSAGE_SEQUENCE_HEADER = 'X-Last-Message-Sequence'
-      
       def call(env)
         websocket_request?(env) ? websocket.call(env) : http_long_poll.call(env)
       end
@@ -50,11 +48,7 @@ module Firehose
                 env['async.callback'].call response(400, "Header '#{LAST_MESSAGE_SEQUENCE_HEADER}' may not be less than zero", response_headers(env))
               else
                 Channel.new(path).next_message(last_sequence, :timeout => TIMEOUT).callback do |message, sequence|
-                  headers = response_headers(env).merge(
-                    LAST_MESSAGE_SEQUENCE_HEADER           => sequence.to_s,
-                    ALTERNATE_LAST_MESSAGE_SEQUENCE_HEADER => sequence.to_s
-                  )
-                  env['async.callback'].call response(200, message, headers)
+                  env['async.callback'].call response(200, message, response_headers(env).merge(LAST_MESSAGE_SEQUENCE_HEADER => sequence.to_s))
                 end.errback do |e|
                   if e == :timeout
                     env['async.callback'].call response(204, '', response_headers(env))
@@ -92,10 +86,7 @@ module Firehose
           # TODO seperate out CORS logic as an async middleware with a Goliath web server.
           {
             'Access-Control-Allow-Origin'     => cors_origin(env),
-            'Access-Control-Expose-Headers'   => [
-              LAST_MESSAGE_SEQUENCE_HEADER,
-              ALTERNATE_LAST_MESSAGE_SEQUENCE_HEADER
-            ].join(', ')
+            'Access-Control-Expose-Headers'   => LAST_MESSAGE_SEQUENCE_HEADER
           }
         end
       end
