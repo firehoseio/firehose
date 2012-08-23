@@ -83,10 +83,13 @@ module Firehose
         end
 
         def cors_headers(env)
+          # HACKETY HACK HACK!! Let's just cram that msg seq num into the content-type
+          content_type = %Q(text/plain; charset="UTF-8"; #{LAST_MESSAGE_SEQUENCE_HEADER})
           # TODO seperate out CORS logic as an async middleware with a Goliath web server.
           {
-            'Access-Control-Allow-Origin'     => cors_origin(env),
-            'Access-Control-Expose-Headers'   => LAST_MESSAGE_SEQUENCE_HEADER
+            'Content-Type'                  => content_type,
+            'Access-Control-Allow-Origin'   => cors_origin(env),
+            'Access-Control-Expose-Headers' => LAST_MESSAGE_SEQUENCE_HEADER
           }
         end
       end
