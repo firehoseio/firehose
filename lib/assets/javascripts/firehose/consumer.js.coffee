@@ -7,6 +7,8 @@ class Firehose.Consumer
     config.transports   ||= Firehose.Consumer.transports
     unless config.transports.length > 0
       throw 'You must provide at least one tranport for Firehose.Consumer'
+    unless typeof config.uri is 'string'
+      throw 'You must provide a Firehose server URI for Firehose.Consumer'
     # Empty handler for messages.
     config.message      ||= ->
     # Empty handler for error handling.
@@ -15,19 +17,16 @@ class Firehose.Consumer
     config.connected    ||= ->
     # Empty handler for when we're disconnected.
     config.disconnected ||= ->
-    # The initial connection failed. This is probably triggered when a transport, like WebSockets
-    # is supported by the browser, but for whatever reason it can't connect (probably a firewall)
+    # The initial connection failed. This is probably triggered when a
+    # transport, like WebSockets is supported by the browser, but for whatever
+    # reason it can't connect (probably a firewall)
     config.failed       ||= ->
       throw "Could not connect"
-    # URL that we'll connect to.
-    config.uri          ||= undefined
     # Params that we'll tack on to the URL.
-    config.params       ||= { }
+    config.params       ||= {}
     # Do stuff before we send the message into config.message. The sensible
     # default on the webs is to parse JSON.
-    config.parse ||= (body) ->
-      JSON.parse(body)
-
+    config.parse        ||= JSON.parse
     # Hang on to these config for when we connect.
     @config = config
     # Make sure we return ourself out of the constructor so we can chain.
