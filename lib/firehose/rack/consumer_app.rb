@@ -49,7 +49,7 @@ module Firehose
               else
                 Channel.new(path).next_message(last_sequence, :timeout => TIMEOUT).callback do |message, sequence|
                   seq_headers = {
-                    # HACKETY HACK HACK!! Let's just cram that msg seq num into the content-type
+                    # HACKETY HACK! Let's just cram that msg seq num into the content-type
                     'Content-Type'               => %Q(text/plain; charset="UTF-8"; #{sequence.to_s}),
                     LAST_MESSAGE_SEQUENCE_HEADER => sequence.to_s
                   }
@@ -88,10 +88,11 @@ module Firehose
         end
 
         def cors_headers(env)
+          expose_headers = ['Content-Type', LAST_MESSAGE_SEQUENCE_HEADER].join ', '
           # TODO seperate out CORS logic as an async middleware with a Goliath web server.
           {
             'Access-Control-Allow-Origin'   => cors_origin(env),
-            'Access-Control-Expose-Headers' => LAST_MESSAGE_SEQUENCE_HEADER
+            'Access-Control-Expose-Headers' => expose_headers
           }
         end
       end
