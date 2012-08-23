@@ -1,5 +1,5 @@
 class Firehose.LongPoll extends Firehose.Transport
-  messageSequenceHeader: 'pragma'
+  messageSequenceHeader: 'Pragma'
   name: -> 'LongPoll'
 
   # CORS is supported in IE 8+
@@ -56,12 +56,12 @@ class Firehose.LongPoll extends Firehose.Transport
   _xhrComplete: (jqXhr) =>
     console?.log "XHR complete", "status #{jqXhr.status}", arguments
     # Get the last sequence from the server if specified.
-    if jqXhr.status == 200
+    if jqXhr.status is 200
       val = jqXhr.getResponseHeader @messageSequenceHeader
       @_lastMessageSequence = val if val?
-      console?.log "Header #{@messageSequenceHeader} => #{val}"
+      console?.log "Last message sequence header => #{val}"
       if @_lastMessageSequence == null
-        console?.log 'ERROR: Unable to get last message sequnce from header'
+        console?.log 'ERROR: Unable to get last message sequence from headers'
 
   stop: =>
     console?.log "stop"
