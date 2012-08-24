@@ -57,8 +57,7 @@ class Firehose.LongPoll extends Firehose.Transport
     console?.log "XHR complete", "status #{jqXhr.status}", arguments
     # Get the last sequence from the server if specified.
     if jqXhr.status is 200
-      val  = jqXhr.getResponseHeader @messageSequenceHeader
-      val ?= parseSeqNum jqXhr.contentType
+      val = jqXhr.getResponseHeader @messageSequenceHeader
       @_lastMessageSequence = val if val?
       console?.log "Last message sequence header => #{val}"
       if @_lastMessageSequence == null
@@ -106,10 +105,6 @@ class Firehose.LongPoll extends Firehose.Transport
       setTimeout @_ping, @_retryDelay + @_lagTime
       # Reconnect with delay
       setTimeout @_request, @_retryDelay
-
-parseSeqNum = (contentType) ->
-  [_..., last] = contentType.split ';'
-  parseInt last, 10
 
 # NB: This is a stupid hack to deal with CORS short-comings in jQuery in
 # Firefox. There is a ticket for this: http://bugs.jquery.com/ticket/10338

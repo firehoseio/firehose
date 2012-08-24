@@ -48,12 +48,8 @@ module Firehose
                 env['async.callback'].call response(400, "Header '#{LAST_MESSAGE_SEQUENCE_HEADER}' may not be less than zero", response_headers(env))
               else
                 Channel.new(path).next_message(last_sequence, :timeout => TIMEOUT).callback do |message, sequence|
-                  seq_headers = {
-                    # HACKETY HACK! Let's just cram that msg seq num into the content-type
-                    'Content-Type'               => %Q(text/plain; charset="UTF-8"; #{sequence.to_s}),
-                    LAST_MESSAGE_SEQUENCE_HEADER => sequence.to_s
-                  }
-                  env['async.callback'].call response(200, message, response_headers(env).merge(seq_headers))
+                  combined_headers = response_headers(env).merge(LAST_MESSAGE_SEQUENCE_HEADER => sequence.to_s)
+                  env['async.callback'].call response(200, message, combined_headers)
                 end.errback do |e|
                   if e == :timeout
                     env['async.callback'].call response(204, '', response_headers(env))
@@ -88,11 +84,10 @@ module Firehose
         end
 
         def cors_headers(env)
-          expose_headers = ['Content-Type', LAST_MESSAGE_SEQUENCE_HEADER].join ', '
           # TODO seperate out CORS logic as an async middleware with a Goliath web server.
           {
             'Access-Control-Allow-Origin'   => cors_origin(env),
-            'Access-Control-Expose-Headers' => expose_headers
+            'Access-Control-Expose-Headers' => LAST_MESSAGE_SEQUENCE_HEADER
           }
         end
       end
