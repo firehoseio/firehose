@@ -28,14 +28,12 @@ class Firehose.LongPoll extends Firehose.Transport
     @_stopRequestLoop = false
 
   connect: (delay = 0) =>
-    console?.log "connect", delay
     unless @_isConnected
       @_isConnected = true
       @config.connected()
     super(delay)
 
   _request: =>
-    console?.log "_request", arguments
     # Set the Last Message Sequence in a query string.
     # Ideally we'd use an HTTP header, but android devices don't let us
     # set any HTTP headers for CORS requests.
@@ -54,21 +52,15 @@ class Firehose.LongPoll extends Firehose.Transport
     $.ajax @config.longPoll.url, opts
 
   _xhrComplete: (jqXhr) =>
-    console?.log "XHR complete", "status #{jqXhr.status}", arguments
     # Get the last sequence from the server if specified.
     if jqXhr.status is 200
       val = jqXhr.getResponseHeader @messageSequenceHeader
       @_lastMessageSequence = val if val?
-      console?.log "Last message sequence header => #{val}"
-      if @_lastMessageSequence == null
-        console?.log 'ERROR: Unable to get last message sequence from headers'
 
   stop: =>
-    console?.log "stop"
     @_stopRequestLoop = true
 
   _success: (data, status, jqXhr) =>
-    console?.log "_success", "status #{jqXhr.status}", arguments
     @_open data unless @_succeeded
     return if @_stopRequestLoop
     if jqXhr.status == 204
@@ -84,7 +76,6 @@ class Firehose.LongPoll extends Firehose.Transport
       @connect(@_okInterval)
 
   _ping: =>
-    console?.log "_ping", arguments
     # Ping long poll server to verify internet connectivity
     # jQuery CORS doesn't support timeouts and there is no way to access xhr2 object
     # directly so we can't manually set a timeout.
@@ -97,7 +88,6 @@ class Firehose.LongPoll extends Firehose.Transport
   # We need this custom handler to have the connection status
   # properly displayed
   _error: (jqXhr, status, error) =>
-    console?.log "_error", arguments
     @_isConnected = false
     @config.disconnected()
     unless @_stopRequestLoop
@@ -115,7 +105,6 @@ class Firehose.LongPoll extends Firehose.Transport
 # jQuery.ajaxSettings.xhr was breaking regular IE7 loading. Better to localize
 # this anyway to solve that problem and loading order issues.
 hackAroundFirefoxXhrHeadersBug = ->
-  console?.log "Hacking AJAX response headers for Firefox"
   XHR_HEADERS = [
     "Cache-Control", "Content-Language", "Content-Type"
     "Expires", "Last-Modified", "Pragma"
@@ -133,7 +122,6 @@ hackAroundFirefoxXhrHeadersBug = ->
 # This code was shamelessly stolen from:
 # https://github.com/jaubourg/ajaxHooks/blob/master/src/ajax/xdr.js
 if $.browser.msie and parseInt($.browser.version, 10) in [8, 9]
-  console?.log "Hacking AJAX CORS for Internet Explorer"
   jQuery.ajaxTransport (s) ->
     if s.crossDomain and s.async
       if s.timeout

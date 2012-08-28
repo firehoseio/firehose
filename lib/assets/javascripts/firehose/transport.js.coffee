@@ -11,7 +11,6 @@ class Firehose.Transport
 
   # Lets rock'n'roll! Connect to the server.
   connect: (delay = 0) =>
-    console?.log "Transport#connect", delay
     setTimeout @_request, delay
     this
 
@@ -22,7 +21,6 @@ class Firehose.Transport
 
   # Default error handler
   _error: (event) =>
-    console?.log "Transport#_error", event
     if @_succeeded
       # Lets try to connect again with delay
       @config.disconnected()
