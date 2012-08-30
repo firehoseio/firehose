@@ -36,6 +36,7 @@ module Firehose
           # Ideally we'd use an HTTP header, but android devices don't let us
           # set any HTTP headers for CORS requests.
           last_sequence = req.params['last_message_sequence'].to_i
+          is_short_poll = req.params['short_poll'] == 'true'
 
           case method
           # GET is how clients subscribe to the queue. When a messages comes in, we flush out a response,
