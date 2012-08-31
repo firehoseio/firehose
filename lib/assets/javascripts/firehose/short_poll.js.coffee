@@ -18,35 +18,24 @@ class Firehose.ShortPoll extends Firehose.Transport
   _request: =>
     data = @config.params
     data.short_poll = true
-    debugger
     $.ajax @config.shortPoll.url,
       crossDomain:  true
       data:         data
-      timeout:      @_timeout
+      timeout:      @config.shortPoll.timeout
       success:      @_success
       error:        @_error
 
-  _timeout: =>
-    debugger
-    @config.disconnected()
-    # TODO: implement some exponential backoff...
-    setTimeout @_request, 3000 unless @_stopRequestLoop
-
   _error: (jqXhr, status, error) =>
-    debugger
     @config.disconnected()
     # TODO: implement some exponential backoff...
-    setTimeout @_request, 1000 unless @_stopRequestLoop
+    setTimeout @_request, 2000 unless @_stopRequestLoop
 
   _success: (data, status, jqXhr) =>
-    debugger
     return if @_stopRequestLoop
     @_open data unless @_succeeded
+    # TODO: don't send message on 204 response
     @config.message @config.parse jqXhr.responseText
-    @connect @_okInterval, @config.shortPoll.shortWait
-
-# NB: Leaving this here for now. It does work, but won't help us since the XDR
-#     object cannot access any response headers, which Firehose relies on.
+    @connect @config.shortPoll.shortWait
 
 # # Let's try to hack in support for IE8+ via the XDomainRequest object!
 # # This was adapted from code shamelessly stolen from:
