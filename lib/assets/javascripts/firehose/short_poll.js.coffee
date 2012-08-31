@@ -39,8 +39,7 @@ class Firehose.ShortPoll extends Firehose.Transport
     @_failCount = 0
     return if @_stopRequestLoop
     @_open data unless @_succeeded
-    # TODO: don't send message on 204 response
-    @config.message @config.parse jqXhr.responseText
+    @config.message @config.parse jqXhr.responseText if jqXhr.status is 200
     @connect @config.shortPoll.shortWait
 
 # # Let's try to hack in support for IE8+ via the XDomainRequest object!
