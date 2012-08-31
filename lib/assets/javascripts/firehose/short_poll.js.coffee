@@ -11,6 +11,11 @@ class Firehose.ShortPoll extends Firehose.Transport
     @config.shortPoll.timeout   ?= args.timeout or 5000
     @config.shortPoll.shortWait ?= args.wait or 800
     @_stopRequestLoop = false
+    @_failCount       = 0
+
+  connect: (delay = 0) =>
+    @_failCount = 0
+    super delay
 
   stop: =>
     @_stopRequestLoop = true
@@ -27,10 +32,11 @@ class Firehose.ShortPoll extends Firehose.Transport
 
   _error: (jqXhr, status, error) =>
     @config.disconnected()
-    # TODO: implement some exponential backoff...
-    setTimeout @_request, 2000 unless @_stopRequestLoop
+    time = Math.min (2000 * ++@_failCount), 20000
+    setTimeout @_request, time unless @_stopRequestLoop
 
   _success: (data, status, jqXhr) =>
+    @_failCount = 0
     return if @_stopRequestLoop
     @_open data unless @_succeeded
     # TODO: don't send message on 204 response
