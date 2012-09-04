@@ -21,8 +21,10 @@ class Firehose.ShortPoll extends Firehose.Transport
     @_stopRequestLoop = true
 
   _request: =>
-    data = @config.params
-    data.short_poll = true
+    rando             = Math.floor Math.random() * 10000000
+    data              = @config.params
+    data.short_poll   = true
+    data.cache_buster = "#{new Date().valueOf()}#{rando}"
     $.ajax @config.shortPoll.url,
       crossDomain:  true
       data:         data
