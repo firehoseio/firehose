@@ -70,7 +70,7 @@ module Firehose
         PAYLOAD_DELIMITER,
         channel_key
       ]
-      Firehose.logger.debug "Evaluating Lua publishing script (#{@publish_script_digest}) with arguments: #{script_args.inspect}"
+      # Firehose.logger.debug "Evaluating Lua publishing script (#{@publish_script_digest}) with arguments: #{script_args.inspect}"
       redis.evalsha(
         @publish_script_digest, script_args.length, *script_args
       ).errback do |e|
