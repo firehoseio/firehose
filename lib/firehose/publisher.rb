@@ -67,7 +67,8 @@ module Firehose
         ttl,
         message,
         MAX_MESSAGES,
-        PAYLOAD_DELIMITER
+        PAYLOAD_DELIMITER,
+        channel_key
       ]
       Firehose.logger.debug "Evaluating Lua publishing script (#{@publish_script_digest}) with arguments: #{script_args.inspect}"
       redis.evalsha(
@@ -88,6 +89,7 @@ module Firehose
       local message           = KEYS[5]
       local max_messages      = KEYS[6]
       local payload_delimiter = KEYS[7]
+      local firehose_resource = KEYS[8]
 
       local current_sequence = redis.call('get', sequence_key)
       if current_sequence == nil or current_sequence == false then
@@ -95,7 +97,7 @@ module Firehose
       end
 
       local sequence = current_sequence + 1
-      local message_payload = channel_key .. payload_delimiter .. sequence .. payload_delimiter .. message
+      local message_payload = firehose_resource .. payload_delimiter .. sequence .. payload_delimiter .. message
 
       redis.call('set', sequence_key, sequence)
       redis.call('expire', sequence_key, ttl)
