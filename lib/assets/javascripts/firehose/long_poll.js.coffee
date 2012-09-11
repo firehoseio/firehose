@@ -6,7 +6,7 @@ class Firehose.LongPoll extends Firehose.Transport
   # access "simple request" response headers. This means we don't yet have a
   # plan to support IE<10 (when it gets a real XHR2 implementation). Sucks...
   @ieSupported: ->
-    $.browser.msie and parseInt($.browser.version) >= 10
+    $.browser.msie and parseInt($.browser.version) >= 8
 
   @supported: ->
     # IE 8+, FF 3.5+, Chrome 4+, Safari 4+, Opera 12+, iOS 3.2+, Android 2.1+
@@ -83,37 +83,34 @@ class Firehose.LongPoll extends Firehose.Transport
       # Reconnect with delay
       setTimeout @_request, @_retryDelay
 
-# NB: Leaving this here for now. It does work, but won't help us since the XDR
-#     object cannot access any response headers, which Firehose relies on.
-
-# # Let's try to hack in support for IE8+ via the XDomainRequest object!
-# # This was adapted from code shamelessly stolen from:
-# # https://github.com/jaubourg/ajaxHooks/blob/master/src/ajax/xdr.js
-# if $.browser.msie and parseInt($.browser.version, 10) in [8, 9]
-#   jQuery.ajaxTransport (s) ->
-#     if s.crossDomain and s.async
-#       if s.timeout
-#         s.xdrTimeout = s.timeout
-#         delete s.timeout
-#       xdr = undefined
-#       return {
-#         send: (_, complete) ->
-#           callback = (status, statusText, responses, responseHeaders) ->
-#             xdr.onload = xdr.onerror = xdr.ontimeout = jQuery.noop
-#             xdr = undefined
-#             complete status, statusText, responses, responseHeaders
-#           xdr = new XDomainRequest()
-#           xdr.open s.type, s.url
-#           xdr.onload = ->
-#             headers = "Content-Type: #{xdr.contentType}"
-#             callback 200, "OK", {text: xdr.responseText}, headers
-#           xdr.onerror = -> callback 404, "Not Found"
-#           if s.xdrTimeout?
-#             xdr.ontimeout = -> callback 0, "timeout"
-#             xdr.timeout   = s.xdrTimeout
-#           xdr.send (s.hasContent and s.data) or null
-#         abort: ->
-#           if xdr?
-#             xdr.onerror = jQuery.noop()
-#             xdr.abort()
-#       }
+# Let's try to hack in support for IE8-9 via the XDomainRequest object!
+# This was adapted from code shamelessly stolen from:
+# https://github.com/jaubourg/ajaxHooks/blob/master/src/ajax/xdr.js
+if $.browser.msie and parseInt($.browser.version, 10) in [8, 9]
+  jQuery.ajaxTransport (s) ->
+    if s.crossDomain and s.async
+      if s.timeout
+        s.xdrTimeout = s.timeout
+        delete s.timeout
+      xdr = undefined
+      return {
+        send: (_, complete) ->
+          callback = (status, statusText, responses, responseHeaders) ->
+            xdr.onload = xdr.onerror = xdr.ontimeout = jQuery.noop
+            xdr = undefined
+            complete status, statusText, responses, responseHeaders
+          xdr = new XDomainRequest()
+          xdr.open s.type, s.url
+          xdr.onload = ->
+            headers = "Content-Type: #{xdr.contentType}"
+            callback 200, "OK", {text: xdr.responseText}, headers
+          xdr.onerror = -> callback 404, "Not Found"
+          if s.xdrTimeout?
+            xdr.ontimeout = -> callback 0, "timeout"
+            xdr.timeout   = s.xdrTimeout
+          xdr.send (s.hasContent and s.data) or null
+        abort: ->
+          if xdr?
+            xdr.onerror = jQuery.noop()
+            xdr.abort()
+      }
