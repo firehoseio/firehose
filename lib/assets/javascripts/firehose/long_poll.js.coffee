@@ -49,6 +49,7 @@ class Firehose.LongPoll extends Firehose.Transport
       timeout:      @_timeout
       success:      @_success
       error:        @_error
+      cache:        false
 
   stop: =>
     @_stopRequestLoop = true
