@@ -57,9 +57,12 @@ class Firehose.LongPoll extends Firehose.Transport
     @_open data unless @_succeeded
     return if @_stopRequestLoop
     if jqXhr.status is 200
-      {message, last_sequence} = JSON.parse jqXhr.responseText
-      @_lastMessageSequence = last_sequence
-      @config.message @config.parse message
+      # Of course, IE's XDomainRequest doesn't support non-200 success codes.
+      try
+        {message, last_sequence} = JSON.parse jqXhr.responseText
+        @_lastMessageSequence    = last_sequence
+        @config.message @config.parse message
+      catch e
     @connect @_okInterval
 
   _ping: =>
