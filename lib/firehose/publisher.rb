@@ -12,8 +12,23 @@ module Firehose
       # TODO hi-redis isn't that awesome... we have to setup an errback per even for wrong
       # commands because of the lack of a method_missing whitelist. Perhaps implement a whitelist in
       # em-hiredis or us a diff lib?
-      deferrable = EM::DefaultDeferrable.new
-      deferrable.errback {|e| EM.next_tick { raise e } }
+      if (deferrable = opts[:deferrable]).nil?
+        deferrable = EM::DefaultDeferrable.new
+        deferrable.errback do |e|
+          # Handle missing Lua publishing script in cache
+          # (such as Redis restarting or someone executing SCRIPT FLUSH)
+          if e.message =~ /NOSCRIPT/
+            deferrable.succeed
+            EM.next_tick do
+              @publish_script_digest = nil
+              combined_opts = opts.merge :deferrable => deferrable
+              self.publish channel_key, message, combined_opts
+            end
+          else
+            EM.next_tick { raise e }
+          end
+        end
+      end
 
       if @publish_script_digest.nil?
         register_publish_script.errback do |e|
@@ -70,7 +85,6 @@ module Firehose
         PAYLOAD_DELIMITER,
         channel_key
       ]
-      # Firehose.logger.debug "Evaluating Lua publishing script (#{@publish_script_digest}) with arguments: #{script_args.inspect}"
       redis.evalsha(
         @publish_script_digest, script_args.length, *script_args
       ).errback do |e|
