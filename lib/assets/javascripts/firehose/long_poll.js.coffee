@@ -6,7 +6,7 @@ class Firehose.LongPoll extends Firehose.Transport
   # access "simple request" response headers. This means we don't yet have a
   # plan to support IE<10 (when it gets a real XHR2 implementation). Sucks...
   @ieSupported: ->
-    $.browser.msie and parseInt($.browser.version) >= 10
+    $.browser.msie and parseInt($.browser.version) >= 8
 
   @supported: ->
     # IE 8+, FF 3.5+, Chrome 4+, Safari 4+, Opera 12+, iOS 3.2+, Android 2.1+
@@ -43,21 +43,13 @@ class Firehose.LongPoll extends Firehose.Transport
     data.last_message_sequence = @_lastMessageSequence
     # TODO: Some of these options will be deprecated in jQuery 1.8
     #       See: http://api.jquery.com/jQuery.ajax/#jqXHR
-    opts =
+    $.ajax @config.longPoll.url,
       crossDomain:  true
       data:         data
       timeout:      @_timeout
       success:      @_success
       error:        @_error
-      complete:     @_xhrComplete
-    opts.xhr = hackAroundFirefoxXhrHeadersBug if $.browser.mozilla
-    $.ajax @config.longPoll.url, opts
-
-  _xhrComplete: (jqXhr) =>
-    # Get the last sequence from the server if specified.
-    if jqXhr.status is 200
-      val = jqXhr.getResponseHeader @messageSequenceHeader
-      @_lastMessageSequence = val if val?
+      cache:        false
 
   stop: =>
     @_stopRequestLoop = true
@@ -65,17 +57,14 @@ class Firehose.LongPoll extends Firehose.Transport
   _success: (data, status, jqXhr) =>
     @_open data unless @_succeeded
     return if @_stopRequestLoop
-    if jqXhr.status == 204
-      # If we get a 204 back, that means the server timed-out and sent back a 204 with a
-      # X-Http-Next-Request header
-      #
-      # Why did we use a 204 and not a 408? Because Firefox is really stupid about 400 level error
-      # codes and would claims its a 0 error code, which we use for something else. Firefox is IE
-      # in this case
-      @connect(@_okInterval)
-    else
-      @config.message(@config.parse(jqXhr.responseText))
-      @connect(@_okInterval)
+    if jqXhr.status is 200
+      # Of course, IE's XDomainRequest doesn't support non-200 success codes.
+      try
+        {message, last_sequence} = JSON.parse jqXhr.responseText
+        @_lastMessageSequence    = last_sequence
+        @config.message @config.parse message
+      catch e
+    @connect @_okInterval
 
   _ping: =>
     # Ping long poll server to verify internet connectivity
@@ -98,59 +87,34 @@ class Firehose.LongPoll extends Firehose.Transport
       # Reconnect with delay
       setTimeout @_request, @_retryDelay
 
-# NB: This is a stupid hack to deal with CORS short-comings in jQuery in
-# Firefox. There is a ticket for this: http://bugs.jquery.com/ticket/10338
-# Once jQuery is upgraded to this version we can probably remove this, but be
-# sure you test the crap out of Firefox!
-# Its also worth noting that I had to localize this monkey-patch to the
-# Firehose.LongPoll consumer because a previous global patch on
-# jQuery.ajaxSettings.xhr was breaking regular IE7 loading. Better to localize
-# this anyway to solve that problem and loading order issues.
-hackAroundFirefoxXhrHeadersBug = ->
-  XHR_HEADERS = [
-    "Cache-Control", "Content-Language", "Content-Type"
-    "Expires", "Last-Modified", "Pragma"
-  ]
-  xhr = jQuery.ajaxSettings.xhr()
-  originalFun = xhr.getAllResponseHeaders
-  xhr.getAllResponseHeaders = ->
-    return allHeaders if allHeaders = originalFun.call xhr
-    lines = for name in XHR_HEADERS when xhr.getResponseHeader(name)?
-      "#{name}: #{xhr.getResponseHeader name}"
-    lines.join '\n'
-  xhr
-
-# NB: Leaving this here for now. It does work, but won't help us since the XDR
-#     object cannot access any response headers, which Firehose relies on.
-
-# # Let's try to hack in support for IE8+ via the XDomainRequest object!
-# # This was adapted from code shamelessly stolen from:
-# # https://github.com/jaubourg/ajaxHooks/blob/master/src/ajax/xdr.js
-# if $.browser.msie and parseInt($.browser.version, 10) in [8, 9]
-#   jQuery.ajaxTransport (s) ->
-#     if s.crossDomain and s.async
-#       if s.timeout
-#         s.xdrTimeout = s.timeout
-#         delete s.timeout
-#       xdr = undefined
-#       return {
-#         send: (_, complete) ->
-#           callback = (status, statusText, responses, responseHeaders) ->
-#             xdr.onload = xdr.onerror = xdr.ontimeout = jQuery.noop
-#             xdr = undefined
-#             complete status, statusText, responses, responseHeaders
-#           xdr = new XDomainRequest()
-#           xdr.open s.type, s.url
-#           xdr.onload = ->
-#             headers = "Content-Type: #{xdr.contentType}"
-#             callback 200, "OK", {text: xdr.responseText}, headers
-#           xdr.onerror = -> callback 404, "Not Found"
-#           if s.xdrTimeout?
-#             xdr.ontimeout = -> callback 0, "timeout"
-#             xdr.timeout   = s.xdrTimeout
-#           xdr.send (s.hasContent and s.data) or null
-#         abort: ->
-#           if xdr?
-#             xdr.onerror = jQuery.noop()
-#             xdr.abort()
-#       }
+# Let's try to hack in support for IE8-9 via the XDomainRequest object!
+# This was adapted from code shamelessly stolen from:
+# https://github.com/jaubourg/ajaxHooks/blob/master/src/ajax/xdr.js
+if $.browser.msie and parseInt($.browser.version, 10) in [8, 9]
+  jQuery.ajaxTransport (s) ->
+    if s.crossDomain and s.async
+      if s.timeout
+        s.xdrTimeout = s.timeout
+        delete s.timeout
+      xdr = undefined
+      return {
+        send: (_, complete) ->
+          callback = (status, statusText, responses, responseHeaders) ->
+            xdr.onload = xdr.onerror = xdr.ontimeout = jQuery.noop
+            xdr = undefined
+            complete status, statusText, responses, responseHeaders
+          xdr = new XDomainRequest()
+          xdr.open s.type, s.url
+          xdr.onload = ->
+            headers = "Content-Type: #{xdr.contentType}"
+            callback 200, "OK", {text: xdr.responseText}, headers
+          xdr.onerror = -> callback 404, "Not Found"
+          if s.xdrTimeout?
+            xdr.ontimeout = -> callback 0, "timeout"
+            xdr.timeout   = s.xdrTimeout
+          xdr.send (s.hasContent and s.data) or null
+        abort: ->
+          if xdr?
+            xdr.onerror = jQuery.noop()
+            xdr.abort()
+      }

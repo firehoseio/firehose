@@ -45,11 +45,10 @@ module Firehose
             EM.next_tick do
 
               if last_sequence < 0
-                env['async.callback'].call response(400, "Header '#{LAST_MESSAGE_SEQUENCE_HEADER}' may not be less than zero", response_headers(env))
+                env['async.callback'].call response(400, "The last_message_sequence parameter may not be less than zero", response_headers(env))
               else
                 Channel.new(path).next_message(last_sequence, :timeout => TIMEOUT).callback do |message, sequence|
-                  combined_headers = response_headers(env).merge(LAST_MESSAGE_SEQUENCE_HEADER => sequence.to_s)
-                  env['async.callback'].call response(200, message, combined_headers)
+                  env['async.callback'].call response(200, wrap_frame(message, sequence), response_headers(env))
                 end.errback do |e|
                   if e == :timeout
                     env['async.callback'].call response(204, '', response_headers(env))
@@ -74,6 +73,10 @@ module Firehose
 
         private
 
+        def wrap_frame(message, last_sequence)
+          JSON.generate :message => message, :last_sequence => last_sequence
+        end
+
         # If the request is a CORS request, return those headers, otherwise don't worry 'bout it
         def response_headers(env)
           cors_origin(env) ? cors_headers(env) : {}
@@ -85,10 +88,7 @@ module Firehose
 
         def cors_headers(env)
           # TODO seperate out CORS logic as an async middleware with a Goliath web server.
-          {
-            'Access-Control-Allow-Origin'   => cors_origin(env),
-            'Access-Control-Expose-Headers' => LAST_MESSAGE_SEQUENCE_HEADER
-          }
+          {'Access-Control-Allow-Origin' => cors_origin(env)}
         end
       end
 
