@@ -1,5 +1,6 @@
 require 'spec_helper'
 require 'integrations/integration_test_helper'
+require 'json'
 
 shared_examples_for 'Firehose::Rack::App' do
   include EM::TestHelper
@@ -53,10 +54,11 @@ shared_examples_for 'Firehose::Rack::App' do
       http = EM::HttpRequest.new(http_url).get(:query => {'last_message_sequence' => last_sequence})
       http.errback { em.stop }
       http.callback do
-        received[cid] << http.response
+        frame = JSON.parse(http.response, :symbolize_names => true)
+        received[cid] << frame[:message]
         if received[cid].size < messages.size
           # Add some jitter so the clients aren't syncronized
-          EM::add_timer(rand*0.001) { http_long_poll.call cid, http.response_header['pragma'] }
+          EM::add_timer(rand*0.001) { http_long_poll.call cid, frame[:last_sequence] }
         else
           succeed.call cid
         end
