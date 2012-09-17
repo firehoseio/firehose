@@ -45,6 +45,7 @@ class Firehose.WebSocket extends Firehose.Transport
       @config.connected @
       clearTimeout @pingTimeout
       @socket.onmessage = @_message
+    else @_message event
 
   _message: (event) =>
     @config.message(@config.parse(event.data))
