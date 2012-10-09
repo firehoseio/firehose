@@ -1,0 +1,2 @@
+Firehose.version = "<%= Firehose::VERSION %>"
+Firehose.codeName = "<%= Firehose::CODENAME %>"
