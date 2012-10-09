@@ -43,7 +43,8 @@ class Firehose.LongPoll extends Firehose.Transport
     data.last_message_sequence = @_lastMessageSequence
     # TODO: Some of these options will be deprecated in jQuery 1.8
     #       See: http://api.jquery.com/jQuery.ajax/#jqXHR
-    $.ajax @config.longPoll.url,
+    $.ajax
+      url: @config.longPoll.url
       crossDomain:  true
       data:         data
       timeout:      @_timeout
@@ -70,7 +71,8 @@ class Firehose.LongPoll extends Firehose.Transport
     # Ping long poll server to verify internet connectivity
     # jQuery CORS doesn't support timeouts and there is no way to access xhr2 object
     # directly so we can't manually set a timeout.
-    $.ajax @config.longPoll.url,
+    $.ajax
+      url: @config.longPoll.url
       method: 'HEAD'
       crossDomain: true
       data: @config.params
