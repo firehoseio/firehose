@@ -1,4 +1,4 @@
 module Firehose
-  VERSION = "0.2.alpha.11"
+  VERSION = "0.2.alpha.10"
   CODENAME = "Surfin' Safari"
 end
