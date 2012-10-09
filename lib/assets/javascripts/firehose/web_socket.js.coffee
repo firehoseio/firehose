@@ -51,9 +51,10 @@ class Firehose.WebSocket extends Firehose.Transport
     @config.message(@config.parse(event.data))
 
   _close: (event) =>
-    if !event || (event and !event.wasClean)
-      # This was not a clean disconnect. An error occurred somewhere
-      # Lets try to reconnect
+    if event?.wasClean
+      @cleanUp()
+    else
+      # This was not a clean disconnect. An error occurred somewhere.
       @_error(event)
 
   _error: (event) =>
