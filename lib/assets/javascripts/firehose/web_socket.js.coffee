@@ -9,7 +9,7 @@ class Firehose.WebSocket extends Firehose.Transport
     # Compatibility reference: http://caniuse.com/websockets
     # We don't need to explicitly check for Flash web socket or MozWebSocket
     # because web_socket.js has already handled that.
-    !!(window.WebSocket)
+    window.WebSocket?
 
   constructor: (args) ->
     super args
@@ -48,24 +48,21 @@ class Firehose.WebSocket extends Firehose.Transport
     else @_message event
 
   _message: (event) =>
-    @config.message(@config.parse(event.data))
+    @config.message @config.parse event.data
 
   _close: (event) =>
-    if event?.wasClean
-      @cleanUp()
-    else
-      # This was not a clean disconnect. An error occurred somewhere.
-      @_error(event)
+    if event?.wasClean then @cleanUp()
+    else @_error event
 
   _error: (event) =>
     @cleanUp()
     super
 
   cleanUp: ->
-    if @socket
+    if @socket?
       @socket.onopen    = null
       @socket.onclose   = null
       @socket.onerror   = null
       @socket.onmessage = null
       @socket.close()
-      delete(@socket)
+      delete @socket
