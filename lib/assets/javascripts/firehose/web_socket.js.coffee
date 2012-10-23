@@ -72,7 +72,6 @@ class Firehose.WebSocket extends Firehose.Transport
 
   _restartKeepAlive: =>
     doPing = =>
-      console.log "Sending keepalive ping!"
       @_sendPing()
       setNextKeepAlive()
     setNextKeepAlive = =>
