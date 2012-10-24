@@ -33,7 +33,7 @@ $ firehose server
 >> Listening on 127.0.0.1:7474, CTRL+C to stop
 ```
 
-In case you're wondering, the Firehose application server runs the Rack app `Firehose::Rack::App.new` inside of Thin or Rainbows!.
+In case you're wondering, the Firehose application server runs the Rack app `Firehose::Rack::App.new` inside of Thin or Rainbows! `Firehose::Rack::App` consists of a bunch of smaller apps and a middleware, which is useful for hacking.
 
 ## Publish a message to a bunch of subscribers
 
@@ -102,8 +102,6 @@ socket.io attempts to store connection state per node instance. Firehose makes n
 
 Also, socket.io attempts to abstract a low-latency full-duplex port. Firehose assumes that its impossible to simulate this in older web browsers that don't support WebSockets. As such, Firehose focuses on low-latency server-to-client connections and encourages the use of existing HTTP transports, like POST and PUT, for client-to-server communications.
 
-Finally, Firehose attempts to solve data consistency issues and authentication by encouraging the use of proxying to the web application.
-
 # The Ruby Publisher
 
 While you can certainly make your own PUT requests when publishing messages, Firehose includes a Ruby client for easy publishing.
@@ -118,25 +116,23 @@ firehose.publish(json).to("/my/messages/path")
 
 # Configuration
 
-Most configuration happens inside the `.env` file. Take a look at `.env.sample` for more info.
+Firehose can be configured via environmental variables. Take a look at the [`.env.sample`](./.env.sample) file for more info.
 
 ## Sprockets
 
 Using Sprockets is the recommended method of including the included client-side assets in a web page.
 
-1) Add the firehose gem in your app's Gemfile.
+1. Add the firehose gem in your app's Gemfile.
 
-2) Append the firehose gem's assets to the sprockets path. In a Rails app, this is usually done in an initializer.
+2. Append the firehose gem's assets to the sprockets path. In a Rails app, this is usually done in an initializer.
 
 ```ruby
-gem_path = Gem.loaded_specs['firehose'].full_gem_path
-sprockets.append_path File.join(gem_path, 'lib/assets/flash')
-sprockets.append_path File.join(gem_path, 'lib/assets/javascripts')
+# Add firehose to a custom sprockets configuration.
+my_sprockets_env = Sprockets::Environment.new
+Firehose::Assets::Sprockets.configure my_sprockets_env
 ```
 
-NOTE: Some spockets setups will do this automatically. If that is your case, then you can skip this step.
-
-3) Create a firehose config file for setting constants. A good place for this file in a Rails app is `app/assets/javascripts/lib/firehose_config.js.erb`. This gives you a way to configure Flash Web Sockets needed to make some older browser such as IE<10 and Opera<12 support web sockets. Usually this config file will just be: 
+3. Create a firehose config file for setting constants. A good place for this file in a Rails app is `app/assets/javascripts/lib/firehose_config.js.erb`. This gives you a way to configure Flash Web Sockets needed to make some older browser such as IE<10 and Opera<12 support web sockets. Usually this config file will just be: 
 
 ```erb
 window.WEB_SOCKET_SWF_LOCATION = '<%= asset_path('firehose/WebSocketMain.swf') %>'
@@ -153,8 +149,7 @@ The options you can set in this file come directly from https://github.com/gimit
 #= require some/more/js/files
 ```
 
-It is important that your config file comes first.
-
+It is important that your firehose config file comes first.
 
 # Web Server
 
@@ -195,7 +190,7 @@ In either case, you'll want to be careful about using these hacks on ports that 
 
 The recommended method of deploying firehose is to deploy it separately from your main app.
 
-1) Create a new project with a Gemfile such as
+1. Create a new project with a Gemfile such as
 
 ```
 gem "firehose"
@@ -207,6 +202,6 @@ gem "capistrano", :require => false
 
 Of course, you could use `exceptional` instead of `airbrake` and `thin` instead of `rainbows`.
 
-2) Set up `config/deploy.rb` to your liking. You can follow most directions for using Capistrano and Foreman to deploy Rack apps, such as https://gist.github.com/1027117
+2. Set up `config/deploy.rb` to your liking. You can follow most directions for using Capistrano and Foreman to deploy Rack apps, such as https://gist.github.com/1027117
 
-3) Set up `config/rainbows.rb` (if you are using Rainbows!). The gem includes an example to get you started.
+3. Set up `config/rainbows.rb` (if you are using Rainbows!). The gem includes an example to get you started.
