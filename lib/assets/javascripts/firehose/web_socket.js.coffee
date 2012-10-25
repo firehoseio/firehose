@@ -59,6 +59,7 @@ class Firehose.WebSocket extends Firehose.Transport
     super
 
   _cleanUp: =>
+    @_clearKeepalive()
     if @socket?
       @socket.onopen    = null
       @socket.onclose   = null
@@ -76,10 +77,13 @@ class Firehose.WebSocket extends Firehose.Transport
       setNextKeepAlive()
     setNextKeepAlive = =>
       @keepaliveTimeout = setTimeout doPing, KEEPALIVE_PING_TIMEOUT
+    @_clearKeepalive()
+    setNextKeepAlive()
+
+  _clearKeepalive: =>
     if @keepaliveTimeout?
       clearTimeout @keepaliveTimeout
       @keepaliveTimeout = null
-    setNextKeepAlive()
 
 isPong = (o) ->
   o.pong is 'PONG'
