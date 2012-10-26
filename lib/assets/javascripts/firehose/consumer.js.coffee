@@ -44,11 +44,11 @@ class Firehose.Consumer
       # If the connection fails, try the next transport supported by the browser.
       @config.failed = =>
         # Map the next transport to connect inside of the current transport failures
-        if nextTransportType = supportedTransports.pop()
-          nextTransport = new nextTransportType @config
-          nextTransport.connect delay
+        if (nextTransportType = supportedTransports.pop())?
+          @transport = new nextTransportType @config
+          @transport.connect delay
         else originalFailFun?()
-      new transport(@config)
+      new transport @config
     # Fire off the first connection attempt.
-    [firstTransport] = transports
-    firstTransport.connect delay
+    [@transport] = transports
+    @transport.connect delay
