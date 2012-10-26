@@ -1,14 +1,5 @@
 class Firehose.Consumer
-  # Transports that are available to Firehose.
-  @transports: [Firehose.WebSocket, Firehose.LongPoll]
-
   constructor: (config = {}) ->
-    # List of transport stragies we have to use.
-    config.transports   ||= Firehose.Consumer.transports
-    unless config.transports.length > 0
-      throw 'You must provide at least one tranport for Firehose.Consumer'
-    unless typeof config.uri is 'string'
-      throw 'You must provide a Firehose server URI for Firehose.Consumer'
     # Empty handler for messages.
     config.message      ||= ->
     # Empty handler for error handling.
@@ -33,22 +24,15 @@ class Firehose.Consumer
     this
 
   connect: (delay=0) =>
-    # Get a list of transports that the browser supports
-    supportedTransports = (t for t in @config.transports when t.supported())
-    # Mmmkay, we've got transports supported by the browser, now lets try connecting
-    # to them and dealing with failed connections that might be caused by firewalls,
-    # or other network connectivity issues.
-    transports = for transport in supportedTransports
-      originalFailFun = @config.failed
-      # Map the next transport into the existing transports connectionError
-      # If the connection fails, try the next transport supported by the browser.
-      @config.failed = =>
-        # Map the next transport to connect inside of the current transport failures
-        if (nextTransportType = supportedTransports.pop())?
-          @transport = new nextTransportType @config
-          @transport.connect delay
-        else originalFailFun?()
-      new transport @config
-    # Fire off the first connection attempt.
-    [@transport] = transports
+    setTimeout =>
+      Firehose.WebSocket.test @config, =>
+        @transport.stop()
+        @config.lastMessageSequence = @transport._lastMessageSequence
+        @transport = new Firehose.WebSocket @config
+        @transport.connect delay
+    , 1000
+    @transport = new Firehose.LongPoll @config
     @transport.connect delay
+
+  stop: =>
+    @transport.stop()

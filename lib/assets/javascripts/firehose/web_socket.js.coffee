@@ -2,48 +2,60 @@
 # hack into the internals of the web_socket.js plugin we are using.
 window.WEB_SOCKET_SWF_LOCATION = '/assets/firehose/WebSocketMain.swf' if !window.WEB_SOCKET_SWF_LOCATION
 
-INITIAL_PING_TIMEOUT      =  2000
+INITIAL_PING_TIMEOUT   =  2000
 KEEPALIVE_PING_TIMEOUT = 20000
 
 class Firehose.WebSocket extends Firehose.Transport
   name: -> 'WebSocket'
 
-  @supported: =>
+  @supported: ->
     # Compatibility reference: http://caniuse.com/websockets
     # We don't need to explicitly check for Flash web socket or MozWebSocket
     # because web_socket.js has already handled that.
     window.WebSocket?
 
+  # Ping-pong the server over web sockets and call successCB if it worked!
+  @test: (config, successCB) ->
+    return unless Firehose.WebSocket.supported()
+    url = "ws:#{config.uri}?#{$.param config.params}"
+    socket = new window.WebSocket url
+    socket.onmessage = (event) ->
+      if isPong(try JSON.parse event.data catch e then {})
+        console.log "Got our test PONG!"
+        socket.onopen = socket.onmessage = null
+        socket.close()
+        successCB()
+    socket.onopen = ->
+      sendPing socket
+    return
+
   constructor: (args) ->
     super args
     # Configrations specifically for web sockets
     @config.webSocket ||= {}
-    # Protocol schema we should use for talking to WS server.
-    @config.webSocket.url ||= "ws:#{@config.uri}?#{$.param(@config.params)}"
+    # What sequence number to start from when upgrading from LongPoll
+    if @config.lastMessageSequence?
+      @_startFromSequence = @config.lastMessageSequence + 1
+
+  _getURL: =>
+    obj = {}
+    obj[k] = v for k, v of @config.params
+    obj.last_message_sequence = @_startFromSequence if @_startFromSequence?
+    "ws:#{@config.uri}?#{$.param obj}"
 
   _request: =>
-    @socket = new window.WebSocket @config.webSocket.url
+    @socket = new window.WebSocket @_getURL()
     @socket.onopen    = @_open
     @socket.onclose   = @_close
     @socket.onerror   = @_error
-    @socket.onmessage = @_waitForPong
+    @socket.onmessage = @_message
 
   stop: =>
     @_cleanUp()
 
   _open: =>
-    @_sendPing()
-    # TODO: consider making this timeout configurable somehow...
-    @pingTimeout = setTimeout @_error, INITIAL_PING_TIMEOUT
-
-  _waitForPong: (event) =>
-    if isPong(try JSON.parse event.data catch e then {})
-      @_succeeded = true
-      @config.connected @
-      clearTimeout @pingTimeout
-      @socket.onmessage = @_message
-      @_restartKeepAlive()
-    else @_message event
+    @_restartKeepAlive()
+    super
 
   _message: (event) =>
     @_restartKeepAlive()
@@ -68,12 +80,9 @@ class Firehose.WebSocket extends Firehose.Transport
       @socket.close()
       delete @socket
 
-  _sendPing: =>
-    @socket.send JSON.stringify ping: 'PING'
-
   _restartKeepAlive: =>
     doPing = =>
-      @_sendPing()
+      sendPing @socket
       setNextKeepAlive()
     setNextKeepAlive = =>
       @keepaliveTimeout = setTimeout doPing, KEEPALIVE_PING_TIMEOUT
@@ -84,6 +93,9 @@ class Firehose.WebSocket extends Firehose.Transport
     if @keepaliveTimeout?
       clearTimeout @keepaliveTimeout
       @keepaliveTimeout = null
+
+sendPing = (socket) ->
+  socket.send JSON.stringify ping: 'PING'
 
 isPong = (o) ->
   o.pong is 'PONG'

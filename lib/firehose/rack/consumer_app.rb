@@ -101,8 +101,11 @@ module Firehose
       class WebSocket
         def call(env)
           req   = ::Rack::Request.new(env)
-          @path  = req.path
-          ws = Faye::WebSocket.new(env)
+          @path = req.path
+          ws    = Faye::WebSocket.new(env)
+
+          # So we can pickup where the longpoll client leftoff after upgrading
+          last_sequence = req.params['last_message_sequence'].to_i
 
           ws.onopen = lambda do |event|
             Firehose.logger.debug "WS subscribed to `#{@path}`"
