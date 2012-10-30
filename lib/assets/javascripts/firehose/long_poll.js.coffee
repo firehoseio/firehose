@@ -36,6 +36,7 @@ class Firehose.LongPoll extends Firehose.Transport
     super(delay)
 
   _request: =>
+    return if @_stopRequestLoop
     # Set the Last Message Sequence in a query string.
     # Ideally we'd use an HTTP header, but android devices don't let us
     # set any HTTP headers for CORS requests.

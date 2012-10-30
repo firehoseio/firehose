@@ -23,16 +23,19 @@ class Firehose.Consumer
     # Make sure we return ourself out of the constructor so we can chain.
     this
 
-  connect: (delay=0) =>
-    setTimeout =>
-      Firehose.WebSocket.test @config, =>
-        @transport.stop()
-        @config.lastMessageSequence = @transport._lastMessageSequence
-        @transport = new Firehose.WebSocket @config
-        @transport.connect delay
-    , 1000
+  connect: (@delay=0) =>
+    @upgradeTimeout = setTimeout =>
+      Firehose.WebSocket.test @config, @_upgradeTransport
+    , 500
     @transport = new Firehose.LongPoll @config
-    @transport.connect delay
+    @transport.connect @delay
 
   stop: =>
+    clearTimeout @upgradeTimeout
     @transport.stop()
+
+  _upgradeTransport: =>
+    @transport.stop()
+    @config.lastMessageSequence = @transport._lastMessageSequence
+    @transport = new Firehose.WebSocket @config
+    @transport.connect @delay

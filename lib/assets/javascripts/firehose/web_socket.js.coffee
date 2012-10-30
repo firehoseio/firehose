@@ -21,7 +21,6 @@ class Firehose.WebSocket extends Firehose.Transport
     socket = new window.WebSocket url
     socket.onmessage = (event) ->
       if isPong(try JSON.parse event.data catch e then {})
-        console.log "Got our test PONG!"
         socket.onopen = socket.onmessage = null
         socket.close()
         successCB()
@@ -35,7 +34,7 @@ class Firehose.WebSocket extends Firehose.Transport
     @config.webSocket ||= {}
     # What sequence number to start from when upgrading from LongPoll
     if @config.lastMessageSequence?
-      @_startFromSequence = @config.lastMessageSequence + 1
+      @_startFromSequence = @config.lastMessageSequence
 
   _getURL: =>
     obj = {}
