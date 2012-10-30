@@ -105,10 +105,14 @@ module Firehose
           ws    = Faye::WebSocket.new(env)
 
           # So we can pickup where the longpoll client leftoff after upgrading
-          last_sequence = req.params['last_message_sequence'].to_i
+          seq_param = req.params['last_message_sequence'].to_i
+          seq_param = seq_param < 1 ? nil : seq_param
 
           ws.onopen = lambda do |event|
             Firehose.logger.debug "WS subscribed to `#{@path}`"
+            unless seq_param.nil?
+              Firehose.logger.debug "(from last sequence #{seq_param})"
+            end
 
             subscribe = Proc.new do |last_sequence|
               @channel = Channel.new(@path)
@@ -119,7 +123,7 @@ module Firehose
               end.errback { |e| EM.next_tick { raise e.inspect } unless e == :disconnect }
             end
 
-            subscribe.call nil
+            subscribe.call seq_param
           end
 
           ws.onmessage = lambda do |event|
