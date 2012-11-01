@@ -100,38 +100,49 @@ module Firehose
       # the callback blocks.
       class WebSocket
         def call(env)
-          req   = ::Rack::Request.new(env)
+          req = ::Rack::Request.new(env)
+          ws  = Faye::WebSocket.new(env)
           @path = req.path
-          ws    = Faye::WebSocket.new(env)
 
-          # So we can pickup where the longpoll client leftoff after upgrading
-          seq_param = req.params['last_message_sequence'].to_i
-          seq_param = seq_param < 1 ? nil : seq_param
-
-          ws.onopen = lambda do |event|
-            Firehose.logger.debug "WS subscribed to `#{@path}`"
-            unless seq_param.nil?
-              Firehose.logger.debug "(from last sequence #{seq_param})"
-            end
-
-            subscribe = Proc.new do |last_sequence|
-              @channel = Channel.new(@path)
-              @deferrable = @channel.next_message(last_sequence).callback do |message, sequence|
-                Firehose.logger.debug "WS sent `#{message}` to `#{@path}` with sequence `#{sequence}`"
-                ws.send message
-                subscribe.call(sequence)
-              end.errback { |e| EM.next_tick { raise e.inspect } unless e == :disconnect }
-            end
-
-            subscribe.call seq_param
+          subscribe = Proc.new do |last_sequence|
+            @channel = Channel.new(@path)
+            @deferrable = @channel.next_message(last_sequence).callback do |message, sequence|
+              Firehose.logger.debug "WS sent `#{message}` to `#{@path}` with sequence `#{sequence}`"
+              ws.send message
+              subscribe.call(sequence)
+            end.errback { |e| EM.next_tick { raise e.inspect } unless e == :disconnect }
           end
 
-          ws.onmessage = lambda do |event|
-            o = JSON.parse(event.data, :symbolize_names => true) rescue {}
-            if o[:ping] == 'PING'
-              Firehose.logger.debug "WS ping received"
+          handle_ping = lambda do |event|
+            msg = JSON.parse(event.data, :symbolize_names => true) rescue {}
+            if msg[:ping] == 'PING'
+              Firehose.logger.debug "WS ping received, sending pong"
               ws.send JSON.generate :pong => 'PONG'
             end
+          end
+
+          wait_for_starting_sequence = lambda do |event|
+            msg = JSON.parse(event.data, :symbolize_names => true) rescue {}
+            seq = msg[:message_sequence]
+            if seq.kind_of? Integer
+              Firehose.logger.debug "Subscribing at message_sequence #{seq}"
+              subscribe.call seq
+              ws.onmessage = handle_ping
+            end
+          end
+
+          wait_for_ping = lambda do |event|
+            msg = JSON.parse(event.data, :symbolize_names => true) rescue {}
+            if msg[:ping] == 'PING'
+              Firehose.logger.debug "WS ping received, sending pong and waiting for starting sequence..."
+              ws.send JSON.generate :pong => 'PONG'
+              ws.onmessage = wait_for_starting_sequence
+            end
+          end
+
+          ws.onopen = lambda do |event|
+            Firehose.logger.debug "WebSocket subscribed to `#{@path}`. Waiting for ping..."
+            ws.onmessage = wait_for_ping
           end
 
           ws.onclose = lambda do |event|
@@ -145,7 +156,6 @@ module Firehose
           ws.onerror = lambda do |event|
             Firehose.logger.error "WS connection `#{@path}` error `#{error}`: #{error.backtrace}"
           end
-
 
           # Return async Rack response
           ws.rack_response
