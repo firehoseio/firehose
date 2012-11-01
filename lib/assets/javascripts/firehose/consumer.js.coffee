@@ -1,41 +1,43 @@
 class Firehose.Consumer
-  constructor: (config = {}) ->
+  constructor: (@config = {}) ->
     # Empty handler for messages.
-    config.message      ||= ->
+    @config.message      ||= ->
     # Empty handler for error handling.
-    config.error        ||= ->
+    @config.error        ||= ->
     # Empty handler for when we establish a connection.
-    config.connected    ||= ->
+    @config.connected    ||= ->
     # Empty handler for when we're disconnected.
-    config.disconnected ||= ->
+    @config.disconnected ||= ->
     # The initial connection failed. This is probably triggered when a
     # transport, like WebSockets is supported by the browser, but for whatever
     # reason it can't connect (probably a firewall)
-    config.failed       ||= ->
+    @config.failed       ||= ->
       throw "Could not connect"
     # Params that we'll tack on to the URL.
-    config.params       ||= {}
+    @config.params       ||= {}
     # Do stuff before we send the message into config.message. The sensible
     # default on the webs is to parse JSON.
-    config.parse        ||= JSON.parse
-    # Hang on to these config for when we connect.
-    @config = config
+    @config.parse        ||= JSON.parse
     # Make sure we return ourself out of the constructor so we can chain.
     this
 
-  connect: (@delay=0) =>
-    @upgradeTimeout = setTimeout =>
-      Firehose.WebSocket.test @config, @_upgradeTransport
-    , 500
+  connect: (delay=0) =>
+    if Firehose.WebSocket.supported()
+      @upgradeTimeout = setTimeout =>
+        @config.connectionVerified = @_upgradeTransport
+        ws = new Firehose.WebSocket @config
+        ws.connect delay
+      , 500
     @transport = new Firehose.LongPoll @config
-    @transport.connect @delay
+    @transport.connect delay
 
   stop: =>
-    clearTimeout @upgradeTimeout
+    if @upgradeTimeout?
+      clearTimeout @upgradeTimeout
+      @upgradeTimeout = null
     @transport.stop()
 
-  _upgradeTransport: =>
+  _upgradeTransport: (ws) =>
     @transport.stop()
-    @config.lastMessageSequence = @transport._lastMessageSequence
-    @transport = new Firehose.WebSocket @config
-    @transport.connect @delay
+    ws.sendStartingMessageSequence @transport.getLastMessageSequence()
+    @transport = ws

@@ -35,6 +35,9 @@ class Firehose.LongPoll extends Firehose.Transport
       @config.connected()
     super(delay)
 
+  getLastMessageSequence: =>
+    @_lastMessageSequence or 0
+
   _request: =>
     return if @_stopRequestLoop
     # Set the Last Message Sequence in a query string.
@@ -45,7 +48,7 @@ class Firehose.LongPoll extends Firehose.Transport
     # TODO: Some of these options will be deprecated in jQuery 1.8
     #       See: http://api.jquery.com/jQuery.ajax/#jqXHR
     $.ajax
-      url: @config.longPoll.url
+      url:          @config.longPoll.url
       crossDomain:  true
       data:         data
       timeout:      @_timeout

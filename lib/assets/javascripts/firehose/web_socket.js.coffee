@@ -14,46 +14,32 @@ class Firehose.WebSocket extends Firehose.Transport
     # because web_socket.js has already handled that.
     window.WebSocket?
 
-  # Ping-pong the server over web sockets and call successCB if it worked!
-  @test: (config, successCB) ->
-    return unless Firehose.WebSocket.supported()
-    url = "ws:#{config.uri}?#{$.param config.params}"
-    socket = new window.WebSocket url
-    socket.onmessage = (event) ->
-      if isPong(try JSON.parse event.data catch e then {})
-        socket.onopen = socket.onmessage = null
-        socket.close()
-        successCB()
-    socket.onopen = ->
-      sendPing socket
-    return
-
   constructor: (args) ->
     super args
     # Configrations specifically for web sockets
     @config.webSocket ||= {}
-    # What sequence number to start from when upgrading from LongPoll
-    if @config.lastMessageSequence?
-      @_startFromSequence = @config.lastMessageSequence
-
-  _getURL: =>
-    obj = {}
-    obj[k] = v for k, v of @config.params
-    obj.last_message_sequence = @_startFromSequence if @_startFromSequence?
-    "ws:#{@config.uri}?#{$.param obj}"
+    @config.webSocket.connectionVerified = @config.connectionVerified
 
   _request: =>
-    @socket = new window.WebSocket @_getURL()
+    @socket = new window.WebSocket "ws:#{@config.uri}?#{$.param @config.params}"
     @socket.onopen    = @_open
     @socket.onclose   = @_close
     @socket.onerror   = @_error
+    @socket.onmessage = @_lookForInitialPong
+
+  _lookForInitialPong: (event) =>
+    if isPong(try JSON.parse event.data catch e then {})
+      @config.webSocket.connectionVerified @
+
+  sendStartingMessageSequence: (message_sequence) =>
     @socket.onmessage = @_message
+    @socket.send JSON.stringify {message_sequence}
 
   stop: =>
     @_cleanUp()
 
   _open: =>
-    @_restartKeepAlive()
+    sendPing @socket
     super
 
   _message: (event) =>
