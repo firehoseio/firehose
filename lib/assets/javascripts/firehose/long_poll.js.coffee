@@ -26,14 +26,7 @@ class Firehose.LongPoll extends Firehose.Transport
     @_lagTime         = 5000
     @_timeout         = @config.longPoll.timeout + @_lagTime
     @_okInterval      = 0
-    @_isConnected     = false
     @_stopRequestLoop = false
-
-  connect: (delay = 0) =>
-    unless @_isConnected
-      @_isConnected = true
-      @config.connected()
-    super(delay)
 
   getLastMessageSequence: =>
     @_lastMessageSequence or 0
@@ -60,7 +53,9 @@ class Firehose.LongPoll extends Firehose.Transport
     @_stopRequestLoop = true
 
   _success: (data, status, jqXhr) =>
-    @_open data unless @_succeeded
+    if @_needToNotifyOfReconnect or not @_succeeded
+      @_needToNotifyOfReconnect = false
+      @_open data
     return if @_stopRequestLoop
     if jqXhr.status is 200
       # Of course, IE's XDomainRequest doesn't support non-200 success codes.
@@ -76,17 +71,21 @@ class Firehose.LongPoll extends Firehose.Transport
     # jQuery CORS doesn't support timeouts and there is no way to access xhr2 object
     # directly so we can't manually set a timeout.
     $.ajax
-      url: @config.longPoll.url
-      method: 'HEAD'
-      crossDomain: true
-      data: @config.params
-      success: @config.connected
+      url:          @config.longPoll.url
+      method:       'HEAD'
+      crossDomain:  true
+      data:         @config.params
+      success:      =>
+        if @_needToNotifyOfReconnect
+          @_needToNotifyOfReconnect = false
+          @config.connected @
 
   # We need this custom handler to have the connection status
   # properly displayed
   _error: (jqXhr, status, error) =>
-    @_isConnected = false
-    @config.disconnected()
+    unless @_needToNotifyOfReconnect
+      @_needToNotifyOfReconnect = true
+      @config.disconnected()
     unless @_stopRequestLoop
       # Ping the server to make sure this isn't a network connectivity error
       setTimeout @_ping, @_retryDelay + @_lagTime
