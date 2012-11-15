@@ -38,6 +38,7 @@ class Firehose.Consumer
     @transport.stop()
 
   _upgradeTransport: (ws) =>
+    console.log @transport
     @transport.stop()
-    ws.sendStartingMessageSequence @transport.getLastMessageSequence()
+    ws.sendStartingMessageSequence @transport.getLastMessageSequence?() or 0
     @transport = ws

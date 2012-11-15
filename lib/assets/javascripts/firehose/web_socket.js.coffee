@@ -21,6 +21,7 @@ class Firehose.WebSocket extends Firehose.Transport
     @config.webSocket.connectionVerified = @config.connectionVerified
 
   _request: =>
+    console.log "WebSocket#_request", arguments
     @socket = new window.WebSocket "ws:#{@config.uri}?#{$.param @config.params}"
     @socket.onopen    = @_open
     @socket.onclose   = @_close
@@ -36,26 +37,32 @@ class Firehose.WebSocket extends Firehose.Transport
     @socket.send JSON.stringify {message_sequence}
 
   stop: =>
+    console.log "WebSocket#stop", arguments
     @_cleanUp()
 
   _open: =>
+    console.log "WebSocket#_open", arguments
     sendPing @socket
     super
 
   _message: (event) =>
+    console.log "WebSocket#_message", arguments
     @_restartKeepAlive()
     msg = @config.parse event.data
     @config.message msg if not isPong msg
 
   _close: (event) =>
+    console.log "WebSocket#_close", arguments
     if event?.wasClean then @_cleanUp()
     else @_error event
 
   _error: (event) =>
+    console.log "WebSocket#_error", arguments
     @_cleanUp()
     super
 
   _cleanUp: =>
+    console.log "WebSocket#_cleanUp" 
     @_clearKeepalive()
     if @socket?
       @socket.onopen    = null
