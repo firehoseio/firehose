@@ -93,77 +93,79 @@ module Firehose
       end
 
 
-      # It _may_ be more memory efficient if we used the same instance of this
-      # class (or even if we just used a proc/lambda) for every
-      # request/connection. However, we couldn't use instance variables, and
-      # so I'd need to confirm that local variables would be accessible from
-      # the callback blocks.
+      # It _may_ be more memory efficient if we used the same instance of
+      # this class (or if we even just used a lambda) for every connection.
       class WebSocket
         def call(env)
-          req = ::Rack::Request.new(env)
-          ws  = Faye::WebSocket.new(env)
+          req   = ::Rack::Request.new(env)
+          @ws   = Faye::WebSocket.new(env)
           @path = req.path
-
-          subscribe = Proc.new do |last_sequence|
-            @channel = Channel.new(@path)
-            @deferrable = @channel.next_message(last_sequence).callback do |message, sequence|
-              Firehose.logger.debug "WS sent `#{message}` to `#{@path}` with sequence `#{sequence}`"
-              ws.send wrap_frame(message, last_sequence)
-              subscribe.call(sequence)
-            end.errback { |e| EM.next_tick { raise e.inspect } unless e == :disconnect }
-          end
-
-          handle_ping = lambda do |event|
-            msg = JSON.parse(event.data, :symbolize_names => true) rescue {}
-            if msg[:ping] == 'PING'
-              Firehose.logger.debug "WS ping received, sending pong"
-              ws.send JSON.generate :pong => 'PONG'
-            end
-          end
-
-          wait_for_starting_sequence = lambda do |event|
-            msg = JSON.parse(event.data, :symbolize_names => true) rescue {}
-            seq = msg[:message_sequence]
-            if seq.kind_of? Integer
-              Firehose.logger.debug "Subscribing at message_sequence #{seq}"
-              subscribe.call seq
-              ws.onmessage = handle_ping
-            end
-          end
-
-          wait_for_ping = lambda do |event|
-            msg = JSON.parse(event.data, :symbolize_names => true) rescue {}
-            if msg[:ping] == 'PING'
-              Firehose.logger.debug "WS ping received, sending pong and waiting for starting sequence..."
-              ws.send JSON.generate :pong => 'PONG'
-              ws.onmessage = wait_for_starting_sequence
-            end
-          end
-
-          ws.onopen = lambda do |event|
-            Firehose.logger.debug "WebSocket subscribed to `#{@path}`. Waiting for ping..."
-            ws.onmessage = wait_for_ping
-          end
-
-          ws.onclose = lambda do |event|
-            if @deferrable
-              @deferrable.fail :disconnect
-              @channel.unsubscribe(@deferrable) if @channel
-            end
-            Firehose.logger.debug "WS connection `#{@path}` closing. Code: #{event.code.inspect}; Reason #{event.reason.inspect}"
-          end
-
-          ws.onerror = lambda do |event|
-            Firehose.logger.error "WS connection `#{@path}` error `#{error}`: #{error.backtrace}"
-          end
-
-          # Return async Rack response
-          ws.rack_response
+          @ws.onopen  = method :handle_open
+          @ws.onclose = method :handle_close
+          @ws.onerror = method :handle_error
+          return @ws.rack_response
         end
 
       private
-      
-        def wrap_frame(message, last_sequence)
+
+        def subscribe(last_sequence)
+          @channel    = Channel.new @path
+          @deferrable = @channel.next_message last_sequence
+          @deferrable.callback do |message, sequence|
+            Firehose.logger.debug "WS sent `#{message}` to `#{@path}` with sequence `#{sequence}`"
+            @ws.send self.class.wrap_frame(message, last_sequence)
+            subscribe sequence
+          end
+          @deferrable.errback do |e|
+            EM.next_tick { raise e.inspect } unless e == :disconnect
+          end
+        end
+
+        def handle_subsequent_pings(event)
+          msg = JSON.parse(event.data, :symbolize_names => true) rescue {}
+          if msg[:ping] == 'PING'
+            Firehose.logger.debug "WS ping received, sending pong"
+            @ws.send JSON.generate :pong => 'PONG'
+          end
+        end
+
+        def handle_starting_sequence(event)
+          msg = JSON.parse(event.data, :symbolize_names => true) rescue {}
+          seq = msg[:message_sequence]
+          if seq.kind_of? Integer
+            Firehose.logger.debug "Subscribing at message_sequence #{seq}"
+            subscribe seq
+            @ws.onmessage = method :handle_subsequent_pings
+          end
+        end
+
+        def handle_initial_ping(event)
+          msg = JSON.parse(event.data, :symbolize_names => true) rescue {}
+          if msg[:ping] == 'PING'
+            Firehose.logger.debug "WS ping received, sending pong and waiting for starting sequence..."
+            @ws.send JSON.generate :pong => 'PONG'
+            @ws.onmessage = method :handle_starting_sequence
+          end
+        end
+
+        def handle_open(event)
+          Firehose.logger.debug "WebSocket subscribed to `#{@path}`. Waiting for ping..."
+          @ws.onmessage = method :handle_initial_ping
+        end
+
+        def handle_close(event)
+          if @deferrable
+            @deferrable.fail :disconnect
+            @channel.unsubscribe(@deferrable) if @channel
+          end
+          Firehose.logger.debug "WS connection `#{@path}` closing. Code: #{event.code.inspect}; Reason #{event.reason.inspect}"
+        end
+
+        def handle_error(event)
+          Firehose.logger.error "WS connection `#{@path}` error `#{error}`: #{error.backtrace}"
+        end
+
+        def self.wrap_frame(message, last_sequence)
           JSON.generate :message => message, :last_sequence => last_sequence
         end
       end
