@@ -35,3 +35,7 @@ class Firehose.Transport
   # Default connection closed handler
   _close: (event) =>
     @config.disconnected()
+
+  # Useful for reconnecting after any networking hiccups
+  getLastMessageSequence: =>
+    @_lastMessageSequence or 0

@@ -28,9 +28,6 @@ class Firehose.LongPoll extends Firehose.Transport
     @_okInterval      = 0
     @_stopRequestLoop = false
 
-  getLastMessageSequence: =>
-    @_lastMessageSequence or 0
-
   _request: =>
     return if @_stopRequestLoop
     # Set the Last Message Sequence in a query string.

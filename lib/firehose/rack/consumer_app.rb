@@ -108,7 +108,7 @@ module Firehose
             @channel = Channel.new(@path)
             @deferrable = @channel.next_message(last_sequence).callback do |message, sequence|
               Firehose.logger.debug "WS sent `#{message}` to `#{@path}` with sequence `#{sequence}`"
-              ws.send message
+              ws.send wrap_frame(message, last_sequence)
               subscribe.call(sequence)
             end.errback { |e| EM.next_tick { raise e.inspect } unless e == :disconnect }
           end
@@ -160,7 +160,14 @@ module Firehose
           # Return async Rack response
           ws.rack_response
         end
+
+      private
+      
+        def wrap_frame(message, last_sequence)
+          JSON.generate :message => message, :last_sequence => last_sequence
+        end
       end
+
     end
   end
 end

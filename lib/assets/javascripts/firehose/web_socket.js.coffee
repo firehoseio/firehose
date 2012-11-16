@@ -28,28 +28,37 @@ class Firehose.WebSocket extends Firehose.Transport
     @socket.onerror   = @_error
     @socket.onmessage = @_lookForInitialPong
 
+  _open: =>
+    console.log "WebSocket#_open", arguments
+    sendPing @socket
+
   _lookForInitialPong: (event) =>
     if isPong(try JSON.parse event.data catch e then {})
-      @config.webSocket.connectionVerified @
+      if @_lastMessageSequence?
+        # don't callback to connectionVerified on subsequent reconnects
+        @sendStartingMessageSequence @_lastMessageSequence
+      else @config.webSocket.connectionVerified @
 
   sendStartingMessageSequence: (message_sequence) =>
-    @socket.onmessage = @_message
+    @_lastMessageSequence = message_sequence
+    @socket.onmessage     = @_message
     @socket.send JSON.stringify {message_sequence}
+    @_needToNotifyOfDisconnect = true
+    Firehose.Transport::_open.call @
 
   stop: =>
     console.log "WebSocket#stop", arguments
     @_cleanUp()
 
-  _open: =>
-    console.log "WebSocket#_open", arguments
-    sendPing @socket
-    super
-
   _message: (event) =>
     console.log "WebSocket#_message", arguments
+    frame = @config.parse event.data
     @_restartKeepAlive()
-    msg = @config.parse event.data
-    @config.message msg if not isPong msg
+    unless isPong frame
+      try
+        @_lastMessageSequence = frame.last_sequence
+        @config.message @config.parse frame.message
+      catch e
 
   _close: (event) =>
     console.log "WebSocket#_close", arguments
@@ -59,7 +68,13 @@ class Firehose.WebSocket extends Firehose.Transport
   _error: (event) =>
     console.log "WebSocket#_error", arguments
     @_cleanUp()
-    super
+    if @_needToNotifyOfDisconnect
+      @_needToNotifyOfDisconnect = false
+      @config.disconnected()
+    if @_succeeded
+      # Lets try to connect again with delay
+      @connect(@_retryDelay)
+    else @config.failed @
 
   _cleanUp: =>
     console.log "WebSocket#_cleanUp" 

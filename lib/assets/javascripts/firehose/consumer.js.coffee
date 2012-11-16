@@ -22,23 +22,27 @@ class Firehose.Consumer
     this
 
   connect: (delay=0) =>
+    console.log "Consumer#connect", arguments
+    @config.connectionVerified = @_upgradeTransport
     if Firehose.WebSocket.supported()
       @upgradeTimeout = setTimeout =>
-        @config.connectionVerified = @_upgradeTransport
         ws = new Firehose.WebSocket @config
         ws.connect delay
       , 500
     @transport = new Firehose.LongPoll @config
     @transport.connect delay
+    return
 
   stop: =>
     if @upgradeTimeout?
       clearTimeout @upgradeTimeout
       @upgradeTimeout = null
     @transport.stop()
+    return
 
   _upgradeTransport: (ws) =>
-    console.log @transport
+    console.log "_upgradeTransport w/ @transport", @transport
     @transport.stop()
-    ws.sendStartingMessageSequence @transport.getLastMessageSequence?() or 0
+    ws.sendStartingMessageSequence @transport.getLastMessageSequence()
     @transport = ws
+    return
