@@ -21,7 +21,6 @@ class Firehose.WebSocket extends Firehose.Transport
     @config.webSocket.connectionVerified = @config.connectionVerified
 
   _request: =>
-    console.log "WebSocket#_request", arguments
     @socket = new window.WebSocket "ws:#{@config.uri}?#{$.param @config.params}"
     @socket.onopen    = @_open
     @socket.onclose   = @_close
@@ -29,7 +28,6 @@ class Firehose.WebSocket extends Firehose.Transport
     @socket.onmessage = @_lookForInitialPong
 
   _open: =>
-    console.log "WebSocket#_open", arguments
     sendPing @socket
 
   _lookForInitialPong: (event) =>
@@ -47,11 +45,9 @@ class Firehose.WebSocket extends Firehose.Transport
     Firehose.Transport::_open.call @
 
   stop: =>
-    console.log "WebSocket#stop", arguments
     @_cleanUp()
 
   _message: (event) =>
-    console.log "WebSocket#_message", arguments
     frame = @config.parse event.data
     @_restartKeepAlive()
     unless isPong frame
@@ -61,12 +57,10 @@ class Firehose.WebSocket extends Firehose.Transport
       catch e
 
   _close: (event) =>
-    console.log "WebSocket#_close", arguments
     if event?.wasClean then @_cleanUp()
     else @_error event
 
   _error: (event) =>
-    console.log "WebSocket#_error", arguments
     @_cleanUp()
     if @_needToNotifyOfDisconnect
       @_needToNotifyOfDisconnect = false
@@ -77,7 +71,6 @@ class Firehose.WebSocket extends Firehose.Transport
     else @config.failed @
 
   _cleanUp: =>
-    console.log "WebSocket#_cleanUp" 
     @_clearKeepalive()
     if @socket?
       @socket.onopen    = null

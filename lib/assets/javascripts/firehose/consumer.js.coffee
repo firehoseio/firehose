@@ -22,7 +22,6 @@ class Firehose.Consumer
     this
 
   connect: (delay=0) =>
-    console.log "Consumer#connect", arguments
     @config.connectionVerified = @_upgradeTransport
     if Firehose.WebSocket.supported()
       @upgradeTimeout = setTimeout =>
@@ -41,7 +40,6 @@ class Firehose.Consumer
     return
 
   _upgradeTransport: (ws) =>
-    console.log "_upgradeTransport w/ @transport", @transport
     @transport.stop()
     ws.sendStartingMessageSequence @transport.getLastMessageSequence()
     @transport = ws
