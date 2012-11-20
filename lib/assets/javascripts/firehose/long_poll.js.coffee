@@ -86,7 +86,7 @@ class Firehose.LongPoll extends Firehose.Transport
   # We need this custom handler to have the connection status
   # properly displayed
   _error: (jqXhr, status, error) =>
-    unless @_needToNotifyOfReconnect
+    unless @_needToNotifyOfReconnect or @_stopRequestLoop
       @_needToNotifyOfReconnect = true
       @config.disconnected()
     unless @_stopRequestLoop
