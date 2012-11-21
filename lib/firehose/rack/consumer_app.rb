@@ -97,18 +97,20 @@ module Firehose
       # this class (or if we even just used a lambda) for every connection.
       class WebSocket
         def call(env)
-          req   = ::Rack::Request.new(env)
-          @ws   = Faye::WebSocket.new(env)
+          req   = ::Rack::Request.new env
+          @ws   = Faye::WebSocket.new env
           @path = req.path
-          @ws.onopen  = method :handle_open
-          @ws.onclose = method :handle_close
-          @ws.onerror = method :handle_error
+          @ws.onopen    = method :handle_open
+          @ws.onclose   = method :handle_close
+          @ws.onerror   = method :handle_error
+          @ws.onmessage = method :handle_message
           return @ws.rack_response
         end
 
       private
 
         def subscribe(last_sequence)
+          @subscribed = true
           @channel    = Channel.new @path
           @deferrable = @channel.next_message last_sequence
           @deferrable.callback do |message, sequence|
@@ -121,36 +123,20 @@ module Firehose
           end
         end
 
-        def handle_subsequent_pings(event)
+        def handle_message(event)
           msg = JSON.parse(event.data, :symbolize_names => true) rescue {}
+          seq = msg[:message_sequence]
           if msg[:ping] == 'PING'
             Firehose.logger.debug "WS ping received, sending pong"
             @ws.send JSON.generate :pong => 'PONG'
-          end
-        end
-
-        def handle_starting_sequence(event)
-          msg = JSON.parse(event.data, :symbolize_names => true) rescue {}
-          seq = msg[:message_sequence]
-          if seq.kind_of? Integer
+          elsif !@subscribed && seq.kind_of?(Integer)
             Firehose.logger.debug "Subscribing at message_sequence #{seq}"
             subscribe seq
-            @ws.onmessage = method :handle_subsequent_pings
-          end
-        end
-
-        def handle_initial_ping(event)
-          msg = JSON.parse(event.data, :symbolize_names => true) rescue {}
-          if msg[:ping] == 'PING'
-            Firehose.logger.debug "WS ping received, sending pong and waiting for starting sequence..."
-            @ws.send JSON.generate :pong => 'PONG'
-            @ws.onmessage = method :handle_starting_sequence
           end
         end
 
         def handle_open(event)
-          Firehose.logger.debug "WebSocket subscribed to `#{@path}`. Waiting for ping..."
-          @ws.onmessage = method :handle_initial_ping
+          Firehose.logger.debug "WebSocket subscribed to `#{@path}`. Waiting for message_sequence..."
         end
 
         def handle_close(event)
