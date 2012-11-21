@@ -1,4 +1,4 @@
 module Firehose
-  VERSION  = "1.0.0"
-  CODENAME = "Concerted Connection Upgrades"
+  VERSION  = "1.1.0"
+  CODENAME = "Rockin' Reconnect"
 end
