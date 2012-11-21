@@ -31,6 +31,7 @@ class Firehose.WebSocket extends Firehose.Transport
     sendPing @socket
 
   _lookForInitialPong: (event) =>
+    @_restartKeepAlive()
     if isPong(try JSON.parse event.data catch e then {})
       if @_lastMessageSequence?
         # don't callback to connectionVerified on subsequent reconnects
