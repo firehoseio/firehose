@@ -44,7 +44,17 @@ module Firehose
 
       response = conn.put do |req|
         req.options[:timeout] = Timeout
-        req.path = channel
+        if conn.path_prefix.nil? || conn.path_prefix == '/'
+          # This avoids a double / if the channel starts with a / too (which is expected).
+          req.path = channel
+        else
+          if conn.path_prefix =~ /\/\Z/ || channel =~ /\A\//
+            req.path = [conn.path_prefix, channel].compact.join
+          else
+            # Add a / so the prefix and channel aren't just rammed together.
+            req.path = [conn.path_prefix, channel].compact.join('/')
+          end
+        end
         req.body = message
         req.headers['Cache-Control'] = "max-age=#{ttl.to_i}" if ttl
       end
@@ -84,7 +94,7 @@ module Firehose
     end
 
   private
-    # Build out a Faraday connection 
+    # Build out a Faraday connection
     def conn
       @conn ||= Faraday.new(:url => uri.to_s) do |builder|
         builder.adapter self.class.adapter

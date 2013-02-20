@@ -21,6 +21,18 @@ describe Firehose::Producer do
     WebMock.should have_requested(:put, url).with { |req| req.body == message }
   end
 
+  context 'prefix is specified in URI' do
+    let(:firehose_uri) {"#{Firehose::Default::URI}/prefix"}
+    let(:url) { "#{firehose_uri}#{channel}"}
+
+    it "should publish message to channel" do
+      publish_stub.to_return(:body => "", :status => 202)
+
+      Firehose::Producer.new(firehose_uri).publish(message).to(channel)
+      WebMock.should have_requested(:put, url).with { |req| req.body == message }
+    end
+  end
+
   it "should publish message to channel with expiry headers" do
     publish_stub.to_return(:body => "", :status => 202)
     ttl = 20
