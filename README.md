@@ -7,7 +7,7 @@
     
     Build realtime web applications in Ruby and JS
 
-[![Build Status](https://travis-ci.org/polleverywhere/firehose.png?branch=master)](https://travis-ci.org/polleverywhere/firehose)
+[![Build Status](https://travis-ci.org/polleverywhere/firehose.png)](https://travis-ci.org/polleverywhere/firehose)
 
 # What is Firehose?
 
