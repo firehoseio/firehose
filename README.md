@@ -7,6 +7,8 @@
     
     Build realtime web applications in Ruby and JS
 
+[![Build Status](https://travis-ci.org/polleverywhere/firehose.png?branch=master)](https://travis-ci.org/polleverywhere/firehose)
+
 # What is Firehose?
 
 Firehose is both a Rack application and JavaScript library that makes building real-time web applications possible.
