@@ -19,6 +19,15 @@ module Firehose
           Firehose::Assets::Sprockets.configure ::Sprockets
         end
       end
+
+      def self.manifest
+        paths = []
+
+        paths << Firehose::Assets.path('/flash/firehose/WebSocketMainInsecure.swf')
+        paths << Firehose::Assets.path('/javascripts/firehose/firehose.js')
+
+        paths
+      end
     end
   end
 end
