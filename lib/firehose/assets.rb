@@ -24,7 +24,8 @@ module Firehose
         paths = []
 
         paths << Firehose::Assets.path('/flash/firehose/WebSocketMainInsecure.swf')
-        paths << Firehose::Assets.path('/javascripts/firehose/firehose.js')
+
+        paths << File.basename(Firehose::Assets.path('/javascripts/firehose/firehose.js.coffee'), '.coffee')
 
         paths
       end
