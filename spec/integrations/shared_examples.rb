@@ -68,8 +68,14 @@ shared_examples_for 'Firehose::Rack::App' do
     # And test a web socket client too, at the same time.
     websocket = Proc.new do |cid|
       ws = Faye::WebSocket::Client.new(ws_url)
+
+      ws.onopen = lambda do |event|
+        ws.send('{"message_sequence":0}')
+      end
+
       ws.onmessage = lambda do |event|
-        received[cid] << event.data
+        frame = JSON.parse(event.data, :symbolize_names => true)
+        received[cid] << frame[:message]
         succeed.call cid unless received[cid].size < messages.size
       end
 
