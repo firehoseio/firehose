@@ -20,7 +20,7 @@ Gem::Specification.new do |s|
 
   # specify any dependencies here; for example:
   s.add_runtime_dependency "eventmachine", ">= 1.0.0.rc"
-  s.add_runtime_dependency "em-hiredis"
+  s.add_runtime_dependency "em-hiredis", "~> 0.1.1"
   s.add_runtime_dependency "thor"
   s.add_runtime_dependency "faraday"
   s.add_runtime_dependency "faye-websocket"
