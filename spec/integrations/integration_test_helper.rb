@@ -13,4 +13,10 @@ module IntegrationTestHelper
   def stop_server
     Process.kill 'INT', @server_pid
   end
+
+
+  # Let isn't allowed in before(:all)
+  def uri
+    Firehose::Default::URI
+  end
 end
