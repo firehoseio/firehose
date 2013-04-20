@@ -48,7 +48,7 @@ module Firehose
     def publish(uri, payload=nil)
       payload     ||= $stdin.read
       client      = Firehose::Client::Producer::Http.new(uri)
-      path        = URI.parse(uri).path
+      path        = ::URI.parse(uri).path
       times       = options[:times]
       ttl         = options[:ttl]
 

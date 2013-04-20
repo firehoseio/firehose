@@ -36,7 +36,7 @@ module Firehose
       # Boot the Firehose server with the Thin app server.
       def start_thin
         require 'thin'
-        require 'thin_em_swf_policy' if ENV['RACK_ENV'] == 'development'
+        require 'firehose/patches/thin' if ENV['RACK_ENV'] == 'development'
 
         Faye::WebSocket.load_adapter('thin')
 
