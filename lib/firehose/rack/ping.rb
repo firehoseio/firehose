@@ -1,6 +1,6 @@
 module Firehose
   module Rack
-    class PingApp
+    class Ping
       attr_reader :redis
 
       def initialize(redis=nil)

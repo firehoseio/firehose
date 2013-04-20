@@ -1,6 +1,6 @@
 module Firehose
   module Rack
-    class PublisherApp
+    class Publisher
       include Firehose::Rack::Helpers
 
       def call(env)

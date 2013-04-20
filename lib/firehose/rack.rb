@@ -1,8 +1,8 @@
 module Firehose
   module Rack
-    autoload :ConsumerApp,    'firehose/rack/consumer_app'
-    autoload :PublisherApp,   'firehose/rack/publisher_app'
-    autoload :PingApp,        'firehose/rack/ping_app'
+    autoload :Consumer,    'firehose/rack/consumer'
+    autoload :Publisher,   'firehose/rack/publisher'
+    autoload :Ping,        'firehose/rack/ping'
 
     # Evented web servers recognize this as a response deferral.
     ASYNC_RESPONSE = [-1, {}, []].freeze
@@ -33,18 +33,17 @@ module Firehose
         end
       end
 
-
-      private
+    private
       def publisher
-        @publisher ||= PublisherApp.new
+        @publisher ||= Publisher.new
       end
 
       def consumer
-        @consumer ||= ConsumerApp.new
+        @consumer ||= Consumer.new
       end
 
       def ping
-        @ping ||= PingApp.new
+        @ping ||= Ping.new
       end
     end
 

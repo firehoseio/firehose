@@ -3,7 +3,7 @@ require 'json'
 
 module Firehose
   module Rack
-    class ConsumerApp
+    class Consumer
       def call(env)
         websocket_request?(env) ? websocket.call(env) : http_long_poll.call(env)
       end

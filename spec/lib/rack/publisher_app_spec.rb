@@ -2,9 +2,9 @@ require 'spec_helper'
 require 'rack/test'
 require 'async_rack_test'
 
-describe Firehose::Rack::PublisherApp, :type => :request do
+describe Firehose::Rack::Publisher, :type => :request do
   include AsyncRackTest::Methods
-  let(:app) { Firehose::Rack::PublisherApp.new }
+  let(:app) { Firehose::Rack::Publisher.new }
   let(:path) { "/test/path/#{Time.now.to_i}" }
   let(:deferrable) { EM::DefaultDeferrable.new }
 

@@ -2,15 +2,15 @@ require 'spec_helper'
 require 'rack/test'
 require 'async_rack_test'
 
-describe Firehose::Rack::PingApp, :type => :request do
+describe Firehose::Rack::Ping, :type => :request do
   include AsyncRackTest::Methods
-  let(:app) { Firehose::Rack::PingApp.new dummy_redis }
+  let(:app) { Firehose::Rack::Ping.new dummy_redis }
   let(:path) { "/test/path/#{Time.now.to_i}" }
   let(:deferrable) { EM::DefaultDeferrable.new }
   let(:dummy_redis) { double 'redis', :set => deferrable, :get => deferrable, :expire => deferrable }
 
   context 'redis is available' do
-    before { deferrable.succeed Firehose::Rack::PingApp::PingCheck::TEST_VALUE }
+    before { deferrable.succeed Firehose::Rack::Ping::PingCheck::TEST_VALUE }
 
     it "should return 200" do
       ahead path
