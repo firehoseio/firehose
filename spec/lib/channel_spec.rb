@@ -1,13 +1,13 @@
 require 'spec_helper'
 
-describe Firehose::Channel do
+describe Firehose::Server::Channel do
   include EM::TestHelper
 
   let(:channel_key)     { '/bears/are/mean' }
-  let(:channel)         { Firehose::Channel.new(channel_key, EM::Hiredis.connect, subscriber) }
-  let(:subscriber)      { Firehose::Subscriber.new(EM::Hiredis.connect) }
+  let(:channel)         { Firehose::Server::Channel.new(channel_key, EM::Hiredis.connect, subscriber) }
+  let(:subscriber)      { Firehose::Server::Subscriber.new(EM::Hiredis.connect) }
   let(:message)         { 'Raaaarrrrrr!!!!' }
-  let(:publisher)       { Firehose::Publisher.new }
+  let(:publisher)       { Firehose::Server::Publisher.new }
 
   describe "#next_message" do
     it "should wait for message if message was not published before subscription" do

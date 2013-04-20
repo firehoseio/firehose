@@ -22,11 +22,8 @@ module Firehose
 
       def self.manifest
         paths = []
-
         paths << Firehose::Assets.path('/flash/firehose/WebSocketMainInsecure.swf')
-
         paths << File.basename(Firehose::Assets.path('/javascripts/firehose/firehose.js.coffee'), '.coffee')
-
         paths
       end
     end

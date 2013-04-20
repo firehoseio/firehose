@@ -1,8 +1,7 @@
-# Sets up logging
-
 require 'logger'
 
 module Firehose
+  # Sets up logging
   def self.logger
     @logger ||= Logger.new($stdout)
   end
@@ -27,8 +26,6 @@ module Firehose
     "[#{out_time} ##$$] #{severity} : #{msg}\n"
   end
 end
-
-EM::Hiredis.logger = Firehose.logger
 
 # stdout gets "lost" in Foreman if this isn't here
 # https://github.com/ddollar/foreman/wiki/Missing-Output

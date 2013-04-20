@@ -25,7 +25,7 @@ module Firehose
     method_option :server, :type => :string,  :default => ENV['SERVER'] ||'rainbows', :required => false, :aliases => '-s'
     def server
       begin
-        Firehose::Server.new(options).start
+        Firehose::Server::App.new(options).start
       rescue => e
         Firehose.logger.error "#{e.message}: #{e.backtrace}"
         raise e

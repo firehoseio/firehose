@@ -4,7 +4,7 @@
 #   include EM::TestHelper
 
 #   let(:consumer)  { Firehose::Consumer.new }
-#   let(:publisher) { Firehose::Publisher.new }
+#   let(:publisher) { Firehose::Server::Publisher.new }
 #   let(:channel)   { '/papa-smurf' }
 #   let(:another_channel)  { '/mama-smurf' }
 

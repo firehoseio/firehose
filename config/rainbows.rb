@@ -1,5 +1,6 @@
-# TODO - Dunno what a lot of this stuff is... Tune with benchmarks
-# http://rainbows.rubyforge.org/Rainbows/Configurator.html
+# Configuration from http://rainbows.rubyforge.org/Rainbows/Configurator.html. Don't juse
+# blindly copy and paste this configuration! Be sure you have read and understand the Rainbows
+# configuration documentation for your environment.
 
 Rainbows! do
   use                       :EventMachine   # concurrency model

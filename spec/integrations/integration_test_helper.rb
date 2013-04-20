@@ -3,7 +3,7 @@ require 'spec_helper'
 module IntegrationTestHelper
   def start_server
     @server_pid = fork do
-      Firehose::Server.new(:server => server, :port => uri.port).start
+      Firehose::Server::App.new(:server => server, :port => uri.port).start
     end
 
     # Need to give the server a chance to boot up.

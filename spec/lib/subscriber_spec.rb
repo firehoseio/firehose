@@ -1,13 +1,13 @@
 require 'spec_helper'
 
-describe Firehose::Subscriber do
+describe Firehose::Server::Subscriber do
   include EM::TestHelper
 
   let(:channel_key)     { '/bears/are/mean' }
-  let(:subscriber)      { Firehose::Subscriber.new(EM::Hiredis.connect) }
-  let(:dummy_subscriber){ Firehose::Subscriber.new(double('redis', :pubsub => double('pubsub', :subscribe => EM::DefaultDeferrable.new, :on => nil))) }
+  let(:subscriber)      { Firehose::Server::Subscriber.new(EM::Hiredis.connect) }
+  let(:dummy_subscriber){ Firehose::Server::Subscriber.new(double('redis', :pubsub => double('pubsub', :subscribe => EM::DefaultDeferrable.new, :on => nil))) }
   let(:message)         { 'Raaaarrrrrr!!!!' }
-  let(:publisher)       { Firehose::Publisher.new }
+  let(:publisher)       { Firehose::Server::Publisher.new }
 
   describe "#subscribe" do
     it "should add the deferrable to the subscriptions hash" do

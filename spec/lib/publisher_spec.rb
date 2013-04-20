@@ -1,18 +1,18 @@
 require 'spec_helper'
 
-describe Firehose::Publisher do
+describe Firehose::Server::Publisher do
   include EM::TestHelper
 
-  let(:publisher)   { Firehose::Publisher.new }
+  let(:publisher)   { Firehose::Server::Publisher.new }
   let(:channel_key) { "/firehose/publisher/test/#{Time.now.to_i}" }
   let(:message)     { "howdy friends!" }
 
   it "should have 100 MAX_MESSAGES" do
-    Firehose::Publisher::MAX_MESSAGES.should == 100
+    Firehose::Server::Publisher::MAX_MESSAGES.should == 100
   end
 
   it "should have 1 day TTL" do
-    Firehose::Publisher::TTL.should == 86400
+    Firehose::Server::Publisher::TTL.should == 86400
   end
 
   describe "#publish" do
@@ -24,7 +24,7 @@ describe Firehose::Publisher do
           msg.should == "#{channel_key}\n1\n#{message}"
           em.next_tick { em.stop }
         }
-        Firehose::Publisher.new.publish channel_key, message
+        Firehose::Server::Publisher.new.publish channel_key, message
       end
     end
 
@@ -32,7 +32,7 @@ describe Firehose::Publisher do
       it "should publish messages with the '#{char.inspect}' character" do
         msg = [char, message, char].join
         em 1 do
-          Firehose::Publisher.new.publish(channel_key, msg).callback { em.stop }
+          Firehose::Server::Publisher.new.publish(channel_key, msg).callback { em.stop }
         end
         redis_exec('lpop', "firehose:#{channel_key}:list").should == msg
       end
@@ -40,19 +40,19 @@ describe Firehose::Publisher do
 
     it "should add message to list" do
       em do
-        Firehose::Publisher.new.publish(channel_key, message).callback { em.stop }
+        Firehose::Server::Publisher.new.publish(channel_key, message).callback { em.stop }
       end
       redis_exec('lpop', "firehose:#{channel_key}:list").should == message
     end
 
     it "should limit list to MAX_MESSAGES messages" do
       em do
-        Firehose::Publisher::MAX_MESSAGES.times do |n|
+        Firehose::Server::Publisher::MAX_MESSAGES.times do |n|
           publisher.publish(channel_key, message)
         end
         publisher.publish(channel_key, message).callback { em.stop }
       end
-      redis_exec('llen', "firehose:#{channel_key}:list").should == Firehose::Publisher::MAX_MESSAGES
+      redis_exec('llen', "firehose:#{channel_key}:list").should == Firehose::Server::Publisher::MAX_MESSAGES
     end
 
     it "should increment sequence" do

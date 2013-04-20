@@ -3,12 +3,15 @@ require 'json'
 
 module Firehose
   module Rack
+    # Handles a subscription request over HTTP or WebSockets depeding on its abilities and
+    # binds that to the Firehose::Server::Subscription class, which is bound to a channel that
+    # gets published to.
     class Consumer
       def call(env)
         websocket_request?(env) ? websocket.call(env) : http_long_poll.call(env)
       end
 
-      private
+    private
       def websocket
         WebSocket.new
       end
@@ -47,7 +50,7 @@ module Firehose
               if last_sequence < 0
                 env['async.callback'].call response(400, "The last_message_sequence parameter may not be less than zero", response_headers(env))
               else
-                Channel.new(path).next_message(last_sequence, :timeout => TIMEOUT).callback do |message, sequence|
+                Server::Channel.new(path).next_message(last_sequence, :timeout => TIMEOUT).callback do |message, sequence|
                   env['async.callback'].call response(200, wrap_frame(message, sequence), response_headers(env))
                 end.errback do |e|
                   if e == :timeout
@@ -108,10 +111,9 @@ module Firehose
         end
 
       private
-
         def subscribe(last_sequence)
           @subscribed = true
-          @channel    = Channel.new @path
+          @channel    = Server::Channel.new @path
           @deferrable = @channel.next_message last_sequence
           @deferrable.callback do |message, sequence|
             Firehose.logger.debug "WS sent `#{message}` to `#{@path}` with sequence `#{sequence}`"
