@@ -1,4 +1,4 @@
 module Firehose
-  VERSION  = "1.1.0"
-  CODENAME = "Rockin' Reconnect"
+  VERSION  = "1.1.1"
+  CODENAME = "Radtastical Redis"
 end
