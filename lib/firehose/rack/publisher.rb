@@ -44,7 +44,7 @@ module Firehose
         end
       end
 
-    private
+      private
       def publisher
         @publisher ||= Firehose::Server::Publisher.new
       end

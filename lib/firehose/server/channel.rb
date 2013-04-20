@@ -14,7 +14,7 @@ module Firehose
 
       def initialize(channel_key, redis=self.class.redis, subscriber=self.class.subscriber)
         @channel_key, @redis, @subscriber = channel_key, redis, subscriber
-        @list_key, @sequence_key = key(channel_key, :list), key(channel_key, :sequence)
+        @list_key, @sequence_key = Server.key(channel_key, :list), Server.key(channel_key, :sequence)
       end
 
       def next_message(last_sequence=nil, options={})
@@ -64,10 +64,6 @@ module Firehose
       end
 
       private
-      def key(*segments)
-        segments.unshift(:firehose).join(':')
-      end
-
       def subscribe(deferrable, timeout=nil)
         subscriber.subscribe(channel_key, deferrable)
         if timeout

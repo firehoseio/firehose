@@ -17,6 +17,6 @@ module IntegrationTestHelper
 
   # Let isn't allowed in before(:all)
   def uri
-    Firehose::Default::URI
+    Firehose::URI
   end
 end

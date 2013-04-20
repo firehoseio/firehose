@@ -41,14 +41,9 @@ module Firehose
         subscriptions.delete(channel_key) if subscriptions[channel_key].empty?
       end
 
-
       private
       def subscriptions
         @subscriptions ||= Hash.new{|h,k| h[k] = []}
-      end
-
-      def key(*segments)
-        segments.unshift(:firehose).join(':')
       end
     end
   end

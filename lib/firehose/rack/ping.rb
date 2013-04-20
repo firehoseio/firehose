@@ -1,5 +1,8 @@
 module Firehose
   module Rack
+    # Allows the Firehose client to periodically "ping" the server
+    # so that the connection isn't timed out by browsers or proxies from
+    # inactivity.
     class Ping
       attr_reader :redis
 
@@ -11,7 +14,6 @@ module Firehose
         PingCheck.new(env, redis).call
         ASYNC_RESPONSE
       end
-
 
       # Encapsulate this in a class so we aren't passing a bunch of variables around
       class PingCheck

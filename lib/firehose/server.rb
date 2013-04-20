@@ -12,5 +12,11 @@ module Firehose
     autoload :Publisher,  'firehose/server/publisher'
     autoload :Channel,    'firehose/server/channel'
     autoload :App,        'firehose/server/app'
+
+    # Generates keys for all firehose interactions with Redis. Ensures a root
+    # key of `firehose`
+    def self.key(*segments)
+      segments.unshift(:firehose).join(':')
+    end
   end
 end

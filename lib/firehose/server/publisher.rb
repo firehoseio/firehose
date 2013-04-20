@@ -45,11 +45,7 @@ module Firehose
         deferrable
       end
 
-    private
-      def key(*segments)
-        segments.unshift(:firehose).join(':')
-      end
-
+      private
       def redis
         @redis ||= EM::Hiredis.connect
       end
@@ -74,11 +70,11 @@ module Firehose
       end
 
       def eval_publish_script(channel_key, message, ttl, deferrable)
-        list_key = key(channel_key, :list)
+        list_key = Server.key(channel_key, :list)
         script_args = [
-          key(channel_key, :sequence),
+          Server.key(channel_key, :sequence),
           list_key,
-          key(:channel_updates),
+          Server.key(:channel_updates),
           ttl,
           message,
           MAX_MESSAGES,

@@ -20,8 +20,8 @@ module Firehose
     end
 
     desc "server", "Start an instance of a server."
-    method_option :port,   :type => :numeric, :default => ENV['PORT'] || Firehose::Default::URI.port, :required => false, :aliases => '-p'
-    method_option :host,   :type => :string,  :default => ENV['HOST'] || Firehose::Default::URI.host, :required => false, :aliases => '-h'
+    method_option :port,   :type => :numeric, :default => ENV['PORT'] || Firehose::URI.port, :required => false, :aliases => '-p'
+    method_option :host,   :type => :string,  :default => ENV['HOST'] || Firehose::URI.host, :required => false, :aliases => '-h'
     method_option :server, :type => :string,  :default => ENV['SERVER'] ||'rainbows', :required => false, :aliases => '-s'
     def server
       begin
@@ -47,7 +47,7 @@ module Firehose
 
     def publish(uri, payload=nil)
       payload     ||= $stdin.read
-      client      = Firehose::Producer.new(uri)
+      client      = Firehose::Client::Producer::Http.new(uri)
       path        = URI.parse(uri).path
       times       = options[:times]
       ttl         = options[:ttl]

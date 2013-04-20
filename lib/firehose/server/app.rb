@@ -5,8 +5,8 @@ module Firehose
     # to boot with custom rack configurations.
     class App
       def initialize(opts={})
-        @port   = opts[:port]   || Firehose::Default::URI.port
-        @host   = opts[:host]   || Firehose::Default::URI.host
+        @port   = opts[:port]   || Firehose::URI.port
+        @host   = opts[:host]   || Firehose::URI.host
         @server = opts[:server] || :rainbows
 
         Firehose.logger.info "Starting #{Firehose::VERSION} '#{Firehose::CODENAME}', in #{ENV['RACK_ENV']}"
@@ -16,7 +16,7 @@ module Firehose
         self.send("start_#{@server}")
       end
 
-    private
+      private
       # Boot the Firehose server with the Rainbows app server.
       def start_rainbows
         require 'rainbows'

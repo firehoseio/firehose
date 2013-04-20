@@ -1,5 +1,6 @@
 ENV['RACK_ENV'] ||= 'development' # TODO - Lets not rock out envs like its 1999.
 
+require 'uri'
 require 'firehose/version'
 require 'firehose/logging'
 
@@ -7,14 +8,15 @@ require 'firehose/logging'
 require 'firehose/rails' if defined?(::Rails::Engine)
 
 module Firehose
-  autoload :Default,      'firehose/default'
-  autoload :Producer,     'firehose/producer' # TODO Move this into the Firehose::Client namespace.
+  autoload :Server,       'firehose/server'
+  autoload :Client,       'firehose/client'
   autoload :Assets,       'firehose/assets'
   autoload :Rack,         'firehose/rack'
   autoload :CLI,          'firehose/cli'
-  autoload :Client,       'firehose/client'
-  autoload :Server,       'firehose/server'
   autoload :SwfPolicyRequest, 'firehose/swf_policy_request'
+
+  # Default URI for the Firehose server. Consider the port "well-known" and bindable from other apps.
+  URI = URI.parse("//0.0.0.0:7474").freeze
 end
 
 # Detect if Sprockets is loaded. If it is, lets configure Firehose to use it!

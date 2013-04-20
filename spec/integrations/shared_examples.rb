@@ -7,12 +7,12 @@ shared_examples_for 'Firehose::Rack::App' do
   include IntegrationTestHelper
 
   before(:all) do
-    Firehose::Producer.adapter = :em_http
+    Firehose::Client::Producer::Http.adapter = :em_http
     start_server
   end
 
   after(:all) do
-    Firehose::Producer.adapter = nil
+    Firehose::Client::Producer::Http.adapter = nil
     stop_server
   end
 
@@ -41,7 +41,7 @@ shared_examples_for 'Firehose::Rack::App' do
 
     # Setup a publisher
     publish = Proc.new do
-      Firehose::Producer.new.publish(outgoing.shift).to(channel) do
+      Firehose::Client::Producer::Http.new.publish(outgoing.shift).to(channel) do
         # The random timer ensures that sometimes the clients will be behind
         # and sometimes they will be caught up.
         EM::add_timer(rand*0.005) { publish.call } unless outgoing.empty?

@@ -112,7 +112,7 @@ While you can certainly make your own PUT requests when publishing messages, Fir
 require 'firehose'
 require 'json'
 json = {'hello'=> 'world'}.to_json
-firehose = Firehose::Producer.new('//127.0.0.1:7474')
+firehose = Firehose::Client::Producer::Http.new('//127.0.0.1:7474')
 firehose.publish(json).to("/my/messages/path")
 ```
 

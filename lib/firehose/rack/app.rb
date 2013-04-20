@@ -1,6 +1,8 @@
 module Firehose
   module Rack
-    # Allows the publisher and consumer to be mounted on the same port.
+    # Acts as the glue between the HTTP/WebSocket world and the Firehose::Server class,
+    # which talks directly to the Redis server. Also dispatches between HTTP and WebSocket
+    # transport handlers depending on the clients' request.
     class App
       def call(env)
         # Cache the parsed request so we don't need to re-parse it when we pass
@@ -17,11 +19,13 @@ module Firehose
           # from inactivity
           ping.call(env)
         else
+          # TODO - 'harden' this up with a GET request and throw a "Bad Request" 
+          # HTTP error code. I'd do it now but I'm in a plane and can't think of it.
           consumer.call(env)
         end
       end
 
-    private
+      private
       def publisher
         @publisher ||= Publisher.new
       end

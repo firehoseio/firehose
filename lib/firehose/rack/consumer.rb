@@ -11,7 +11,7 @@ module Firehose
         websocket_request?(env) ? websocket.call(env) : http_long_poll.call(env)
       end
 
-    private
+      private
       def websocket
         WebSocket.new
       end
@@ -110,7 +110,7 @@ module Firehose
           return @ws.rack_response
         end
 
-      private
+        private
         def subscribe(last_sequence)
           @subscribed = true
           @channel    = Server::Channel.new @path
