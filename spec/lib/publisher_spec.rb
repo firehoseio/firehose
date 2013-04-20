@@ -18,7 +18,7 @@ describe Firehose::Publisher do
   describe "#publish" do
     it "should publish message change" do
       em do
-        hiredis = EM::Hiredis.connect
+        hiredis = EM::Hiredis.connect.pubsub
         hiredis.subscribe "firehose:channel_updates"
         hiredis.on(:message) {|_, msg|
           msg.should == "#{channel_key}\n1\n#{message}"

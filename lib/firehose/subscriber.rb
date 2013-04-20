@@ -1,10 +1,10 @@
 module Firehose
   # Setups a connetion to Redis to listen for new resources...
   class Subscriber
-    attr_reader :redis
+    attr_reader :pubsub
 
     def initialize(redis)
-      @redis = redis
+      @pubsub = redis.pubsub
 
       # TODO: Instead of just raising an exception, it would probably be better
       #       for the errback to set some sort of 'disconnected' state. Then
@@ -16,10 +16,10 @@ module Firehose
       #       with the same error.
       #       The final goal is to allow the failed deferrable bubble back up
       #       so we can send back a nice, clean 500 error to the client.
-      redis.subscribe('firehose:channel_updates').
+      pubsub.subscribe('firehose:channel_updates').
         errback{|e| EM.next_tick { raise e } }.
         callback { Firehose.logger.debug "Redis subscribed to `firehose:channel_updates`" }
-      redis.on(:message) do |_, payload|
+      pubsub.on(:message) do |_, payload|
         channel_key, sequence, message = Firehose::Publisher.from_payload(payload)
 
         if deferrables = subscriptions.delete(channel_key)

@@ -5,7 +5,7 @@ describe Firehose::Subscriber do
 
   let(:channel_key)     { '/bears/are/mean' }
   let(:subscriber)      { Firehose::Subscriber.new(EM::Hiredis.connect) }
-  let(:dummy_subscriber){ Firehose::Subscriber.new(double('redis', :subscribe => EM::DefaultDeferrable.new, :on => nil)) }
+  let(:dummy_subscriber){ Firehose::Subscriber.new(double('redis', :pubsub => double('pubsub', :subscribe => EM::DefaultDeferrable.new, :on => nil))) }
   let(:message)         { 'Raaaarrrrrr!!!!' }
   let(:publisher)       { Firehose::Publisher.new }
 
