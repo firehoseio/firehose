@@ -21,7 +21,8 @@ module Firehose
     CORS_OPTIONS_MAX_AGE = ENV['RACK_ENV'] == 'development' ? '1' : '1728000'
 
     module Helpers
-      # Calculates the content length for you
+      # Calculates the content of a message body for the response so that HTTP Keep-Alive
+      # connections work.
       def response(status, body='', headers={})
         headers = {'Content-Length' => body.size.to_s}.merge(headers)
         [status, headers, [body]]

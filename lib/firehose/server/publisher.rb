@@ -1,10 +1,18 @@
 module Firehose
   module Server
     class Publisher
+      # Number of messages that Redis buffers for the client if its
+      # connection drops, then reconnects.
       MAX_MESSAGES = 100
-      TTL = 60*60*24  # 1 day of time, yay!
+
+      # Seconds that the message buffer should live before Redis expires it.
+      TTL = 60*60*24
+
+      # Delimited used to frame different parts of a message that's published
+      # over Firehose.
       PAYLOAD_DELIMITER = "\n"
 
+      # Publish a message to a Firehose channel via Redis.
       def publish(channel_key, message, opts={})
         # How long should we hang on to the resource once is published?
         ttl = (opts[:ttl] || TTL).to_i
@@ -50,10 +58,12 @@ module Firehose
         @redis ||= EM::Hiredis.connect
       end
 
+      # Serialize components of a message into something that can be dropped into Redis.
       def self.to_payload(channel_key, sequence, message)
         [channel_key, sequence, message].join(PAYLOAD_DELIMITER)
       end
 
+      # Deserealize components of a message back into Ruby.
       def self.from_payload(payload)
         payload.split(PAYLOAD_DELIMITER, method(:to_payload).arity)
       end

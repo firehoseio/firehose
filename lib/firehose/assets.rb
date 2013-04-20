@@ -5,6 +5,7 @@ module Firehose
       File.join File.expand_path('../../assets', __FILE__), segs
     end
 
+    # Integrate Firehose ./lib/assets files into a sprocket-enabled environment.
     module Sprockets
       # Drop flash and javascript paths to Firehose assets into a sprockets environment.
       def self.configure(env)

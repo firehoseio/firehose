@@ -2,7 +2,7 @@ require 'thor'
 require 'eventmachine'
 require 'uri'
 
-# Enable native 
+# Enable native async-io libs
 EM.kqueue if EM.kqueue?
 EM.epoll  if EM.epoll?
 
@@ -44,7 +44,6 @@ module Firehose
     method_option :ttl, :type => :numeric, :aliases => '-t'
     method_option :times, :type => :numeric, :aliases => '-n', :default => 1
     method_option :interval, :type => :numeric, :aliases => '-i'
-
     def publish(uri, payload=nil)
       payload     ||= $stdin.read
       client      = Firehose::Client::Producer::Http.new(uri)
@@ -70,6 +69,5 @@ module Firehose
         end
       end
     end
-
   end
 end
