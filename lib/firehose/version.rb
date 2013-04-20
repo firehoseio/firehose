@@ -1,4 +1,4 @@
 module Firehose
-  VERSION  = "1.1.1"
-  CODENAME = "Radtastical Redis"
+  VERSION  = "1.2.0"
+  CODENAME = "Spring Cleaning"
 end
