@@ -4,9 +4,7 @@ require 'logger'
 require 'em-http'
 require 'faye/websocket'
 require 'hiredis'
-
 require 'firehose'
-
 
 # We use both EM::Http and Net::Http in this test lib. When EM:Http is fired up
 # we're usually hitting Rainbows! for integrations, and when Net::Http we want
@@ -61,9 +59,6 @@ RSpec.configure do |config|
     reset_redis
   end
 end
-
-
-
 
 # Allow async responses to get through rack/lint
 require 'rack/lint'
