@@ -17,10 +17,10 @@ shared_examples_for 'Firehose::Rack::App' do
   end
 
   before(:each) { WebMock.disable! }
-  after(:each) { WebMock.enable! }
+  after(:each)  { WebMock.enable! }
 
   let(:app)       { Firehose::Rack::App.new }
-  let(:messages)  { (1..2000).map{|n| "msg-#{n}" } }
+  let(:messages)  { (1..200).map{|n| "msg-#{n}" } }
   let(:channel)   { "/firehose/integration/#{Time.now.to_i}" }
   let(:http_url)  { "http://#{uri.host}:#{uri.port}#{channel}" }
   let(:ws_url)    { "ws://#{uri.host}:#{uri.port}#{channel}" }
