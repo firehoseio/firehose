@@ -1,7 +1,3 @@
-# Unfortunately this needs to a global variable. The only other option is to
-# hack into the internals of the web_socket.js plugin we are using.
-window.WEB_SOCKET_SWF_LOCATION = '/assets/firehose/WebSocketMain.swf' if !window.WEB_SOCKET_SWF_LOCATION
-
 INITIAL_PING_TIMEOUT   =  2000
 KEEPALIVE_PING_TIMEOUT = 20000
 
