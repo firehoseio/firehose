@@ -9,7 +9,6 @@ module Firehose
     module Sprockets
       # Drop flash and javascript paths to Firehose assets into a sprockets environment.
       def self.configure(env)
-        env.append_path Firehose::Assets.path('flash')
         env.append_path Firehose::Assets.path('javascripts')
         env
       end
@@ -23,7 +22,6 @@ module Firehose
 
       def self.manifest
         paths = []
-        paths << Firehose::Assets.path('/flash/firehose/WebSocketMainInsecure.swf')
         paths << File.basename(Firehose::Assets.path('/javascripts/firehose/firehose.js.coffee'), '.coffee')
         paths
       end
