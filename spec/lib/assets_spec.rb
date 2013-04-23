@@ -15,7 +15,7 @@ describe Firehose::Assets do
   describe "Sprockets.configure" do
     it "should configure environment" do
       env = Firehose::Assets::Sprockets.configure Sprockets::Environment.new
-      env.paths.should include(Firehose::Assets.path('flash'),  Firehose::Assets.path('javascripts'))
+      env.paths.should include(Firehose::Assets.path('javascripts'))
     end
   end
 end
