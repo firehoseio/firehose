@@ -98,7 +98,7 @@ class Firehose.LongPoll extends Firehose.Transport
 # Let's try to hack in support for IE8-9 via the XDomainRequest object!
 # This was adapted from code shamelessly stolen from:
 # https://github.com/jaubourg/ajaxHooks/blob/master/src/ajax/xdr.js
-if $.browser.msie and parseInt($.browser.version, 10) in [8, 9]
+if $.browser? and $.browser.msie? and $.browser.msie and parseInt($.browser.version, 10) in [8, 9]
   jQuery.ajaxTransport (s) ->
     if s.crossDomain and s.async
       if s.timeout
