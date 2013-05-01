@@ -70,8 +70,6 @@ Firehose doesn't just stop at curl; it has a full-featured JavaScript client tha
 Still have the server running? Copy and paste the code below into Firebug or the WebKit console.
 
 ```javascript
-// You'll need to set for WS to work in IE. The value here is the default.
-window.WEB_SOCKET_SWF_LOCATION = '/assets/firehose/WebSocketMain.swf';
 
 new Firehose.Consumer({
   message: function(msg){
@@ -134,15 +132,7 @@ my_sprockets_env = Sprockets::Environment.new
 Firehose::Assets::Sprockets.configure my_sprockets_env
 ```
 
-3. Create a firehose config file for setting constants. A good place for this file in a Rails app is `app/assets/javascripts/lib/firehose_config.js.erb`. This gives you a way to configure Flash Web Sockets needed to make some older browser such as IE<10 and Opera<12 support web sockets. Usually this config file will just be: 
-
-```erb
-window.WEB_SOCKET_SWF_LOCATION = '<%= asset_path('firehose/WebSocketMain.swf') %>'
-```
-
-The options you can set in this file come directly from https://github.com/gimite/web-socket-js (which is the flash web socket implementation used by Firehose).
-
-4) Require your config file and the firehose gem. This would look something like this:
+3. Require your config file and the firehose gem. This would look something like this:
 
 ```ruby
 #= require some/other/js/file
@@ -171,22 +161,6 @@ if exceptional_key = ENV['EXCEPTIONAL_KEY']
   end
 end
 ```
-
-# Flash Policy File
-
-This works out of the box in development if you use the included Procfile with Foreman. However, that solution doesn't work well with a lot production setups, so it is disabled in other environments.
-
-[Here is a hack to server your policy file via Nginx](http://blog.vokle.com/index.php/2009/06/10/dealing-with-adobe-and-serving-socket-policy-servers-via-nginx-and-10-lines-of-code/)
-
-You can also add a similar hack to HAProxy to serve your policy file.
-
-```sh
-listen swf_policy_requests 0.0.0.0:843
-  # Be careful here. This needs to be an absolute path.
-  errorfile 400 /path/to/my/crossdomain.xml
-```
-
-In either case, you'll want to be careful about using these hacks on ports that you are also using for genuine HTTP traffic.
 
 # Deployment
 
