@@ -82,7 +82,9 @@ shared_examples_for 'Firehose::Rack::App' do
         ws = nil
       end
 
-      ws.onerror  { |e| raise 'ws failed' + "\n" + e.inspect }
+      ws.onerror = lambda do |event|
+        raise 'ws failed' + "\n" + event.inspect
+      end
     end
 
     # Great, we have all the pieces in order, lets run this thing in the reactor.
