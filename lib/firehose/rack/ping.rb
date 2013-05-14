@@ -1,3 +1,5 @@
+require 'em-hiredis'
+
 module Firehose
   module Rack
     # Allows the Firehose client to periodically "ping" the server
