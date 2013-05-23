@@ -4,10 +4,8 @@ KEEPALIVE_PING_TIMEOUT = 20000
 class Firehose.WebSocket extends Firehose.Transport
   name: -> 'WebSocket'
 
+  # Check if WebSocket is an object in the window.
   @supported: ->
-    # Compatibility reference: http://caniuse.com/websockets
-    # We don't need to explicitly check for Flash web socket or MozWebSocket
-    # because web_socket.js has already handled that.
     window.WebSocket?
 
   constructor: (args) ->
@@ -17,11 +15,16 @@ class Firehose.WebSocket extends Firehose.Transport
     @config.webSocket.connectionVerified = @config.connectionVerified
 
   _request: =>
-    @socket = new window.WebSocket "ws:#{@config.uri}?#{$.param @config.params}"
-    @socket.onopen    = @_open
-    @socket.onclose   = @_close
-    @socket.onerror   = @_error
-    @socket.onmessage = @_lookForInitialPong
+    # Run this is a try/catch block because IE10 inside of a .NET control
+    # complains about security zones.
+    try
+      @socket = new window.WebSocket "ws:#{@config.uri}?#{$.param @config.params}"
+      @socket.onopen    = @_open
+      @socket.onclose   = @_close
+      @socket.onerror   = @_error
+      @socket.onmessage = @_lookForInitialPong
+    catch err
+      @_error(err)
 
   _open: =>
     sendPing @socket
