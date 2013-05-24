@@ -1,4 +1,4 @@
 module Firehose
-  VERSION  = "1.2.3"
-  CODENAME = "Steampunk Boogaloo"
+  VERSION  = "1.2.4"
+  CODENAME = "Dot Net Is Tubular"
 end
