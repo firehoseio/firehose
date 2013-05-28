@@ -39,6 +39,7 @@ class Firehose.LongPoll extends Firehose.Transport
     #       See: http://api.jquery.com/jQuery.ajax/#jqXHR
     @_lastRequest = $.ajax
       url:          @config.longPoll.url
+      firehose:     true
       crossDomain:  true
       data:         data
       timeout:      @_timeout
@@ -77,6 +78,7 @@ class Firehose.LongPoll extends Firehose.Transport
       url:          @config.longPoll.url
       method:       'HEAD'
       crossDomain:  true
+      firehose:     true
       data:         @config.params
       success:      =>
         if @_needToNotifyOfReconnect
@@ -94,3 +96,35 @@ class Firehose.LongPoll extends Firehose.Transport
       setTimeout @_ping, @_retryDelay + @_lagTime
       # Reconnect with delay
       setTimeout @_request, @_retryDelay
+
+# Let's try to hack in support for IE8-9 via the XDomainRequest object!
+# This was adapted from code shamelessly stolen from:
+# https://github.com/jaubourg/ajaxHooks/blob/master/src/ajax/xdr.js
+if $?.browser?.msie and parseInt($.browser.version, 10) in [8, 9]
+  jQuery.ajaxTransport (s) ->
+    if s.crossDomain and s.async and s.firehose
+      if s.timeout
+        s.xdrTimeout = s.timeout
+        delete s.timeout
+      xdr = undefined
+      return {
+        send: (_, complete) ->
+          callback = (status, statusText, responses, responseHeaders) ->
+            xdr.onload = xdr.onerror = xdr.ontimeout = jQuery.noop
+            xdr = undefined
+            complete status, statusText, responses, responseHeaders
+          xdr = new XDomainRequest()
+          xdr.open s.type, s.url
+          xdr.onload = ->
+            headers = "Content-Type: #{xdr.contentType}"
+            callback 200, "OK", {text: xdr.responseText}, headers
+          xdr.onerror = -> callback 404, "Not Found"
+          if s.xdrTimeout?
+            xdr.ontimeout = -> callback 0, "timeout"
+            xdr.timeout   = s.xdrTimeout
+          xdr.send (s.hasContent and s.data) or null
+        abort: ->
+          if xdr?
+            xdr.onerror = jQuery.noop()
+            xdr.abort()
+      }
