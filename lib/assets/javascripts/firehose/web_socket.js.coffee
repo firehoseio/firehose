@@ -9,19 +9,6 @@ class Firehose.WebSocket extends Firehose.Transport
     window.WebSocket?
 
   constructor: (args) ->
-    # Prevent triggering of socket onclose
-    # event when navigating back to the page
-    # http://stackoverflow.com/questions/4812686/closing-websocket-correctly-html5-javascript
-    window.onbeforeunload = =>
-      @_cleanUp()
-      null # prevent "Are you sure?" dialog
-
-    # pagehide only exists for these iOS devices
-    # but it is triggered much more reliably than onbeforeunload
-    if (/iphone|ipod|ipad.*os 5/gi).test(navigator.appVersion)
-      window.onpagehide = =>
-        @_cleanUp()
-
     super args
     # Configrations specifically for web sockets
     @config.webSocket ||= {}
@@ -70,8 +57,10 @@ class Firehose.WebSocket extends Firehose.Transport
       catch e
 
   _close: (event) =>
-    if event?.wasClean then @_cleanUp()
-    else @_error event
+    if event?.code is 1006
+      @_error(event)
+    else
+      @_cleanUp()
 
   _error: (event) =>
     @_cleanUp()
