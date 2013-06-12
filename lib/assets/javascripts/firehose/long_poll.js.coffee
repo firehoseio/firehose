@@ -15,10 +15,12 @@ class Firehose.LongPoll extends Firehose.Transport
 
   constructor: (args) ->
     super args
+
+    @config.ssl              ?= false
     # Configrations specifically for web sockets
     @config.longPoll         ||= {}
     # Protocol schema we should use for talking to WS server.
-    @config.longPoll.url     ||= "http:#{@config.uri}"
+    @config.longPoll.url     ||= "#{@_protocol()}:#{@config.uri}"
     # How many ms should we wait before timing out the AJAX connection?
     @config.longPoll.timeout ||= 25000
     # TODO - What is @_lagTime for? Can't we just use the @_timeout value?
@@ -27,6 +29,9 @@ class Firehose.LongPoll extends Firehose.Transport
     @_timeout         = @config.longPoll.timeout + @_lagTime
     @_okInterval      = 0
     @_stopRequestLoop = false
+
+  _protocol: =>
+    if @config.ssl then 'https' else 'http'
 
   _request: =>
     return if @_stopRequestLoop
