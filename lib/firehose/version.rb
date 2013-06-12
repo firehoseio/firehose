@@ -1,4 +1,4 @@
 module Firehose
-  VERSION  = "1.2.5"
-  CODENAME = "Polyfillin Pat!"
+  VERSION  = "1.2.6"
+  CODENAME = "Q"
 end
