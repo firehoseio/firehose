@@ -1,4 +1,4 @@
 module Firehose
-  VERSION  = "1.2.7"
-  CODENAME = "Rain Reservoir"
+  VERSION  = "1.2.8"
+  CODENAME = "Straight Stream"
 end

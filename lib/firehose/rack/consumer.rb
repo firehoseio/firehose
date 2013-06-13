@@ -150,7 +150,7 @@ module Firehose
         end
 
         def handle_error(event)
-          Firehose.logger.error "WS connection `#{@path}` error `#{event.inspect}`"
+          Firehose.logger.error "WS connection `#{@path}` error. Message: `#{event.message.inspect}`; Data: `#{event.data.inspect}`"
         end
 
         def self.wrap_frame(message, last_sequence)
