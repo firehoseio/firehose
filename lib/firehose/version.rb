@@ -1,4 +1,4 @@
 module Firehose
-  VERSION  = "1.2.6"
-  CODENAME = "Q"
+  VERSION  = "1.2.7"
+  CODENAME = "Rain Reservoir"
 end
