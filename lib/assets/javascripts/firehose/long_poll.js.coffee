@@ -8,9 +8,6 @@ class Firehose.LongPoll extends Firehose.Transport
   @ieSupported: ->
     $.browser.msie and parseInt($.browser.version) >= 8
 
-  @ieNoSsl: ->
-    $.browser.msie and parseInt($.browser.version) is 8
-
   @supported: ->
     # IE 8+, FF 3.5+, Chrome 4+, Safari 4+, Opera 12+, iOS 3.2+, Android 2.1+
     if xhr = $.ajaxSettings.xhr()
@@ -20,9 +17,6 @@ class Firehose.LongPoll extends Firehose.Transport
     super args
 
     @config.ssl ?= false
-
-    # IE8 doesn't like https, so let's not even try
-    @config.ssl = false if Firehose.LongPoll.ieNoSsl()
 
     # Configrations specifically for web sockets
     @config.longPoll         ||= {}
