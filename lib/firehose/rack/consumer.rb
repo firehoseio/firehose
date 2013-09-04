@@ -10,6 +10,11 @@ module Firehose
       autoload :HttpLongPoll, 'firehose/rack/consumer/http_long_poll'
       autoload :WebSocket,    'firehose/rack/consumer/web_socket'
 
+      # Let the client configure the consumer on initialization.
+      def initialize
+        yield self if block_given?
+      end
+
       def call(env)
         websocket_request?(env) ? websocket.call(env) : http_long_poll.call(env)
       end

@@ -120,19 +120,36 @@ Firehose can be configured via environmental variables. Take a look at the [`.en
 
 ## Rack Configuration
 
+There are two rack applications that are included with Firehose: `Firehose::Rack::Producer` which a client can `PUT` HTTP request with message payloads to publish information on Firehose and the `Firehose::Rack::Consumer` application which a client connects to via HTT long polling or WebSockets to consume a message.
+
+### Consumer Configuration
+
 ```ruby
 # Kitchen-sink rack configuration file example
 require 'firehose'
 
-firehose = Firehose::Rack::App.new do |app|
+consumer = Firehose::Rack::Consumer.new do |app|
   # Configure how long the server should wait before send the client a 204
   # with a request to reconnect. Typically browsers time-out the client connection
   # after 30 seconds, so we set the `Firehose.Consumer` JS client to 25, and the
   # server to 20 to make sure latency or timing doesn't cause any problems.
-  app.consumer.http_long_poll.timeout = 20
+  app.http_long_poll.timeout = 20
 end
 
-run firehose
+run consumer
+```
+
+### Publisher Configuration
+
+```ruby
+# Kitchen-sink rack configuration file example
+require 'firehose'
+
+# There's nothing to configure with the Publisher, but its possible that
+# you might include rack middleware authorization mechanisms here to control
+# who can publish to Firehose.
+
+run Firehose::Rack::Publisher.new
 ```
 
 ## Sprockets
