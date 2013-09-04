@@ -13,7 +13,6 @@ module Firehose
   autoload :Assets,       'firehose/assets'
   autoload :Rack,         'firehose/rack'
   autoload :CLI,          'firehose/cli'
-  autoload :SwfPolicyRequest, 'firehose/swf_policy_request'
 
   # Default URI for the Firehose server. Consider the port "well-known" and bindable from other apps.
   URI = URI.parse("//0.0.0.0:7474").freeze
