@@ -118,6 +118,23 @@ firehose.publish(json).to("/my/messages/path")
 
 Firehose can be configured via environmental variables. Take a look at the [`.env.sample`](./.env.sample) file for more info.
 
+## Rack Configuration
+
+```ruby
+# Kitchen-sink rack configuration file example
+require 'firehose'
+
+firehose = Firehose::Rack::App.new do |app|
+  # Configure how long the server should wait before send the client a 204
+  # with a request to reconnect. Typically browsers time-out the client connection
+  # after 30 seconds, so we set the `Firehose.Consumer` JS client to 25, and the
+  # server to 20 to make sure latency or timing doesn't cause any problems.
+  app.consumer.http_long_poll.timeout = 20
+end
+
+run firehose
+```
+
 ## Sprockets
 
 Using Sprockets is the recommended method of including the included client-side assets in a web page.

@@ -4,6 +4,10 @@ module Firehose
     # which talks directly to the Redis server. Also dispatches between HTTP and WebSocket
     # transport handlers depending on the clients' request.
     class App
+      def initialize
+        yield self if block_given?
+      end
+
       def call(env)
         # Cache the parsed request so we don't need to re-parse it when we pass
         # control onto another app.
@@ -25,13 +29,16 @@ module Firehose
         end
       end
 
+      # The consumer pulls messages off of the backend and passes messages to the 
+      # connected HTTP or WebSocket client. This can be configured from the initialization
+      # method of the rack app.
+      def consumer
+        @consumer ||= Consumer.new
+      end
+
       private
       def publisher
         @publisher ||= Publisher.new
-      end
-
-      def consumer
-        @consumer ||= Consumer.new
       end
 
       def ping

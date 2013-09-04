@@ -6,5 +6,6 @@
 Gemfile.lock
 log/*
 pkg/*
+tmp
 *.sublime-project
 *.sublime-workspace
