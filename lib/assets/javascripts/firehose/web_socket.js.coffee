@@ -18,13 +18,17 @@ class Firehose.WebSocket extends Firehose.Transport
     # Run this is a try/catch block because IE10 inside of a .NET control
     # complains about security zones.
     try
-      @socket = new window.WebSocket "ws:#{@config.uri}?#{$.param @config.params}"
+      @socket = new window.WebSocket "#{@_protocol()}:#{@config.uri}?#{$.param @config.params}"
       @socket.onopen    = @_open
       @socket.onclose   = @_close
       @socket.onerror   = @_error
       @socket.onmessage = @_lookForInitialPong
     catch err
       console?.log(err)
+
+  # Protocol schema we should use for talking to firehose server.
+  _protocol: =>
+    if @config.ssl then "wss" else "ws"
 
   _open: =>
     sendPing @socket

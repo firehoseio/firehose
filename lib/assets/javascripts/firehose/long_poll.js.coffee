@@ -18,9 +18,8 @@ class Firehose.LongPoll extends Firehose.Transport
 
     @config.ssl ?= false
 
-    # Configrations specifically for web sockets
+    # Configrations specifically for long polling
     @config.longPoll         ||= {}
-    # Protocol schema we should use for talking to WS server.
     @config.longPoll.url     ||= "#{@_protocol()}:#{@config.uri}"
     # How many ms should we wait before timing out the AJAX connection?
     @config.longPoll.timeout ||= 25000
@@ -31,8 +30,9 @@ class Firehose.LongPoll extends Firehose.Transport
     @_okInterval      = 0
     @_stopRequestLoop = false
 
+  # Protocol schema we should use for talking to firehose server.
   _protocol: =>
-    if @config.ssl then 'https' else 'http'
+    if @config.ssl then "https" else "http"
 
   _request: =>
     return if @_stopRequestLoop
