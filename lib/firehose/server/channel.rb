@@ -31,7 +31,7 @@ module Firehose
           redis.lrange(list_key, 0, Server::Publisher::MAX_MESSAGES).
             errback {|e| deferrable.fail e }
         redis.exec.callback do |(sequence, message_list)|
-          Firehose.logger.debug "exec returened: `#{sequence}` and `#{message_list.inspect}`"
+          Firehose.logger.debug "exec returned: `#{sequence}` and `#{message_list.inspect}`"
           sequence = sequence.to_i
 
           if sequence.nil? || (diff = sequence - last_sequence) <= 0
