@@ -32,7 +32,7 @@ Gem::Specification.new do |s|
   s.add_development_dependency "guard-rspec"
   s.add_development_dependency "guard-bundler"
   s.add_development_dependency "guard-coffeescript"
-  s.add_development_dependency "rainbows", "~> 4.4.3"
+  s.add_development_dependency "rainbows", "~> 4.5.0"
   s.add_development_dependency "thin"
   s.add_development_dependency "rack-test"
   s.add_development_dependency "async_rack_test"

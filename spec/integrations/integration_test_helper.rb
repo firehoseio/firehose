@@ -12,6 +12,7 @@ module IntegrationTestHelper
 
   def stop_server
     Process.kill 'INT', @server_pid
+    Process.wait @server_pid # Let rspec print test results after the server exits. 
   end
 
 

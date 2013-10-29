@@ -83,7 +83,7 @@ GEM
     rack (1.5.2)
     rack-test (0.6.2)
       rack (>= 1.0)
-    rainbows (4.4.3)
+    rainbows (4.5.0)
       kgio (~> 2.5)
       rack (~> 1.1)
       unicorn (~> 4.6, >= 4.6.2)
@@ -135,7 +135,7 @@ DEPENDENCIES
   guard-coffeescript
   guard-rspec
   rack-test
-  rainbows (~> 4.4.3)
+  rainbows (~> 4.5.0)
   rake
   rspec
   sprockets

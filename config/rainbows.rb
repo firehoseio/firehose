@@ -4,7 +4,7 @@
 
 Rainbows! do
   use                       :EventMachine   # concurrency model
-  worker_connections        400
+  worker_connections        50              # Any higher and we start breaking rlimit defaults
   keepalive_timeout         0               # disables keepalives
   keepalive_requests        666             # default:100
   client_max_body_size      5 * 1024 * 1024 # 5 megabytes

@@ -20,7 +20,6 @@ module Firehose
       # Boot the Firehose server with the Rainbows app server.
       def start_rainbows
         require 'rainbows'
-        Faye::WebSocket.load_adapter('rainbows')
 
         rackup = Unicorn::Configurator::RACKUP
         rackup[:port] = @port if @port
@@ -29,7 +28,8 @@ module Firehose
         opts = rackup[:options]
         opts[:config_file] = File.expand_path('../../../../config/rainbows.rb', __FILE__)
 
-        server = Rainbows::HttpServer.new(Firehose::Rack::App.new, opts)
+        app = Firehose::Rack::App.new
+        server = Rainbows::HttpServer.new(app, opts)
         server.start.join
       end
 
@@ -45,7 +45,9 @@ module Firehose
 
         server = Thin::Server.new(@host, @port) do
           run Firehose::Rack::App.new
-        end.start
+        end
+
+        server.start
       end
     end
   end
