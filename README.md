@@ -214,4 +214,4 @@ Of course, you could use `exceptional` instead of `airbrake` and `thin` instead 
 
 2. Set up `config/deploy.rb` to your liking. You can follow most directions for using Capistrano and Foreman to deploy Rack apps, such as https://gist.github.com/1027117
 
-3. Set up `config/rainbows.rb` (if you are using Rainbows!). The gem includes an example to get you started.
+3. Set up `config/rainbows.rb` (if you are using Rainbows!). The gem includes example configurations scripts to get you started. There's also an example at https://gist.github.com/bradgessler/f2416efdbb1771e983b3.
