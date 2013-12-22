@@ -10,6 +10,7 @@ Gem::Specification.new do |s|
   s.homepage    = "http://firehose.io/"
   s.summary     = %q{Build realtime Ruby web applications}
   s.description = %q{Firehose is a realtime web application toolkit for building realtime Ruby web applications.}
+  s.license     = "MIT"
 
   s.rubyforge_project = "firehose"
 
