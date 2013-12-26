@@ -1,0 +1,4 @@
+firehose: ./bin/firehose server -p $PORT
+redis: redis-server
+evergreen: rake evergreen:serve
+# guard: guard

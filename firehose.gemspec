@@ -33,6 +33,7 @@ Gem::Specification.new do |s|
   s.add_development_dependency "guard-rspec"
   s.add_development_dependency "guard-bundler"
   s.add_development_dependency "guard-coffeescript"
+  s.add_development_dependency "guard-copy"
   s.add_development_dependency "rainbows", "~> 4.4.3"
   s.add_development_dependency "thin"
   s.add_development_dependency "rack-test"
@@ -40,4 +41,7 @@ Gem::Specification.new do |s|
   s.add_development_dependency "foreman"
   s.add_development_dependency "sprockets"
   s.add_development_dependency "rake"
+  s.add_development_dependency "evergreen"
+  s.add_development_dependency "capybara-webkit"
+  s.add_development_dependency "therubyracer"
 end

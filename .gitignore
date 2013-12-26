@@ -8,3 +8,4 @@ pkg/*
 tmp
 *.sublime-project
 *.sublime-workspace
+public/javascripts

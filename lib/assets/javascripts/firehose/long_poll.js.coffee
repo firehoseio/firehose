@@ -27,7 +27,7 @@ class Firehose.LongPoll extends Firehose.Transport
     # We use the lag time to make the client live longer than the server.
     @_lagTime         = 5000
     @_timeout         = @config.longPoll.timeout + @_lagTime
-    @_okInterval      = 0
+    @_okInterval      = @config.okInterval || 0
     @_stopRequestLoop = false
 
   # Protocol schema we should use for talking to firehose server.
