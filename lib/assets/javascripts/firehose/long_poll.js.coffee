@@ -5,8 +5,8 @@ class Firehose.LongPoll extends Firehose.Transport
   # CORS is kinda supported in IE8+ except that its implementation cannot
   # access "simple request" response headers. This means we don't yet have a
   # plan to support IE<10 (when it gets a real XHR2 implementation). Sucks...
-  @ieSupported: ->
-    $.browser.msie and parseInt($.browser.version) >= 8
+  # $.browser.msie and parseInt($.browser.version) >= 8 # DEPRECATED
+  @ieSupported: -> (document.documentMode || 10) > 8
 
   @supported: ->
     # IE 8+, FF 3.5+, Chrome 4+, Safari 4+, Opera 12+, iOS 3.2+, Android 2.1+

@@ -4,9 +4,8 @@ KEEPALIVE_PING_TIMEOUT = 20000
 class Firehose.WebSocket extends Firehose.Transport
   name: -> 'WebSocket'
 
-  # Check if WebSocket is an object in the window.
-  @supported: ->
-    window.WebSocket?
+  @ieSupported:-> (document.documentMode || 10) > 9
+  @supported  :-> window.WebSocket? # Check if WebSocket is an object in the window.
 
   constructor: (args) ->
     super args
