@@ -1,3 +1,1 @@
 window.Firehose = {}
-
-window.$ ||= jQuery

@@ -22,3 +22,10 @@ guard :copy,
   to:           'public/javascripts/vendor',
   mkpath:       true,
   run_at_start: true
+
+
+guard :copy,
+  from:         'spec/javascripts/support',
+  to:           'public/javascripts/vendor',
+  mkpath:       true,
+  run_at_start: true

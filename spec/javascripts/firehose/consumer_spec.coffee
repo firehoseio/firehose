@@ -35,10 +35,10 @@ describe 'Firehose.Consumer', ->
     describe 'when .connect called earlier', ->
       beforeEach ->
         @instance.connect()
-        spyOn @instance.transport, 'stop'
+        sinon.stub @instance.transport, 'stop'
 
       it 'calls stop on @transport', ->
         @instance.stop()
-        expect( @instance.transport.stop ).toHaveBeenCalled()
+        expect( @instance.transport.stop.called ).toBe true
 
       xit 'stops the upgrade timeout'
