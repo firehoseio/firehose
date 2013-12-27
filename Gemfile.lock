@@ -178,6 +178,7 @@ PLATFORMS
 DEPENDENCIES
   async_rack_test
   capybara-webkit
+  coffee-script
   evergreen
   firehose!
   foreman

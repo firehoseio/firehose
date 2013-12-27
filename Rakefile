@@ -1,6 +1,7 @@
 require "rake/testtask"
 require 'bundler/gem_tasks'
 require 'rspec/core/rake_task'
+require 'coffee-script'
 
 
 task :default => [:spec, 'evergreen:run']
@@ -30,14 +31,15 @@ namespace :travis do
   task :prepare do
     # Prepare directories
     sh "mkdir -p public/javascripts/vendor"
+    sh "mkdir -p public/javascripts/firehose"
 
     # Precompile coffeescript
-    sh "bundle exec coffee -c -o public/javascripts lib/assets/javascripts"
+    Dir.glob 'lib/assets/javascripts/**/*.js.coffee' do |coffee_file|
+      dest = coffee_file.gsub( 'lib/assets/', 'public/' ).gsub '.js.coffee', '.js'
 
-    # Remove double extensions caused by sprockets naming convention
-    Dir.glob 'public/javascripts/**/*.js.js' do |js_file|
-      new_name = js_file.gsub '.js.js', '.js'
-      sh "mv #{js_file} #{new_name}"
+      File.open dest, 'w' do |file|
+        file.write ::CoffeeScript.compile File.read coffee_file
+      end
     end
 
     # Copy JS vendor files into public
