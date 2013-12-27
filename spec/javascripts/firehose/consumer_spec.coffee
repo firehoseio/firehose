@@ -3,8 +3,6 @@ describe 'Firehose.Consumer', ->
     @klass    = Firehose.Consumer
     @instance = new @klass uri: 'test_uri', okInterval: 9999 # Stop crazy ajax loops during tests
 
-  # afterEach -> @instance.stop() # FIXME Stop doesn't seem to work here... added the high okInterval above as temporary remedy
-
 
   #= Specs ===
 
@@ -35,10 +33,13 @@ describe 'Firehose.Consumer', ->
     describe 'when .connect called earlier', ->
       beforeEach ->
         @instance.connect()
-        sinon.stub @instance.transport, 'stop'
+        sinon.spy @instance.transport, 'stop'
 
-      it 'calls stop on @transport', ->
+      it 'calls stop once on @transport', ->
         @instance.stop()
-        expect( @instance.transport.stop.called ).toBe true
+        expect( @instance.transport.stop.calledOnce ).toBe true
 
-      xit 'stops the upgrade timeout'
+      it 'stops the upgrade timeout', ->
+        @instance.stop()
+        expect( @instance.upgradeTimeout? ).toBe false
+

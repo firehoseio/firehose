@@ -43,11 +43,10 @@ namespace :travis do
     end
 
     # Copy JS vendor files into public
-    Dir.glob 'lib/assets/javascripts/vendor/*.js' do |js_file|
-      sh "cp #{js_file} public/javascripts/vendor"
-    end
-
-    Dir.glob 'spec/javascripts/support/*.js' do |js_file|
+    Dir.glob [
+      'spec/javascripts/support/*.js',
+      'lib/assets/javascripts/vendor/*.js'
+    ] do |js_file|
       sh "cp #{js_file} public/javascripts/vendor"
     end
   end

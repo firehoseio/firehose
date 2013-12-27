@@ -8,10 +8,23 @@ require( '/javascripts/firehose/consumer.js'   );
 
 //= Mock out jQuery / Zepto calls
 window.$ = {
-  ajaxSettings : {
-    xhr : function(){
-      return { withCredentials : true }
+  ajax : function(){
+    return {
+      abort : function (){}
     }
   },
+
+  ajaxSettings : {
+    xhr : function(){
+      return {
+        withCredentials : true
+      }
+    }
+  },
+
+  param : function(){
+    return { fake: 'params' }
+  },
+
   supported : { }
 };
