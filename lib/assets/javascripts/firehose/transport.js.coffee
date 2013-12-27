@@ -8,6 +8,7 @@ class Firehose.Transport
   constructor: (config={}) ->
     @config      = config
     @_retryDelay = 3000
+    @
 
   # Lets rock'n'roll! Connect to the server.
   connect: (delay = 0) =>
