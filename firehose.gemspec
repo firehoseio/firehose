@@ -27,6 +27,7 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency "em-http-request", ">= 1.0.0"
   s.add_runtime_dependency "json"
   s.add_runtime_dependency "rack", "~> 1.4.0"
+  s.add_runtime_dependency "rainbows", "~> 4.5.0"
 
   s.add_development_dependency "rspec"
   s.add_development_dependency "webmock"
