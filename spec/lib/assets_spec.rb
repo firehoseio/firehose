@@ -18,4 +18,17 @@ describe Firehose::Assets do
       env.paths.should include(Firehose::Assets.path('javascripts'))
     end
   end
+
+  describe "Sprockets.javascript" do
+    let(:js_spot_checks) do
+      %w[
+        Firehose.Transport
+        Firehose.version
+        window.Firehose
+      ]
+    end
+    it "should compile javascript" do
+      Firehose::Assets::Sprockets.javascript.should include(*js_spot_checks)
+    end
+  end
 end
