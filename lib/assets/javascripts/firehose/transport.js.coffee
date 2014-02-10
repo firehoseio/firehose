@@ -39,4 +39,4 @@ class Firehose.Transport
 
   # Useful for reconnecting after any networking hiccups
   getLastMessageSequence: =>
-    @_lastMessageSequence or 0
+    @_lastEventId or 0

@@ -35,13 +35,13 @@ class Firehose.WebSocket extends Firehose.Transport
   _lookForInitialPong: (event) =>
     @_restartKeepAlive()
     if isPong(try JSON.parse event.data catch e then {})
-      if @_lastMessageSequence?
+      if @_lastEventId?
         # don't callback to connectionVerified on subsequent reconnects
-        @sendStartingMessageSequence @_lastMessageSequence
+        @sendStartingMessageSequence @_lastEventId
       else @config.webSocket.connectionVerified @
 
   sendStartingMessageSequence: (message_sequence) =>
-    @_lastMessageSequence = message_sequence
+    @_lastEventId = message_sequence
     @socket.onmessage     = @_message
     @socket.send JSON.stringify {message_sequence}
     @_needToNotifyOfDisconnect = true
@@ -55,7 +55,7 @@ class Firehose.WebSocket extends Firehose.Transport
     @_restartKeepAlive()
     unless isPong frame
       try
-        @_lastMessageSequence = frame.last_sequence
+        @_lastEventId = frame.last_sequence
         @config.message @config.parse frame.message
       catch e
 

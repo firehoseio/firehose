@@ -40,7 +40,7 @@ class Firehose.LongPoll extends Firehose.Transport
     # Ideally we'd use an HTTP header, but android devices don't let us
     # set any HTTP headers for CORS requests.
     data = @config.params
-    data.last_message_sequence = @_lastMessageSequence
+    data.last_event_id = @_lastEventId
     # TODO: Some of these options will be deprecated in jQuery 1.8
     #       See: http://api.jquery.com/jQuery.ajax/#jqXHR
     @_lastRequest = $.ajax
@@ -71,7 +71,7 @@ class Firehose.LongPoll extends Firehose.Transport
       # Of course, IE's XDomainRequest doesn't support non-200 success codes.
       try
         {message, last_sequence} = JSON.parse jqXhr.responseText
-        @_lastMessageSequence    = last_sequence
+        @_lastEventId    = last_sequence
         @config.message @config.parse message
       catch e
     @connect @_okInterval

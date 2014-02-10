@@ -12,10 +12,10 @@ module Firehose
     # Normally we'd want to use a custom header to reduce the likelihood of some
     # HTTP middleware clobbering the value. But Safari seems to ignore our CORS
     # header instructions, so we are using 'pragma' because it is always allowed.
-    LAST_MESSAGE_SEQUENCE_HEADER = 'Pragma'
+    LAST_EVENT_ID = 'Pragma'
 
     # Rack wants the header to start with HTTP, so we deal with that here.
-    RACK_LAST_MESSAGE_SEQUENCE_HEADER = "HTTP_#{LAST_MESSAGE_SEQUENCE_HEADER.upcase.gsub('-', '_')}"
+    RACK_LAST_EVENT_ID = "HTTP_#{LAST_EVENT_ID.upcase.gsub('-', '_')}"
 
     # Disable CORS preflight caches for requests in development mode.
     CORS_OPTIONS_MAX_AGE = ENV['RACK_ENV'] == 'development' ? '1' : '1728000'

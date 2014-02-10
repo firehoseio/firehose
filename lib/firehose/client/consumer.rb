@@ -61,7 +61,7 @@ module Firehose
         end
 
         def request(last_sequence=0)
-          http = EM::HttpRequest.new(url, :inactivity_timeout => 0).get(:query => {'last_message_sequence' => last_sequence})
+          http = EM::HttpRequest.new(url, :inactivity_timeout => 0).get(:query => {'last_event_id' => last_sequence})
           http.callback do
             case status = http.response_header.status
             when 200

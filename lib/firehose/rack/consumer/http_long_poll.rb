@@ -25,7 +25,7 @@ module Firehose
           # Get the Last Message Sequence from the query string.
           # Ideally we'd use an HTTP header, but android devices don't let us
           # set any HTTP headers for CORS requests.
-          last_sequence = req.params['last_message_sequence'].to_i
+          last_sequence = req.params['last_event_id'].to_i
 
           case method
           # GET is how clients subscribe to the queue. When a messages comes in, we flush out a response,
@@ -35,7 +35,7 @@ module Firehose
             EM.next_tick do
 
               if last_sequence < 0
-                env['async.callback'].call response(400, "The last_message_sequence parameter may not be less than zero", response_headers(env))
+                env['async.callback'].call response(400, "The last_event_id parameter may not be less than zero", response_headers(env))
               else
                 Server::Channel.new(path).next_message(last_sequence, :timeout => timeout).callback do |message, sequence|
                   env['async.callback'].call response(200, wrap_frame(message, sequence), response_headers(env))
