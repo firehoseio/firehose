@@ -177,6 +177,16 @@ Firehose::Assets::Sprockets.configure my_sprockets_env
 
 It is important that your firehose config file comes first.
 
+### Not using sprockets?
+
+If you don't intend to use the Firehose JavaScript client in a Ruby stack where Sprockets is available, you can grab the unminified source by running:
+
+```sh
+$ firehose javascript > firehose.js
+```
+
+Copy the firehose.js where needed in your project.
+
 # Web Server
 
 Firehose currently supports Thin and Rainbows! (which is the default). Neither is listed as a dependency in the gemspec so that you don't need to install whichever one you aren't using. You can set which server to use via the `.env` file (recommended) or with the `-s` option to `bin/firehose`.
