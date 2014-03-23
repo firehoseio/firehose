@@ -1,4 +1,4 @@
 module Firehose
-  VERSION  = "1.2.10"
-  CODENAME = "I just ate four tacos"
+  VERSION  = "1.2.11"
+  CODENAME = "For the Pythonistas"
 end
