@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    firehose (1.2.10)
+    firehose (1.2.11)
       em-hiredis (>= 0.2.0)
       em-http-request (>= 1.0.0)
       eventmachine (>= 1.0.0)
@@ -41,12 +41,12 @@ GEM
     dotenv (0.9.0)
     em-hiredis (0.2.1)
       hiredis (~> 0.4.0)
-    em-http-request (1.1.1)
+    em-http-request (1.1.2)
       addressable (>= 2.3.4)
       cookiejar
       em-socksify (>= 0.3)
       eventmachine (>= 1.0.3)
-      http_parser.rb (>= 0.6.0.beta.2)
+      http_parser.rb (>= 0.6.0)
     em-socksify (0.3.0)
       eventmachine (>= 1.0.0.beta.4)
     eventmachine (1.0.3)
@@ -57,9 +57,9 @@ GEM
       launchy
       sinatra (~> 1.1)
     execjs (2.0.2)
-    faraday (0.8.8)
-      multipart-post (~> 1.2.0)
-    faye-websocket (0.7.1)
+    faraday (0.9.0)
+      multipart-post (>= 1.2, < 3)
+    faye-websocket (0.7.2)
       eventmachine (>= 0.12.0)
       websocket-driver (>= 0.3.1)
     ffi (1.9.0)
@@ -102,7 +102,7 @@ GEM
     mime-types (2.0)
     mini_portile (0.5.2)
     multi_json (1.8.2)
-    multipart-post (1.2.0)
+    multipart-post (2.0.0)
     nokogiri (1.6.1)
       mini_portile (~> 0.5.0)
     pry (0.9.12.2)
@@ -168,7 +168,7 @@ GEM
       addressable (>= 2.2.7)
       crack (>= 0.3.2)
     websocket (1.0.7)
-    websocket-driver (0.3.1)
+    websocket-driver (0.3.2)
     xpath (0.1.4)
       nokogiri (~> 1.3)
 
