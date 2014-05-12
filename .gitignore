@@ -9,3 +9,4 @@ tmp
 *.sublime-project
 *.sublime-workspace
 public/javascripts
+Gemfile.lock

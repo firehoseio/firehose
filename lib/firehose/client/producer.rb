@@ -41,9 +41,10 @@ module Firehose
         # Publish the message via HTTP.
         def put(message, channel, opts, &block)
           ttl = opts[:ttl]
+          timeout = opts[:timeout] || Timeout
 
           response = conn.put do |req|
-            req.options[:timeout] = Timeout
+            req.options[:timeout] = timeout
             if conn.path_prefix.nil? || conn.path_prefix == '/'
               # This avoids a double / if the channel starts with a / too (which is expected).
               req.path = channel
