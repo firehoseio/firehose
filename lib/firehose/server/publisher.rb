@@ -3,7 +3,7 @@ module Firehose
     class Publisher
       # Number of messages that Redis buffers for the client if its
       # connection drops, then reconnects.
-      MAX_MESSAGES = 100
+      BUFFER_SIZE = 100
 
       # Seconds that the message buffer should live before Redis expires it.
       TTL = 60*60*24
@@ -16,6 +16,7 @@ module Firehose
       def publish(channel_key, message, opts={})
         # How long should we hang on to the resource once is published?
         ttl = (opts[:ttl] || TTL).to_i
+        buffer_size = (opts[:buffer_size] || BUFFER_SIZE).to_i
 
         # TODO hi-redis isn't that awesome... we have to setup an errback per even for wrong
         # commands because of the lack of a method_missing whitelist. Perhaps implement a whitelist in
@@ -44,10 +45,10 @@ module Firehose
           end.callback do |digest|
             @publish_script_digest = digest
             Firehose.logger.debug "Registered Lua publishing script with Redis => #{digest}"
-            eval_publish_script channel_key, message, ttl, deferrable
+            eval_publish_script channel_key, message, ttl, buffer_size, deferrable
           end
         else
-          eval_publish_script channel_key, message, ttl, deferrable
+          eval_publish_script channel_key, message, ttl, buffer_size, deferrable
         end
 
         deferrable
@@ -79,7 +80,7 @@ module Firehose
         redis.script 'LOAD', REDIS_PUBLISH_SCRIPT
       end
 
-      def eval_publish_script(channel_key, message, ttl, deferrable)
+      def eval_publish_script(channel_key, message, ttl, buffer_size, deferrable)
         list_key = Server.key(channel_key, :list)
         script_args = [
           Server.key(channel_key, :sequence),
@@ -87,7 +88,7 @@ module Firehose
           Server.key(:channel_updates),
           ttl,
           message,
-          MAX_MESSAGES,
+          buffer_size,
           PAYLOAD_DELIMITER,
           channel_key
         ]
