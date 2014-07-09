@@ -29,7 +29,7 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency "json"
   s.add_runtime_dependency "rack"
 
-  s.add_development_dependency "rspec"
+  s.add_development_dependency "rspec", "~> 2"
   s.add_development_dependency "webmock"
   s.add_development_dependency "coffee-script"
   s.add_development_dependency "guard-rspec"
