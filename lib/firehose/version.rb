@@ -1,4 +1,4 @@
 module Firehose
-  VERSION  = "1.2.12"
-  CODENAME = "Benchmarkin' Billy"
+  VERSION  = "1.2.13"
+  CODENAME = "Larger Sprocket"
 end
