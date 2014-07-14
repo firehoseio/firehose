@@ -24,7 +24,7 @@ describe Firehose::Assets do
       %w[
         Firehose.Transport
         Firehose.version
-        window.Firehose
+        (global || window).Firehose
       ]
     end
     it "should compile javascript" do
