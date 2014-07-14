@@ -1,1 +1,1 @@
-window.Firehose = {}
+(global || window).Firehose = {}
