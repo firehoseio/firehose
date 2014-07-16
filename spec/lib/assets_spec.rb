@@ -21,10 +21,11 @@ describe Firehose::Assets do
 
   describe "Sprockets.javascript" do
     let(:js_spot_checks) do
-      %w[
-        Firehose.Transport
-        Firehose.version
-        (global || window).Firehose
+      [
+        "Firehose.Transport",
+        "Firehose.version",
+        "global.Firehose || (global.Firehose = {})",
+        "window.Firehose || (window.Firehose = {})"
       ]
     end
     it "should compile javascript" do
