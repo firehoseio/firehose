@@ -22,6 +22,8 @@ class Firehose.Consumer
     this
 
   connect: (delay=0) =>
+    promise = _connectPromise()
+
     @config.connectionVerified = @_upgradeTransport
     if Firehose.WebSocket.supported()
       @upgradeTimeout = setTimeout =>
@@ -30,7 +32,8 @@ class Firehose.Consumer
       , 500
     @transport = new Firehose.LongPoll @config
     @transport.connect delay
-    return
+
+    promise
 
   stop: =>
     if @upgradeTimeout?
@@ -44,3 +47,24 @@ class Firehose.Consumer
     ws.sendStartingMessageSequence @transport.getLastMessageSequence()
     @transport = ws
     return
+
+  # Return a promise that will succeed/fail depending on whether or not the
+  # initial connection succeeds.
+  _connectPromise: =>
+    deferred = $.Deferred()
+
+    origConnected = @config.connected
+    @config.connected = ->
+      deferred.resolve()
+      if origConnected
+        @config.connected = origConnected
+        origConnected()
+
+    origdisconnected = @config.disconnected
+    @config.disconnected = ->
+      deferred.reject()
+      if origDisconnected
+        @config.disconnected = origDisconnected
+        origDisconnected()
+
+    deferred.promise()
