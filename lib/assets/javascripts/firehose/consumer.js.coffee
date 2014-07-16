@@ -22,7 +22,7 @@ class Firehose.Consumer
     this
 
   connect: (delay=0) =>
-    promise = _connectPromise()
+    promise = @_connectPromise()
 
     @config.connectionVerified = @_upgradeTransport
     if Firehose.WebSocket.supported()
