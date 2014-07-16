@@ -60,11 +60,11 @@ class Firehose.Consumer
         @config.connected = origConnected
         origConnected()
 
-    origdisconnected = @config.disconnected
-    @config.disconnected = =>
-      deferred.reject()
-      if origDisconnected
-        @config.disconnected = origDisconnected
-        origDisconnected()
+  #  origDisconnected = @config.disconnected
+  #  @config.disconnected = =>
+  #    deferred.reject()
+  #    if origDisconnected
+  #      @config.disconnected = origDisconnected
+  #      origDisconnected()
 
     deferred.promise()
