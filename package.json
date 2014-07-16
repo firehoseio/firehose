@@ -1,5 +1,5 @@
 {
   "name": "firehose",
-  "version": "1.2.18",
+  "version": "1.2.19",
   "main": "lib/assets/javascripts/firehose.js.coffee"
 }
