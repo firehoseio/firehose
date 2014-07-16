@@ -54,14 +54,14 @@ class Firehose.Consumer
     deferred = $.Deferred()
 
     origConnected = @config.connected
-    @config.connected = ->
+    @config.connected = =>
       deferred.resolve()
       if origConnected
         @config.connected = origConnected
         origConnected()
 
     origdisconnected = @config.disconnected
-    @config.disconnected = ->
+    @config.disconnected = =>
       deferred.reject()
       if origDisconnected
         @config.disconnected = origDisconnected
