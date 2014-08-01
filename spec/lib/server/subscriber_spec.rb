@@ -51,7 +51,7 @@ describe Firehose::Server::Subscriber do
       deferrable = EM::DefaultDeferrable.new
       dummy_subscriber.subscribe(channel_key, deferrable)
       dummy_subscriber.unsubscribe(channel_key, deferrable)
-      dummy_subscriber.send(:subscriptions).has_key?(channel_key).should be_false
+      dummy_subscriber.send(:subscriptions).has_key?(channel_key).should be_falsey
     end
 
     it "shouldn't call succeed on the deferrable when a message is published" do

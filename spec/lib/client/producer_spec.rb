@@ -1,9 +1,11 @@
 require 'spec_helper'
+require 'json'
 
 describe Firehose::Client::Producer::Http do
   let(:channel)       { "/channel-awesome" }
   let(:url)           { "#{Firehose::URI}#{channel}"}
   let(:publish_stub)  { stub_request(:put, url) }
+  let(:batch_publish_stub) { stub_request(:post, "#{Firehose::URI}/") }
   let(:message)       { "hey dude" }
 
   before(:all) do
@@ -19,6 +21,23 @@ describe Firehose::Client::Producer::Http do
 
     Firehose::Client::Producer::Http.new.publish(message).to(channel)
     WebMock.should have_requested(:put, url).with { |req| req.body == message }
+  end
+
+  it "should batch publish messages" do
+    batch_publish_stub.to_return(:body => "", :status => 200)
+
+    batch = {
+      "#{channel}/1" => {
+        :messages => [{"1st" => "batch"}, {"would" => "have been the body"}],
+        :ttl => 90
+      },
+      "#{channel}/2" => {
+        :messages => [{"more" => "data"}, {"that would" => "have been the body"}],
+        :ttl => 120
+      }
+    }
+    Firehose::Client::Producer::Http.new.batch_publish(batch)
+    WebMock.should have_requested(:post, "#{Firehose::URI}/").with { |req| req.body == batch.to_json }
   end
 
   context 'prefix is specified in URI' do
