@@ -6,11 +6,6 @@ module Firehose
     module Producer
       # Publish messages to Firehose via an HTTP interface.
       class Http
-        # Exception gets raised when a 202 is _not_ received from the server after a message is published.
-        PublishError = Class.new(RuntimeError)
-        TimeoutError = Class.new(Faraday::Error::TimeoutError)
-        Timeout = 1 # How many seconds should we wait for a publish to take?
-
         # A DSL for publishing requests. This doesn't so much, but lets us call
         # Firehose::Client::Producer::Http#publish('message').to('channel'). Slick eh? If you don't like it,
         # just all Firehose::Client::Producer::Http#put('message', 'channel')
@@ -38,39 +33,13 @@ module Firehose
           Builder.new(self, message)
         end
 
+        def batch_publish(data, opts={}, &block)
+          PostRequest.new(self, data, opts={}, &block).process
+        end
+
         # Publish the message via HTTP.
         def put(message, channel, opts, &block)
-          ttl = opts[:ttl]
-          timeout = opts[:timeout] || Timeout
-
-          response = conn.put do |req|
-            req.options[:timeout] = timeout
-            if conn.path_prefix.nil? || conn.path_prefix == '/'
-              # This avoids a double / if the channel starts with a / too (which is expected).
-              req.path = channel
-            else
-              if conn.path_prefix =~ /\/\Z/ || channel =~ /\A\//
-                req.path = [conn.path_prefix, channel].compact.join
-              else
-                # Add a / so the prefix and channel aren't just rammed together.
-                req.path = [conn.path_prefix, channel].compact.join('/')
-              end
-            end
-            req.body = message
-            req.headers['Cache-Control'] = "max-age=#{ttl.to_i}" if ttl
-          end
-          response.on_complete do
-            case response.status
-            when 202 # Fire off the callback if everything worked out OK.
-              block.call(response) if block
-            else
-              error_handler.call PublishError.new("Could not publish #{message.inspect} to '#{uri.to_s}/#{channel}': #{response.inspect}")
-            end
-          end
-
-          # Hide Faraday with this Timeout exception, and through the error handler.
-          rescue Faraday::Error::TimeoutError => e
-            error_handler.call TimeoutError.new(e)
+          PutRequest.new(self, message, channel, opts, &block).process
         end
 
         # Handle errors that could happen while publishing a message.
@@ -94,11 +63,148 @@ module Firehose
           @adapter ||= Faraday.default_adapter
         end
 
-        private
         # Build out a Faraday connection
-        def conn
-          @conn ||= Faraday.new(:url => uri.to_s) do |builder|
+        def connection
+          @connection ||= Faraday.new(:url => uri.to_s) do |builder|
             builder.adapter self.class.adapter
+          end
+        end
+
+
+        # Exception gets raised when an unexpected status code is received
+        # from the server after a message is published.
+        PublishError = Class.new(RuntimeError)
+        TimeoutError = Class.new(Faraday::Error::TimeoutError)
+
+        class Request #:nodoc:
+          DEFAULT_TIMEOUT = 1 # How many seconds should we wait for a publish to take?
+
+          def initialize
+            fail NotImplementedError
+          end
+
+          def process
+            send_request
+            handle_response
+
+          # Hide Faraday with this Timeout exception, and through the error handler.
+          rescue Faraday::Error::TimeoutError => e
+            error_handler.call TimeoutError.new(e)
+          end
+
+
+          private
+
+          def timeout
+            @opts[:timeout] || DEFAULT_TIMEOUT
+          end
+
+          def conn
+            @conn ||= @producer.connection
+          end
+
+          def error_handler
+            @error_handler ||= @producer.error_handler
+          end
+
+          def handle_response
+            @response.on_complete do
+              case @response.status
+              when success_status # Fire off the callback if everything worked out OK.
+                @block.call(@response) if @block
+              else
+                error_handler.call PublishError.new("#{error_message}: #{@response.inspect}")
+              end
+            end
+          end
+
+          def ttl
+          end
+
+          def connection_settings
+            Proc.new do |req|
+              req.options[:timeout] = timeout
+              req.path = path
+              req.body = body
+              req.headers['Cache-Control'] = "max-age=#{ttl.to_i}" if ttl
+            end
+          end
+        end
+
+        class PutRequest < Request #:nodoc:
+          def initialize(producer, message, channel, opts, &block)
+            @producer, @message, @channel, @opts, @block = producer, message, channel, opts, block
+          end
+
+
+          private
+
+          def ttl
+            ttl = @opts[:ttl]
+          end
+
+          def uri
+            @producer.uri
+          end
+
+
+          def send_request
+            @response = conn.put &connection_settings
+          end
+
+          def body
+            @message
+          end
+
+          def path
+            if conn.path_prefix.nil? || conn.path_prefix == '/'
+              # This avoids a double / if the channel starts with a / too (which is expected).
+              @channel
+            else
+              if conn.path_prefix =~ /\/\Z/ || @channel =~ /\A\//
+                [conn.path_prefix, @channel].compact.join
+              else
+                # Add a / so the prefix and channel aren't just rammed together.
+                [conn.path_prefix, @channel].compact.join('/')
+              end
+            end
+          end
+
+          def success_status
+            202
+          end
+
+          def error_message
+            "Could not publish #{@message.inspect} to '#{uri.to_s}/#{@channel}'"
+          end
+        end
+
+
+        class PostRequest < Request #:nodoc:
+          def initialize(producer, data, opts={}, &block)
+            @producer, @data, @opts, @block = producer, data, opts, block
+          end
+
+          private
+
+          def send_request
+            @response = conn.post &connection_settings
+          end
+
+          def body
+            @data.to_json
+          end
+
+          def path
+            "/" # all batch publishing goes to root
+          end
+
+          def success_status
+            200
+          end
+
+          def error_message
+            "Could not batch publish #{@data.inspect}:"
           end
         end
       end

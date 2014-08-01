@@ -1,9 +1,10 @@
 module Firehose
   module Rack
-    autoload :Consumer,   'firehose/rack/consumer'
-    autoload :Publisher,  'firehose/rack/publisher'
-    autoload :Ping,       'firehose/rack/ping'
-    autoload :App,        'firehose/rack/app'
+    autoload :Consumer,       "firehose/rack/consumer"
+    autoload :Publisher,      "firehose/rack/publisher"
+    autoload :BatchPublisher, "firehose/rack/batch_publisher"
+    autoload :Ping,           "firehose/rack/ping"
+    autoload :App,            "firehose/rack/app"
 
     # Evented web servers recognize the -1 HTTP code as a response deferral, which
     # is needed to stream responses via WebSockets or HTTP long polling.
