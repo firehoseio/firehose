@@ -6,9 +6,13 @@ module Firehose
     module Producer
       # Publish messages to Firehose via an HTTP interface.
       class Http
+        autoload :Async, 'firehose/client/producer/async'
+
         # A DSL for publishing requests. This doesn't so much, but lets us call
         # Firehose::Client::Producer::Http#publish('message').to('channel'). Slick eh? If you don't like it,
         # just all Firehose::Client::Producer::Http#put('message', 'channel')
+        # For async sending use Firehose::Client::Producer::Http#publish('message').async.to('channel')
+        # or Firehose::Client::Producer::Http#async_put('message', 'channel')
         class Builder
           def initialize(producer, message)
             @producer, @message = producer, message
@@ -16,7 +20,12 @@ module Firehose
           end
 
           def to(channel, opts={}, &callback)
-            @producer.put(@message, channel, opts, &callback)
+            @producer.send(@method || :put, @message, channel, opts, &callback)
+          end
+
+          def async
+            @method = :async_put
+            self
           end
         end
 
@@ -26,6 +35,7 @@ module Firehose
         def initialize(uri = Firehose::URI)
           @uri = ::URI.parse(uri.to_s)
           @uri.scheme ||= 'http'
+          @async = Async.new self
         end
 
         # A DSL for publishing messages.
@@ -40,6 +50,15 @@ module Firehose
         # Publish the message via HTTP.
         def put(message, channel, opts, &block)
           PutRequest.new(self, message, channel, opts, &block).process
+        end
+
+        # Publish the message in batches via a background process.
+        # Note that although the interface here looks identical to #put, the argument
+        # passed to the callback block will be slightly different. Since the
+        # messages are published in blocks, there is only a single response
+        # object. That is what will be passed back.
+        def async_put(message, channel, opts, &block)
+          @async.enqueue(message, channel, opts, &block)
         end
 
         # Handle errors that could happen while publishing a message.
