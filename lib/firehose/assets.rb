@@ -36,7 +36,7 @@ module Firehose
         ::Sprockets::Manifest.new(environment, directory)
       end
 
-      # Try to automatically configure Sprockets if its detected in the project.
+      # Try to automatically configure Sprockets if it's detected in the project.
       def self.auto_detect
         if defined? ::Sprockets and ::Sprockets.respond_to? :append_path
           Firehose::Assets::Sprockets.configure ::Sprockets
@@ -51,3 +51,6 @@ module Firehose
     end
   end
 end
+
+# Detect if Sprockets is loaded. If it is, lets configure Firehose to use it!
+Firehose::Assets::Sprockets.auto_detect
