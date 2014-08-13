@@ -9,7 +9,7 @@ module Firehose
         # Exception gets raised when a 202 is _not_ received from the server after a message is published.
         PublishError = Class.new(RuntimeError)
         TimeoutError = Class.new(Faraday::Error::TimeoutError)
-        Timeout = 1 # How many seconds should we wait for a publish to take?
+        DEFAULT_TIMEOUT = 1 # How many seconds should we wait for a publish to take?
 
         # A DSL for publishing requests. This doesn't so much, but lets us call
         # Firehose::Client::Producer::Http#publish('message').to('channel'). Slick eh? If you don't like it,
@@ -26,11 +26,12 @@ module Firehose
         end
 
         # URI for the Firehose server. This URI does not include the path of the channel.
-        attr_reader :uri
+        attr_reader :uri, :timeout
 
-        def initialize(uri = Firehose::URI)
+        def initialize(uri = Firehose::URI, timeout=DEFAULT_TIMEOUT)
           @uri = ::URI.parse(uri.to_s)
           @uri.scheme ||= 'http'
+          @timeout = timeout
         end
 
         # A DSL for publishing messages.
@@ -41,7 +42,7 @@ module Firehose
         # Publish the message via HTTP.
         def put(message, channel, opts, &block)
           ttl = opts[:ttl]
-          timeout = opts[:timeout] || Timeout
+          timeout = opts[:timeout] || @timeout || DEFAULT_TIMEOUT
 
           response = conn.put do |req|
             req.options[:timeout] = timeout
