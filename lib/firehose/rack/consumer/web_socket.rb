@@ -32,7 +32,7 @@ module Firehose
           end
 
           # Subscribe the client to the channel on the server. Asks for
-          # the last sequence for clients that reconnect. 
+          # the last sequence for clients that reconnect.
           def subscribe(last_sequence)
             @subscribed = true
             @channel    = Server::Channel.new @req.path
@@ -62,7 +62,7 @@ module Firehose
             end
           end
 
-          # Log a message that the client has connected. 
+          # Log a message that the client has connected.
           def open(event)
             Firehose.logger.debug "WebSocket subscribed to `#{@req.path}`. Waiting for message_sequence..."
           end
@@ -80,10 +80,10 @@ module Firehose
           # Log errors if a socket fails. `close` will fire after this to clean up any
           # remaining connectons.
           def error(event)
-            Firehose.logger.error "WS connection `#{@req.path}` error. Message: `#{event.message.inspect}`; Data: `#{event.data.inspect}`"
+            Firehose.logger.error "WS connection `#{@req.path}` error. Message: `#{event.message.inspect}`"
           end
 
-          # Wrap a message in a sequence so that the client can record this and give us 
+          # Wrap a message in a sequence so that the client can record this and give us
           # the sequence when it reconnects.
           def self.wrap_frame(message, last_sequence)
             JSON.generate :message => message, :last_sequence => last_sequence
