@@ -85,7 +85,7 @@ module Firehose
         end
 
         # What adapter should Firehose use to PUT the message? List of adapters is
-        # available at https://github.com/technoweenie/faraday.
+        # available at https://github.com/lostisland/faraday/tree/master/lib/faraday/adapter.
         def self.adapter=(adapter)
           @adapter = adapter
         end
