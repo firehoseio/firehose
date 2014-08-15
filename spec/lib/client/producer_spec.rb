@@ -7,7 +7,7 @@ describe Firehose::Client::Producer::Http do
   let(:message)       { "hey dude" }
 
   before(:all) do
-    Firehose::Client::Producer::Http.adapter = :net_http
+    Firehose::Client::Producer::Http.adapter = Firehose::Client::Producer::Http::DEFAULT_FARADAY_ADAPTER
   end
 
   after(:all) do

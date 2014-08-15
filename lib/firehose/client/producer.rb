@@ -9,7 +9,14 @@ module Firehose
         # Exception gets raised when a 202 is _not_ received from the server after a message is published.
         PublishError = Class.new(RuntimeError)
         TimeoutError = Class.new(Faraday::Error::TimeoutError)
-        DEFAULT_TIMEOUT = 1 # How many seconds should we wait for a publish to take?
+
+        # The number of seconds the producer waits to publish a message before failing. Things
+        # happen fast in Firehose, so this number is kept low by default.
+        DEFAULT_TIMEOUT = 1
+
+        # Default to a publisher with HTTP keepalive to minimize TCP/IP connection over
+        # head between publishes under heavy load.
+        DEFAULT_FARADAY_ADAPTER = :net_http_persistent
 
         # A DSL for publishing requests. This doesn't so much, but lets us call
         # Firehose::Client::Producer::Http#publish('message').to('channel'). Slick eh? If you don't like it,
@@ -92,7 +99,7 @@ module Firehose
 
         # Use :net_http for the default Faraday adapter.
         def self.adapter
-          @adapter ||= Faraday.default_adapter
+          @adapter ||= DEFAULT_FARADAY_ADAPTER
         end
 
         private

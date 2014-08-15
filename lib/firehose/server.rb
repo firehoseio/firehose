@@ -13,6 +13,10 @@ module Firehose
     autoload :Channel,    'firehose/server/channel'
     autoload :App,        'firehose/server/app'
 
+    # How long should the server wait for HTTP Keepalive connections to timeout?
+    # This variable is read by the ./config/rainbows.rb file.
+    HTTP_KEEPALIVE = 60
+
     # Generates keys for all firehose interactions with Redis. Ensures a root
     # key of `firehose`
     def self.key(*segments)

@@ -61,6 +61,8 @@ module Firehose
         end
 
         def request(last_sequence=0)
+          # TODO - Replace EM::HttpRequest with Faraday. Try to remove em-http-request from
+          # this gem as a runtime_dependency.
           http = EM::HttpRequest.new(url, :inactivity_timeout => 0).get(:query => {'last_message_sequence' => last_sequence})
           http.callback do
             case status = http.response_header.status
