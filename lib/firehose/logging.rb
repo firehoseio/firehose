@@ -1,9 +1,10 @@
 require 'logger'
+require 'em-logger'
 
 module Firehose
   # Sets up logging
   def self.logger
-    @logger ||= Logger.new($stdout)
+    @logger ||= EM::Logger.new Logger.new($stdout)
   end
 
   def self.logger=(logger)
