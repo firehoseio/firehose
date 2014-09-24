@@ -1,4 +1,4 @@
 module Firehose
-  VERSION  = "1.2.19"
-  CODENAME = "Larger Sprocket"
+  VERSION  = "1.2.20"
+  CODENAME = "Onprogress of Doom"
 end
