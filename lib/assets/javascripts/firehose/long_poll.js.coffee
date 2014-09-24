@@ -119,16 +119,29 @@ if $?.browser?.msie and parseInt($.browser.version, 10) in [8, 9]
             xdr.onload = xdr.onerror = xdr.ontimeout = jQuery.noop
             xdr = undefined
             complete status, statusText, responses, responseHeaders
+
           xdr = new XDomainRequest()
+
           xdr.open s.type, s.url
+
           xdr.onload = ->
             headers = "Content-Type: #{xdr.contentType}"
             callback 200, "OK", {text: xdr.responseText}, headers
+
           xdr.onerror = -> callback 404, "Not Found"
+
+          # This is critical for long poll to work in IE9.
+          # Without it, the initial request will work but
+          # subsequent requests will fail silently.
+          # http://social.msdn.microsoft.com/Forums/ie/en-US/30ef3add-767c-4436-b8a9-f1ca19b4812e/ie9-rtm-xdomainrequest-issued-requests-may-abort-if-all-event-handlers-not-specified?forum=iewebdevelopment
+          xdr.onprogress = -> {}
+
           if s.xdrTimeout?
             xdr.ontimeout = -> callback 0, "timeout"
             xdr.timeout   = s.xdrTimeout
+
           xdr.send (s.hasContent and s.data) or null
+
         abort: ->
           if xdr?
             xdr.onerror = jQuery.noop()
