@@ -10,6 +10,7 @@ module Firehose
         PublishError = Class.new(RuntimeError)
         TimeoutError = Class.new(Faraday::Error::TimeoutError)
         DEFAULT_TIMEOUT = 1 # How many seconds should we wait for a publish to take?
+        DEFAULT_ERROR_HANDLER = ->(e) { raise e }
 
         # A DSL for publishing requests. This doesn't so much, but lets us call
         # Firehose::Client::Producer::Http#publish('message').to('channel'). Slick eh? If you don't like it,
@@ -81,7 +82,7 @@ module Firehose
 
         # Raise an exception if an error occurs when connecting to the Firehose.
         def error_handler
-          @error_handler || Proc.new{ |e| raise e }
+          @error_handler || DEFAULT_ERROR_HANDLER
         end
 
         # What adapter should Firehose use to PUT the message? List of adapters is
