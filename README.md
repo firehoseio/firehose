@@ -120,7 +120,7 @@ Firehose can be configured via environmental variables. Take a look at the [`.en
 
 ## Rack Configuration
 
-There are two rack applications that are included with Firehose: `Firehose::Rack::Producer` which a client can `PUT` HTTP request with message payloads to publish information on Firehose and the `Firehose::Rack::Consumer` application which a client connects to via HTT long polling or WebSockets to consume a message.
+There are two rack applications that are included with Firehose: `Firehose::Rack::Producer` which a client can `PUT` HTTP request with message payloads to publish information on Firehose and the `Firehose::Rack::Consumer` application which a client connects to via HTTP long polling or WebSockets to consume a message.
 
 ### Consumer Configuration
 

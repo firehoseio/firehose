@@ -14,7 +14,7 @@ class Firehose.WebSocket extends Firehose.Transport
     @config.webSocket.connectionVerified = @config.connectionVerified
 
   _request: =>
-    # Run this is a try/catch block because IE10 inside of a .NET control
+    # Run this in a try/catch block because IE10 inside of a .NET control
     # complains about security zones.
     try
       @socket = new (if module?.exports? then global else window).WebSocket "#{@_protocol()}:#{@config.uri}?#{$.param @config.params}"
