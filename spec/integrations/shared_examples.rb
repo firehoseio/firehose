@@ -24,6 +24,7 @@ shared_examples_for 'Firehose::Rack::App' do
   let(:channel)   { "/firehose/integration/#{Time.now.to_i}" }
   let(:http_url)  { "http://#{uri.host}:#{uri.port}#{channel}" }
   let(:ws_url)    { "ws://#{uri.host}:#{uri.port}#{channel}" }
+  let(:multiplex_channels) { ["/foo/bar", "/bar/baz", "/baz/quux"] }
 
   it "supports pub-sub http and websockets" do
     # Setup variables that we'll use after we turn off EM to validate our
@@ -87,6 +88,45 @@ shared_examples_for 'Firehose::Rack::App' do
       end
     end
 
+
+    # Test multiplexed web socket client
+    outgoing_multi = messages.dup
+    publish_multi = Proc.new do
+      msg = outgoing_multi.shift
+      chan = multiplex_channels[rand(multiplex_channels.size)]
+      Firehose::Client::Producer::Http.new.publish(msg).to(chan) do
+        EM::add_timer(rand*0.005) { publish_multi.call } unless outgoing_multi.empty?
+      end
+    end
+
+    multiplexed_websocket = Proc.new do |cid|
+      ws = Faye::WebSocket::Client.new("ws://#{uri.host}:#{uri.port}/?multiplexing=enabled")
+
+      subscribe_message = {
+        multiplex_subscribe: multiplex_channels.map do |c|
+          { channel: c, message_sequence: 0 }
+        end
+      }
+
+      ws.onopen = lambda do |event|
+        ws.send(subscribe_message.to_json)
+      end
+
+      ws.onmessage = lambda do |event|
+        frame = JSON.parse(event.data, :symbolize_names => true)
+        received[cid] << frame[:message]
+        succeed.call cid unless received[cid].size < messages.size
+      end
+
+      ws.onclose = lambda do |event|
+        ws = nil
+      end
+
+      ws.onerror = lambda do |event|
+        raise 'ws failed' + "\n" + event.inspect
+      end
+    end
+
     # Great, we have all the pieces in order, lets run this thing in the reactor.
     em 180 do
       # Start the clients.
@@ -94,15 +134,18 @@ shared_examples_for 'Firehose::Rack::App' do
       websocket.call(2)
       http_long_poll.call(3)
       http_long_poll.call(4)
+      multiplexed_websocket.call(5)
+      multiplexed_websocket.call(6)
 
       # Wait a sec to let our clients set up.
-      em.add_timer(1){ publish.call }
+      em.add_timer(1){ publish_multi.call ; publish.call }
     end
 
     # When EM stops, these assertions will be made.
-    expect(received.size).to eql(4)
-    received.values.each do |arr|
-      expect(arr).to eql(messages)
+    expect(received.size).to eql(6)
+    received.each_value do |arr|
+      expect(arr.size).to eql(messages.size)
+      expect(arr.sort).to eql(messages.sort)
     end
   end
 
