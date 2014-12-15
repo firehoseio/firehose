@@ -9,6 +9,11 @@ describe Firehose::Server::Channel do
   let(:message)         { 'Raaaarrrrrr!!!!' }
   let(:publisher)       { Firehose::Server::Publisher.new }
 
+  def push_message
+    redis_exec 'lpush', "firehose:#{channel_key}:list", message
+    redis_exec 'set', "firehose:#{channel_key}:sequence", '100'
+  end
+
   describe "#next_message" do
     it "should wait for message if message was not published before subscription" do
       em do
@@ -23,8 +28,7 @@ describe Firehose::Server::Channel do
     end
 
     it "should return the latest message and sequence if no sequence is given" do
-      redis_exec 'lpush', "firehose:#{channel_key}:list", message
-      redis_exec 'set', "firehose:#{channel_key}:sequence", '100'
+      push_message
 
       em do
         channel.next_message.callback do |msg, seq|
@@ -38,8 +42,7 @@ describe Firehose::Server::Channel do
     end
 
     it "should wait for message if most recent sequence is given" do
-      redis_exec 'lpush', "firehose:#{channel_key}:list", message
-      redis_exec 'set', "firehose:#{channel_key}:sequence", '100'
+      push_message
 
       em 3 do
         channel.next_message(100).callback do |msg, seq|
@@ -53,8 +56,7 @@ describe Firehose::Server::Channel do
     end
 
     it "should wait for message if a future sequence is given" do
-      redis_exec 'lpush', "firehose:#{channel_key}:list", message
-      redis_exec 'set', "firehose:#{channel_key}:sequence", '100'
+      push_message
 
       em 3 do
         channel.next_message(101).callback do |msg, seq|
@@ -101,8 +103,7 @@ describe Firehose::Server::Channel do
 
     context "a timeout is set" do
       it "should timeout if message isn't published in time" do
-        redis_exec 'lpush', "firehose:#{channel_key}:list", message
-        redis_exec 'set', "firehose:#{channel_key}:sequence", '100'
+        push_message
 
         em 3 do
           channel.next_message(100, :timeout => 1).callback do |msg, seq|
@@ -119,8 +120,7 @@ describe Firehose::Server::Channel do
       end
 
       it "should not timeout if message is published in time" do
-        redis_exec 'lpush', "firehose:#{channel_key}:list", message
-        redis_exec 'set', "firehose:#{channel_key}:sequence", '100'
+        push_message
 
         em 3 do
           d = channel.next_message(100, :timeout => 2).callback do |msg, seq|
