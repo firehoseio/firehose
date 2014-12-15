@@ -20,7 +20,7 @@ module Firehose
         def enable_multiplexing?(env)
           qs = env["QUERY_STRING"]
           return false if qs.empty?
-          params = ::Rack::Utils.parse_nested_query(qs)
+          params = ::Rack::Utils.parse_query(qs)
           params["multiplexing"] == "enabled"
         end
 
