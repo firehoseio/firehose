@@ -44,6 +44,12 @@ module Firehose
             JSON.parse(event.data, :symbolize_names => true) rescue {}
           end
 
+          # Send a JSON message to the client
+          # Expects message to be a Hash
+          def send_message(message)
+            @ws.send JSON.generate(message)
+          end
+
           # Log errors if a socket fails. `close` will fire after this to clean up any
           # remaining connectons.
           def error(event)
@@ -63,7 +69,7 @@ module Firehose
             @deferrable = @channel.next_message last_sequence
             @deferrable.callback do |message, sequence|
               Firehose.logger.debug "WS sent `#{message}` to `#{@req.path}` with sequence `#{sequence}`"
-              @ws.send wrap_frame(message, last_sequence)
+              send_message message: message, last_sequence: last_sequence
               subscribe sequence
             end
             @deferrable.errback do |e|
@@ -79,7 +85,7 @@ module Firehose
             seq = msg[:message_sequence]
             if msg[:ping] == 'PING'
               Firehose.logger.debug "WS ping received, sending pong"
-              @ws.send JSON.generate :pong => 'PONG'
+              send_message pong: "PONG"
             elsif !@subscribed && seq.kind_of?(Integer)
               Firehose.logger.debug "Subscribing at message_sequence #{seq}"
               subscribe seq
@@ -99,12 +105,6 @@ module Firehose
               @channel.unsubscribe(@deferrable) if @channel
             end
             Firehose.logger.debug "WS connection `#{@req.path}` closing. Code: #{event.code.inspect}; Reason #{event.reason.inspect}"
-          end
-
-          # Wrap a message in a sequence so that the client can record this and give us
-          # the sequence when it reconnects.
-          def wrap_frame(message, last_sequence)
-            JSON.generate :message => message, :last_sequence => last_sequence
           end
         end
 
@@ -130,7 +130,7 @@ module Firehose
 
             if msg[:ping] == 'PING'
               Firehose.logger.debug "WS ping received, sending pong"
-              return @ws.send JSON.generate :pong => 'PONG'
+              return send_message pong: "PONG"
             end
           end
 
@@ -164,21 +164,17 @@ module Firehose
 
             deferrable.callback do |message, sequence|
               Firehose.logger.debug "WS sent `#{message}` to `#{channel_name}` with sequence `#{sequence}`"
-              @ws.send wrap_frame(channel_name, message, last_sequence)
+              send_message(
+                channel: channel_name,
+                message: message,
+                last_sequence: last_sequence
+              )
               subscribe channel_name, sequence
             end
 
             deferrable.errback do |e|
               EM.next_tick { raise e.inspect } unless e == :disconnect
             end
-          end
-
-          # Wrap a message in a sequence so that the client can record this and give us
-          # the sequence when it reconnects.
-          def wrap_frame(channel, message, last_sequence)
-            JSON.generate :channel => channel,
-                          :message => message,
-                          :last_sequence => last_sequence
           end
         end
       end
