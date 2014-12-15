@@ -144,7 +144,7 @@ module Firehose
           end
 
           def subscribe_multiplexed(subscriptions)
-            subscriptions.each do |sub|
+            Array(subscriptions).each do |sub|
               channel, sequence = sub[:channel], sub[:message_sequence]
               next if channel.nil? || sequence.nil?
 
