@@ -124,8 +124,12 @@ module Firehose
           def message(event)
             msg = parse_message(event)
 
-            if wanted_subscriptions = msg[:multiplex_subscribe]
-              return subscribe_multiplexed(wanted_subscriptions)
+            if subscriptions = msg[:multiplex_subscribe]
+              return subscribe_multiplexed(subscriptions)
+            end
+
+            if channel_names = msg[:multiplex_unsubscribe]
+              return unsubscribe(channel_names)
             end
 
             if msg[:ping] == 'PING'
@@ -174,6 +178,15 @@ module Firehose
 
             deferrable.errback do |e|
               EM.next_tick { raise e.inspect } unless e == :disconnect
+            end
+          end
+
+          def unsubscribe(channel_names)
+            Array(channel_names).each do |chan|
+              if sub = @subscriptions[chan]
+                sub.close
+                @subscriptions.delete(chan)
+              end
             end
           end
         end
