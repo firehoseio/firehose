@@ -100,7 +100,7 @@ shared_examples_for 'Firehose::Rack::App' do
     end
 
     multiplexed_websocket = Proc.new do |cid|
-      ws = Faye::WebSocket::Client.new("ws://#{uri.host}:#{uri.port}/?multiplexing=enabled")
+      ws = Faye::WebSocket::Client.new("ws://#{uri.host}:#{uri.port}/channels@firehose")
 
       subscribe_message = {
         multiplex_subscribe: multiplex_channels.map do |c|

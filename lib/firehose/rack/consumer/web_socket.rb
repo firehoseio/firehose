@@ -6,6 +6,8 @@ module Firehose
   module Rack
     class Consumer
       class WebSocket
+        MULTIPLEX_CHANNEL = "/channels@firehose"
+
         # Setup a handler for the websocket connection.
         def call(env)
           ws = Faye::WebSocket.new(env)
@@ -18,10 +20,7 @@ module Firehose
         end
 
         def enable_multiplexing?(env)
-          qs = env["QUERY_STRING"]
-          return false if qs.empty?
-          params = ::Rack::Utils.parse_query(qs)
-          params["multiplexing"] == "enabled"
+          env["REQUEST_PATH"] == MULTIPLEX_CHANNEL
         end
 
         # Determine if the rack request is a WebSocket request.
