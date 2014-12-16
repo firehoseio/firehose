@@ -7,8 +7,8 @@ describe Firehose::Server::Publisher do
   let(:channel_key) { "/firehose/publisher/test/#{Time.now.to_i}" }
   let(:message)     { "howdy friends!" }
 
-  it "has 100 MAX_MESSAGES" do
-    expect(Firehose::Server::Publisher::MAX_MESSAGES).to eql(100)
+  it "has 100 BUFFER_SIZE" do
+    expect(Firehose::Server::Publisher::BUFFER_SIZE).to eql(100)
   end
 
   it "has 1 day TTL" do
@@ -45,14 +45,14 @@ describe Firehose::Server::Publisher do
       expect(redis_exec('lpop', "firehose:#{channel_key}:list")).to eql(message)
     end
 
-    it "limits list to MAX_MESSAGES messages" do
+    it "limits list to BUFFER_SIZE messages" do
       em do
-        Firehose::Server::Publisher::MAX_MESSAGES.times do |n|
+        Firehose::Server::Publisher::BUFFER_SIZE.times do |n|
           publisher.publish(channel_key, message)
         end
         publisher.publish(channel_key, message).callback { em.stop }
       end
-      expect(redis_exec('llen', "firehose:#{channel_key}:list")).to eql(Firehose::Server::Publisher::MAX_MESSAGES)
+      expect(redis_exec('llen', "firehose:#{channel_key}:list")).to eql(Firehose::Server::Publisher::BUFFER_SIZE)
     end
 
     it "increments sequence" do

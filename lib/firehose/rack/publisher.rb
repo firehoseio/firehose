@@ -1,13 +1,16 @@
+require "rack/utils"
+
 module Firehose
   module Rack
     class Publisher
       include Firehose::Rack::Helpers
 
       def call(env)
-        req     = env['parsed_request'] ||= ::Rack::Request.new(env)
-        path    = req.path
-        method  = req.request_method
+        req           = env['parsed_request'] ||= ::Rack::Request.new(env)
+        path          = req.path
+        method        = req.request_method
         cache_control = {}
+        params        = ::Rack::Utils.parse_query(env["QUERY_STRING"])
 
         # Parse out cache control directives from the Cache-Control header.
         if cache_control_header = env['HTTP_CACHE_CONTROL']
@@ -26,7 +29,11 @@ module Firehose
           EM.next_tick do
             body = env['rack.input'].read
             Firehose.logger.debug "HTTP published #{body.inspect} to #{path.inspect} with ttl #{ttl.inspect}"
-            publisher.publish(path, body, :ttl => ttl).callback do
+            opts = { :ttl => ttl }
+            if buffer_size = params["buffer_size"]
+              opts[:buffer_size] = buffer_size.to_i
+            end
+            publisher.publish(path, body, opts).callback do
               env['async.callback'].call [202, {'Content-Type' => 'text/plain', 'Content-Length' => '0'}, []]
               env['async.callback'].call response(202, '', 'Content-Type' => 'text/plain')
             end.errback do |e|
