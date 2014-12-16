@@ -61,22 +61,6 @@ module Firehose
         # by the Consumer::WebSocket class. Deals with message sequence,
         # connection, failures, and subscription state.
         class Handler < BaseHandler
-          # Subscribe the client to the channel on the server. Asks for
-          # the last sequence for clients that reconnect.
-          def subscribe(last_sequence)
-            @subscribed = true
-            @channel    = Server::Channel.new @req.path
-            @deferrable = @channel.next_message last_sequence
-            @deferrable.callback do |message, sequence|
-              Firehose.logger.debug "WS sent `#{message}` to `#{@req.path}` with sequence `#{sequence}`"
-              send_message message: message, last_sequence: last_sequence
-              subscribe sequence
-            end
-            @deferrable.errback do |e|
-              EM.next_tick { raise e.inspect } unless e == :disconnect
-            end
-          end
-
           # Manages messages sent from the connect client to the server. This is mostly
           # used to handle heart-beats that are designed to prevent the WebSocket connection
           # from timing out from inactivity.
@@ -105,6 +89,22 @@ module Firehose
               @channel.unsubscribe(@deferrable) if @channel
             end
             Firehose.logger.debug "WS connection `#{@req.path}` closing. Code: #{event.code.inspect}; Reason #{event.reason.inspect}"
+          end
+
+          # Subscribe the client to the channel on the server. Asks for
+          # the last sequence for clients that reconnect.
+          def subscribe(last_sequence)
+            @subscribed = true
+            @channel    = Server::Channel.new @req.path
+            @deferrable = @channel.next_message last_sequence
+            @deferrable.callback do |message, sequence|
+              Firehose.logger.debug "WS sent `#{message}` to `#{@req.path}` with sequence `#{sequence}`"
+              send_message message: message, last_sequence: last_sequence
+              subscribe sequence
+            end
+            @deferrable.errback do |e|
+              EM.next_tick { raise e.inspect } unless e == :disconnect
+            end
           end
         end
 
