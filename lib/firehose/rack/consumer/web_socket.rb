@@ -149,10 +149,10 @@ module Firehose
           def subscribe_multiplexed(subscriptions)
             Array(subscriptions).each do |sub|
               channel, sequence = sub[:channel], sub[:message_sequence]
-              next if channel.nil? || sequence.nil?
+              next if channel.nil?
 
               Firehose.logger.debug "Subscribing multiplexed to: #{sub}"
-              subscribe(channel, sequence)
+              subscribe(channel, sequence.to_i)
             end
           end
 
