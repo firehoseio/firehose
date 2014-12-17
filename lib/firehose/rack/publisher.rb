@@ -10,7 +10,6 @@ module Firehose
         path          = req.path
         method        = req.request_method
         cache_control = {}
-        params        = ::Rack::Utils.parse_query(env["QUERY_STRING"])
 
         # Parse out cache control directives from the Cache-Control header.
         if cache_control_header = env['HTTP_CACHE_CONTROL']
@@ -30,7 +29,7 @@ module Firehose
             body = env['rack.input'].read
             Firehose.logger.debug "HTTP published #{body.inspect} to #{path.inspect} with ttl #{ttl.inspect}"
             opts = { :ttl => ttl }
-            if buffer_size = params["buffer_size"]
+            if buffer_size = env["HTTP_X_FIREHOSE_BUFFER_SIZE"]
               opts[:buffer_size] = buffer_size.to_i
             end
             publisher.publish(path, body, opts).callback do

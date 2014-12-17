@@ -61,7 +61,7 @@ module Firehose
             end
             req.body = message
             req.headers['Cache-Control'] = "max-age=#{ttl.to_i}" if ttl
-            req.params[:buffer_size] = buffer_size if buffer_size
+            req.headers["X-Firehose-Buffer-Size"] = buffer_size if buffer_size
           end
           response.on_complete do
             case response.status
