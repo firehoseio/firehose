@@ -3,6 +3,7 @@
   "version": "1.2.20",
   "main": "lib/assets/javascripts/firehose.js.coffee",
   "devDependencies": {
+    "coffee-script": "*",
     "jasmine-jquery": "git://github.com/velesin/jasmine-jquery.git",
     "karma": "~0.12.16",
     "karma-chrome-launcher": "~0.1.4",
