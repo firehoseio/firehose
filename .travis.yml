@@ -9,8 +9,5 @@ rvm:
 services:
   - redis-server
 
-before_script:
-  - bundle exec rake travis:prepare
-
 script:
   - bundle exec rake spec
