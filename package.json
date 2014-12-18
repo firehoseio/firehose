@@ -1,5 +1,16 @@
 {
   "name": "firehose",
   "version": "1.2.20",
-  "main": "lib/assets/javascripts/firehose.js.coffee"
+  "main": "lib/assets/javascripts/firehose.js.coffee",
+  "devDependencies": {
+    "jasmine-jquery": "git://github.com/velesin/jasmine-jquery.git",
+    "karma": "~0.12.16",
+    "karma-chrome-launcher": "~0.1.4",
+    "karma-coffee-preprocessor": "~0.2.1",
+    "karma-jasmine": "~0.2.0",
+    "karma-junit-reporter": "^0.2.2",
+    "karma-phantomjs-launcher": "^0.1.4",
+    "karma-safari-launcher": "*",
+    "karma-sprockets-mincer": "0.1.2"
+  }
 }

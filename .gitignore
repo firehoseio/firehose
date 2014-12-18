@@ -10,3 +10,4 @@ tmp
 *.sublime-workspace
 public/javascripts
 Gemfile.lock
+node_modules

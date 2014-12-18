@@ -14,4 +14,3 @@ before_script:
 
 script:
   - bundle exec rake spec
-  - xvfb-run bundle exec rake evergreen:run

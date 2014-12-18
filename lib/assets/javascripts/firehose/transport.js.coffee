@@ -1,12 +1,14 @@
 class Firehose.Transport
   # Class method to determine whether transport is supported by the current browser. Note that while
-  # the transport may be supported by the browser, its possible that the network connection won't 
+  # the transport may be supported by the browser, its possible that the network connection won't
   # succeed. That should be accounted for during the initial connecting to the server.
   @supported: =>
     false
 
   constructor: (config={}) ->
-    @config      = config
+    @config = config
+    @config.params ||= {}
+
     @_retryDelay = 3000
     @
 
