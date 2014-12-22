@@ -23,6 +23,7 @@ shared_examples_for 'Firehose::Rack::App' do
   let(:messages)  { (1..200).map{|n| "msg-#{n}" } }
   let(:channel)   { "/firehose/integration/#{Time.now.to_i}" }
   let(:http_url)  { "http://#{uri.host}:#{uri.port}#{channel}" }
+  let(:http_multi_url) { "http://#{uri.host}:#{uri.port}/channels@firehose" }
   let(:ws_url)    { "ws://#{uri.host}:#{uri.port}#{channel}" }
   let(:multiplex_channels) { ["/foo/bar", "/bar/baz", "/baz/quux"] }
 
@@ -52,6 +53,22 @@ shared_examples_for 'Firehose::Rack::App' do
     # Lets have an HTTP Long poll client
     http_long_poll = Proc.new do |cid, last_sequence|
       http = EM::HttpRequest.new(http_url).get(:query => {'last_message_sequence' => last_sequence})
+      http.errback { em.stop }
+      http.callback do
+        frame = JSON.parse(http.response, :symbolize_names => true)
+        received[cid] << frame[:message]
+        if received[cid].size < messages.size
+          # Add some jitter so the clients aren't syncronized
+          EM::add_timer(rand*0.001) { http_long_poll.call cid, frame[:last_sequence] }
+        else
+          succeed.call cid
+        end
+      end
+    end
+
+    # Lets have an HTTP Long poll client using channel multiplexing
+    multiplexed_http_long_poll = Proc.new do |cid, last_sequence|
+      http = EM::HttpRequest.new(http_multi_url).get(:query => {'subscribe' => "#{channel}!#{last_sequence.to_i}"})
       http.errback { em.stop }
       http.callback do
         frame = JSON.parse(http.response, :symbolize_names => true)
@@ -100,17 +117,18 @@ shared_examples_for 'Firehose::Rack::App' do
     end
 
     multiplexed_websocket = Proc.new do |cid|
-      ws = Faye::WebSocket::Client.new("ws://#{uri.host}:#{uri.port}/channels@firehose")
+      subscription_query = multiplex_channels.map{|c| "#{c}!0"}.join(",")
+      ws = Faye::WebSocket::Client.new("ws://#{uri.host}:#{uri.port}/channels@firehose?subscribe=#{subscription_query}")
 
-      subscribe_message = {
-        multiplex_subscribe: multiplex_channels.map do |c|
-          { channel: c, message_sequence: 0 }
-        end
-      }
+      # subscribe_message = {
+      #   multiplex_subscribe: multiplex_channels.map do |c|
+      #     { channel: c, message_sequence: 0 }
+      #   end
+      # }
 
-      ws.onopen = lambda do |event|
-        ws.send(subscribe_message.to_json)
-      end
+      # ws.onopen = lambda do |event|
+      #   ws.send(subscribe_message.to_json)
+      # end
 
       ws.onmessage = lambda do |event|
         frame = JSON.parse(event.data, :symbolize_names => true)
@@ -134,15 +152,17 @@ shared_examples_for 'Firehose::Rack::App' do
       websocket.call(2)
       http_long_poll.call(3)
       http_long_poll.call(4)
-      multiplexed_websocket.call(5)
-      multiplexed_websocket.call(6)
+      multiplexed_http_long_poll.call(5)
+      multiplexed_http_long_poll.call(6)
+      multiplexed_websocket.call(7)
+      multiplexed_websocket.call(8)
 
       # Wait a sec to let our clients set up.
       em.add_timer(1){ publish_multi.call ; publish.call }
     end
 
     # When EM stops, these assertions will be made.
-    expect(received.size).to eql(6)
+    expect(received.size).to eql(8)
     received.each_value do |arr|
       expect(arr.size).to eql(messages.size)
       expect(arr.sort).to eql(messages.sort)
