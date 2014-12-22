@@ -26,6 +26,7 @@ shared_examples_for 'Firehose::Rack::App' do
   let(:http_multi_url) { "http://#{uri.host}:#{uri.port}/channels@firehose" }
   let(:ws_url)    { "ws://#{uri.host}:#{uri.port}#{channel}" }
   let(:multiplex_channels) { ["/foo/bar", "/bar/baz", "/baz/quux"] }
+  let(:subscription_query) { multiplex_channels.map{|c| "#{c}!0"}.join(",") }
 
   it "supports pub-sub http and websockets" do
     # Setup variables that we'll use after we turn off EM to validate our
@@ -68,7 +69,8 @@ shared_examples_for 'Firehose::Rack::App' do
 
     # Lets have an HTTP Long poll client using channel multiplexing
     multiplexed_http_long_poll = Proc.new do |cid, last_sequence|
-      http = EM::HttpRequest.new(http_multi_url).get(:query => {'subscribe' => "#{channel}!#{last_sequence.to_i}"})
+      http = EM::HttpRequest.new(http_multi_url).get(:query => {'subscribe' => subscription_query})
+
       http.errback { em.stop }
       http.callback do
         frame = JSON.parse(http.response, :symbolize_names => true)
@@ -117,7 +119,6 @@ shared_examples_for 'Firehose::Rack::App' do
     end
 
     multiplexed_websocket = Proc.new do |cid|
-      subscription_query = multiplex_channels.map{|c| "#{c}!0"}.join(",")
       ws = Faye::WebSocket::Client.new("ws://#{uri.host}:#{uri.port}/channels@firehose?subscribe=#{subscription_query}")
 
       # subscribe_message = {
