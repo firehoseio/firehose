@@ -55,6 +55,17 @@ describe Firehose::Server::Publisher do
       expect(redis_exec('llen', "firehose:#{channel_key}:list")).to eql(Firehose::Server::Publisher::BUFFER_SIZE)
     end
 
+    it "limits message list to a custom buffer size" do
+      buffer_size = rand(100)
+      em do
+        Firehose::Server::Publisher::BUFFER_SIZE.times do |n|
+          publisher.publish(channel_key, message)
+        end
+        publisher.publish(channel_key, message, buffer_size: buffer_size).callback { em.stop }
+      end
+      redis_exec('llen', "firehose:#{channel_key}:list").should == buffer_size
+    end
+
     it "increments sequence" do
       sequence_key = "firehose:#{channel_key}:sequence"
 
