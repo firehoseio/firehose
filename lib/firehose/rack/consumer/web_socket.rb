@@ -12,7 +12,7 @@ module Firehose
           if Consumer.multiplexing_request?(env)
             MultiplexingHandler.new(ws)
           else
-            Handler.new(ws)
+            DefaultHandler.new(ws)
           end
           ws.rack_response
         end
@@ -22,7 +22,7 @@ module Firehose
           Faye::WebSocket.websocket?(env)
         end
 
-        class BaseHandler
+        class Handler
           def initialize(ws)
             @ws = ws
             @req = ::Rack::Request.new ws.env
@@ -53,7 +53,7 @@ module Firehose
         # Manages connection state for the web socket that's connected
         # by the Consumer::WebSocket class. Deals with message sequence,
         # connection, failures, and subscription state.
-        class Handler < BaseHandler
+        class DefaultHandler < Handler
           # Manages messages sent from the connect client to the server. This is mostly
           # used to handle heart-beats that are designed to prevent the WebSocket connection
           # from timing out from inactivity.
@@ -101,7 +101,7 @@ module Firehose
           end
         end
 
-        class MultiplexingHandler < BaseHandler
+        class MultiplexingHandler < Handler
           class Subscription < Struct.new(:channel, :deferrable)
             def close
               deferrable.fail :disconnect

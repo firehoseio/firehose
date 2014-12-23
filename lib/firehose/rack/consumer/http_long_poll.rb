@@ -19,11 +19,11 @@ module Firehose
           if Consumer.multiplexing_request?(env)
             MultiplexingHandler.new(@timeout).call(env)
           else
-            Handler.new(@timeout).call(env)
+            DefaultHandler.new(@timeout).call(env)
           end
         end
 
-        class BaseHandler
+        class Handler
           include Firehose::Rack::Helpers
 
           def initialize(timeout=TIMEOUT)
@@ -91,7 +91,7 @@ module Firehose
           end
         end
 
-        class Handler < BaseHandler
+        class DefaultHandler < Handler
           def wrap_frame(channel, message, last_sequence)
             JSON.generate :message => message, :last_sequence => last_sequence
           end
@@ -110,7 +110,7 @@ module Firehose
           end
         end
 
-        class MultiplexingHandler < BaseHandler
+        class MultiplexingHandler < Handler
           def wrap_frame(channel, message, last_sequence)
             JSON.generate channel: channel, :message => message, :last_sequence => last_sequence
           end
