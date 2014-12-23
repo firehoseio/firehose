@@ -11,3 +11,4 @@ tmp
 public/javascripts
 Gemfile.lock
 node_modules
+lib/assets/javascripts/firehose/version.js.coffee

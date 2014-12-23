@@ -9,6 +9,26 @@ task :ci => ["spec:ci"]
 
 task :spec => ["spec:all"]
 
+namespace :js do
+  desc "Compile *.js.coffee.erb files"
+  task :compile_erb do
+    require 'erb'
+    require_relative "lib/firehose"
+
+    erb_files = Dir.glob("lib/assets/javascripts/**/*.erb")
+
+    erb_files.each do |template_file|
+      output_file = template_file.split(".erb")[0]
+      puts "ERB compile #{template_file} => #{output_file}"
+
+      renderer = ERB.new File.read(template_file)
+      File.open(output_file, "w+") do |f|
+       f.puts renderer.result
+      end
+    end
+  end
+end
+
 namespace :spec do
   desc "Run all specs"
   task :all => [:ruby, "js:run"]
@@ -18,7 +38,7 @@ namespace :spec do
     sh 'rspec spec'
   end
 
-  task :js => "js:run"
+  task :js => ["js:compile_erb", "js:run"]
 
   # desc "Run specs with Karma runner"
   namespace :js do
