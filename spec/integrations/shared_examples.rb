@@ -111,7 +111,7 @@ shared_examples_for 'Firehose::Rack::App' do
 
   end
 
-  it "should support channel multiplexing for http_long_poll and websockets" do
+  it "supports channel multiplexing for http_long_poll and websockets" do
     # Setup variables that we'll use after we turn off EM to validate our
     # test assertions.
     outgoing, received = messages.dup, Hash.new{|h,k| h[k] = []}
