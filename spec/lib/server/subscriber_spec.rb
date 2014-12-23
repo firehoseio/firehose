@@ -10,17 +10,17 @@ describe Firehose::Server::Subscriber do
   let(:publisher)       { Firehose::Server::Publisher.new }
 
   describe "#subscribe" do
-    it "should add the deferrable to the subscriptions hash" do
+    it "adds the deferrable to the subscriptions hash" do
       deferrable = EM::DefaultDeferrable.new
       dummy_subscriber.subscribe(channel_key, deferrable)
-      dummy_subscriber.send(:subscriptions)[channel_key].should == [deferrable]
+      expect(dummy_subscriber.send(:subscriptions)[channel_key]).to eql([deferrable])
     end
 
-    it "should call succeed on the deferrable when a message is published" do
+    it "calls succeed on the deferrable when a message is published" do
       deferrable = EM::DefaultDeferrable.new
       deferrable.callback do |msg, sequence|
-        msg.should == message
-        sequence.should == 1 # The publisher is fresh, so the sequence ID will be 1.
+        expect(msg).to eql(message)
+        expect(sequence).to eql(1) # The publisher is fresh, so the sequence ID will be 1.
         em.next_tick { em.stop }
       end
 
@@ -30,7 +30,7 @@ describe Firehose::Server::Subscriber do
       end
     end
 
-    it "shouldn't call succeed on the deferrable when a 2nd message is published" do
+    it "doesn't call succeed on the deferrable when a 2nd message is published" do
       deferrable = EM::DefaultDeferrable.new
       deferrable.should_receive(:succeed).with(message, 1) # The publisher is fresh, so the sequence ID will be 1.
       deferrable.should_not_receive(:succeed).with('2nd message', 2)
@@ -47,14 +47,14 @@ describe Firehose::Server::Subscriber do
   end
 
   describe "#unsubscribe" do
-    it "should remove the deferrable from the subscriptions hash" do
+    it "removes the deferrable from the subscriptions hash" do
       deferrable = EM::DefaultDeferrable.new
       dummy_subscriber.subscribe(channel_key, deferrable)
       dummy_subscriber.unsubscribe(channel_key, deferrable)
-      dummy_subscriber.send(:subscriptions).has_key?(channel_key).should be_falsey
+      expect(dummy_subscriber.send(:subscriptions).has_key?(channel_key)).to be_falsey
     end
 
-    it "shouldn't call succeed on the deferrable when a message is published" do
+    it "doesn't call succeed on the deferrable when a message is published" do
       deferrable = EM::DefaultDeferrable.new
       deferrable.should_not_receive(:succeed).with(message, 1) # The publisher is fresh, so the sequence ID will be 1.
       em do

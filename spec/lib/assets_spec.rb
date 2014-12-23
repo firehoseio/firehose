@@ -3,19 +3,19 @@ require 'sprockets'
 
 describe Firehose::Assets do
   describe ".path" do
-    it "should have root path" do
-      Firehose::Assets.path('poop').should == File.expand_path('../../../lib/assets/poop', __FILE__)
+    it "has root path" do
+      expect(Firehose::Assets.path('poop')).to eql(File.expand_path('../../../lib/assets/poop', __FILE__))
     end
 
-    it "should accept folders" do
-      Firehose::Assets.path('poop').should == File.join(Firehose::Assets.path, 'poop')
+    it "accepts folders" do
+      expect(Firehose::Assets.path('poop')).to eql(File.join(Firehose::Assets.path, 'poop'))
     end
   end
 
   describe "Sprockets.configure" do
-    it "should configure environment" do
+    it "configures environment" do
       env = Firehose::Assets::Sprockets.configure Sprockets::Environment.new
-      env.paths.should include(Firehose::Assets.path('javascripts'))
+      expect(env.paths).to include(Firehose::Assets.path('javascripts'))
     end
   end
 
@@ -28,8 +28,8 @@ describe Firehose::Assets do
         "window.Firehose || (window.Firehose = {})"
       ]
     end
-    it "should compile javascript" do
-      Firehose::Assets::Sprockets.javascript.should include(*js_spot_checks)
+    it "compiles javascript" do
+      expect(Firehose::Assets::Sprockets.javascript).to include(*js_spot_checks)
     end
   end
 end

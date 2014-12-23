@@ -11,19 +11,19 @@ describe Firehose::Rack::Publisher, :type => :request do
   context 'publishing is successful' do
     before { deferrable.succeed }
 
-    it "should return 202" do
+    it "returns 202" do
       app.stub(:publisher => double('publisher', :publish => deferrable))
       aput path, :body => "some nice little message"
-      last_response.status.should == 202
+      expect(last_response.status).to eql(202)
     end
 
-    it "should have Content-Length of zero" do
+    it "has Content-Length of zero" do
       app.stub(:publisher => double('publisher', :publish => deferrable))
       aput path, :body => "some nice little message"
-      last_response.headers['Content-Length'].should == '0'
+      expect(last_response.headers['Content-Length']).to eql('0')
     end
 
-    it "should parse Cache-Control max-age" do
+    it "parses Cache-Control max-age" do
       body = "howdy dude!"
       ttl = '92'
 

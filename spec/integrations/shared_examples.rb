@@ -25,7 +25,7 @@ shared_examples_for 'Firehose::Rack::App' do
   let(:http_url)  { "http://#{uri.host}:#{uri.port}#{channel}" }
   let(:ws_url)    { "ws://#{uri.host}:#{uri.port}#{channel}" }
 
-  it "should pub-sub http and websockets" do
+  it "supports pub-sub http and websockets" do
     # Setup variables that we'll use after we turn off EM to validate our
     # test assertions.
     outgoing, received = messages.dup, Hash.new{|h,k| h[k] = []}
@@ -100,19 +100,19 @@ shared_examples_for 'Firehose::Rack::App' do
     end
 
     # When EM stops, these assertions will be made.
-    received.size.should == 4
+    expect(received.size).to eql(4)
     received.values.each do |arr|
-      arr.should == messages
+      expect(arr).to eql(messages)
     end
   end
 
 
-  it "should return 400 error for long-polling when using http long polling and sequence header is < 0" do
+  it "returns 400 error for long-polling when using http long polling and sequence header is < 0" do
     em 5 do
       http = EM::HttpRequest.new(http_url).get(:query => {'last_message_sequence' => -1})
       http.errback { |e| raise e.inspect }
       http.callback do
-        http.response_header.status.should == 400
+        expect(http.response_header.status).to eql(400)
         em.stop
       end
     end

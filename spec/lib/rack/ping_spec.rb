@@ -12,17 +12,17 @@ describe Firehose::Rack::Ping, :type => :request do
   context 'redis is available' do
     before { deferrable.succeed Firehose::Rack::Ping::PingCheck::TEST_VALUE }
 
-    it "should return 200" do
+    it "returns 200" do
       ahead path
-      last_response.status.should == 200
+      expect(last_response.status).to eql(200)
     end
   end
 
   context 'redis is not available' do
     before { deferrable.fail 'some error' }
-    it "should return 500" do
+    it "returns 500" do
       ahead path
-      last_response.status.should == 500
+      expect(last_response.status).to eql(500)
     end
   end
 end
