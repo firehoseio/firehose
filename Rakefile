@@ -38,11 +38,11 @@ namespace :spec do
     sh 'rspec spec'
   end
 
-  task :js => ["js:compile_erb", "js:run"]
+  task :js => "js:run"
 
   # desc "Run specs with Karma runner"
   namespace :js do
-    task :setup do
+    task :setup => "js:compile_erb" do
       sh %[npm install]
     end
 
