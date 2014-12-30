@@ -119,23 +119,21 @@ new Firehose.MultiplexedConsumer({
   uri: '//localhost:7474/',
 
   // List of channel subscriptions:
-  subscribe: [
-    {
-      channel: "/my/channel/1",
+  channels: {
+    "/my/channel/1": {
       last_sequence: 10,        // defaults to 0 and can be ommitted
       message: function(msg) {
         console.log("got message on channel 1:");
         console.log(msg);
       }
     },
-    {
-      channel: "/my/channel/2",
+    "/my/channel/2": {
       message: function(msg) {
         console.log("got message on channel 2:");
         console.log(msg);
       }
     }
-  ]
+  }
 }).connect();
 ```
 

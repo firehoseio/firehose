@@ -103,11 +103,11 @@ class Firehose.MultiplexedWebSocket extends Firehose.WebSocket
     @_lastMessageSequence or {}
 
   _requestParams: =>
-    for sub in @config.subscribe
+    for channel, opts of @config.channels
       if @_lastMessageSequence
-        sub.last_sequence = @_lastMessageSequence[sub.channel]
+        opts.last_sequence = @_lastMessageSequence[channel]
       else
-        sub.last_sequence = 0
+        opts.last_sequence = 0
 
     @config.params = Firehose.MultiplexedConsumer.subscriptionQuery(@config)
     @config.params

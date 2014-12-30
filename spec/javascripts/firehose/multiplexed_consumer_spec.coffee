@@ -6,17 +6,15 @@ describe 'Firehose.MultiplexedConsumer', ->
     @instance = new Firehose.MultiplexedConsumer
       uri: '/'
       okInterval: 9999 # Stop crazy ajax loops during tests
-      subscribe: [
-        channel: "/foo"
-        last_sequence: 0
-        message: (msg) =>
-          @receivedMessages.push msg
-      ,
-        channel: "/bar"
-        last_sequence: 10
-        message: (msg) =>
-          @receivedMessages.push msg
-      ]
+      channels:
+        "/foo":
+          last_sequence: 0
+          message: (msg) =>
+            @receivedMessages.push msg
+        "/bar":
+          last_sequence: 10
+          message: (msg) =>
+            @receivedMessages.push msg
 
   #= Specs ===
 

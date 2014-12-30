@@ -4,7 +4,7 @@ class Firehose.MultiplexedConsumer extends Firehose.Consumer
   @subscriptionQuery: (config) ->
     {
       subscribe: [
-        "#{sub.channel}!#{sub.last_sequence || 0}" for sub in config.subscribe
+        "#{channel}!#{opts.last_sequence || 0}" for channel, opts of config.channels
       ].join(",")
     }
 
@@ -15,8 +15,8 @@ class Firehose.MultiplexedConsumer extends Firehose.Consumer
 
     @config.params = Firehose.MultiplexedConsumer.subscriptionQuery(@config)
 
-    for sub in @config.subscribe
-      @subscribe(sub)
+    for channel, opts of @config.channels
+      @subscribe(channel, opts)
 
     super(@config)
 
@@ -31,10 +31,10 @@ class Firehose.MultiplexedConsumer extends Firehose.Consumer
       for handler in handlers
         handler(msg.message)
 
-  subscribe: (opts) =>
+  subscribe: (channel, opts) =>
     if opts.message
-      @messageHandlers[opts.channel] ||= []
-      @messageHandlers[opts.channel].push opts.message
+      @messageHandlers[channel] ||= []
+      @messageHandlers[channel].push opts.message
 
   unsubscribe: (channelNames...) =>
     for chan in channelNames
