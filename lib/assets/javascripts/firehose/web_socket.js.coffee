@@ -99,10 +99,15 @@ class Firehose.WebSocket extends Firehose.Transport
       @keepaliveTimeout = null
 
 class Firehose.MultiplexedWebSocket extends Firehose.WebSocket
+  getLastMessageSequence: =>
+    @_lastMessageSequence or {}
+
   _requestParams: =>
-    @_lastMessageSequence ||= {}
     for sub in @config.subscribe
-      sub.last_sequence = @_lastMessageSequence[sub.channel] || 0
+      if @_lastMessageSequence
+        sub.last_sequence = @_lastMessageSequence[sub.channel]
+      else
+        sub.last_sequence = 0
 
     @config.params = Firehose.MultiplexedConsumer.subscriptionQuery(@config)
     @config.params

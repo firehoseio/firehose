@@ -21,16 +21,22 @@ class Firehose.Consumer
     # Make sure we return ourself out of the constructor so we can chain.
     this
 
+  websocketTransport: (config) =>
+    new Firehose.WebSocket(config)
+
+  longpollTransport: (config) =>
+    new Firehose.LongPoll(config)
+
   connect: (delay=0) =>
     promise = @_connectPromise()
 
     @config.connectionVerified = @_upgradeTransport
     if Firehose.WebSocket.supported()
       @upgradeTimeout = setTimeout =>
-        ws = new Firehose.WebSocket @config
+        ws = @websocketTransport(@config)
         ws.connect delay
       , 500
-    @transport = new Firehose.LongPoll @config
+    @transport = @longpollTransport(@config)
     @transport.connect delay
 
     promise

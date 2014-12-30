@@ -2,8 +2,6 @@ Firehose.multiplexChannel = "<%= Firehose::Rack::Consumer::MULTIPLEX_CHANNEL %>"
 
 class Firehose.MultiplexedConsumer extends Firehose.Consumer
   @subscriptionQuery: (config) ->
-    query =
-
     {
       subscribe: [
         "#{sub.channel}!#{sub.last_sequence || 0}" for sub in config.subscribe
@@ -22,19 +20,11 @@ class Firehose.MultiplexedConsumer extends Firehose.Consumer
 
     super(@config)
 
-  connect: (delay=0) =>
-    promise = @_connectPromise()
+  websocketTransport: (config) =>
+    new Firehose.MultiplexedWebSocket(config)
 
-    @config.connectionVerified = @_upgradeTransport
-    if Firehose.WebSocket.supported()
-      @upgradeTimeout = setTimeout =>
-        ws = new Firehose.MultiplexedWebSocket @config
-        ws.connect delay
-      , 500
-    @transport = new Firehose.MultiplexedLongPoll @config
-    @transport.connect delay
-
-    promise
+  longpollTransport: (config) =>
+    new Firehose.MultiplexedLongPoll(config)
 
   message: (msg) =>
     if handlers = @messageHandlers[msg.channel]

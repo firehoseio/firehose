@@ -152,10 +152,16 @@ if $?.browser?.msie and parseInt($.browser.version, 10) in [8, 9]
       }
 
 class Firehose.MultiplexedLongPoll extends Firehose.LongPoll
+  getLastMessageSequence: =>
+    @_lastMessageSequence or {}
+
   _requestParams: =>
-    @_lastMessageSequence ||= {}
     for sub in @config.subscribe
-      sub.last_sequence = @_lastMessageSequence[sub.channel] || 0
+      if @_lastMessageSequence
+        sub.last_sequence = @_lastMessageSequence[sub.channel]
+      else
+        sub.last_sequence = 0
+
 
     @config.params = Firehose.MultiplexedConsumer.subscriptionQuery(@config)
     @config.params

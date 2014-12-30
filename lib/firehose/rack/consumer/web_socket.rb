@@ -184,6 +184,7 @@ module Firehose
           end
 
           def unsubscribe(channel_names)
+            Firehose.logger.debug "Unsubscribing from channels: #{channel_names}"
             Array(channel_names).each do |chan|
               if sub = @subscriptions[chan]
                 sub.close
