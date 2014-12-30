@@ -27,14 +27,12 @@ class Firehose.MultiplexedConsumer extends Firehose.Consumer
     new Firehose.MultiplexedLongPoll(config)
 
   message: (msg) =>
-    if handlers = @messageHandlers[msg.channel]
-      for handler in handlers
-        handler(msg.message)
+    if handler = @messageHandlers[msg.channel]
+      handler(msg.message)
 
   subscribe: (channel, opts) =>
     if opts.message
-      @messageHandlers[channel] ||= []
-      @messageHandlers[channel].push opts.message
+      @messageHandlers[channel] = opts.message
 
   unsubscribe: (channelNames...) =>
     for chan in channelNames
