@@ -28,7 +28,7 @@ class Firehose.MultiplexedConsumer extends Firehose.Consumer
 
   message: (msg) =>
     if handler = @messageHandlers[msg.channel]
-      handler(msg.message)
+      handler(@config.parse msg.message)
 
   subscribe: (channel, opts) =>
     if opts.message
