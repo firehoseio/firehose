@@ -35,7 +35,7 @@ module Firehose
           sequence = sequence.to_i
 
           if sequence.nil? || (diff = sequence - last_sequence) <= 0
-            Firehose.logger.debug "No message available yet, subscribing. sequence: `#{sequence}`"
+            Firehose.logger.debug "No message available yet, subscribing. sequence: `#{sequence}` last_sequence: #{last_sequence}"
             # Either this resource has never been seen before or we are all caught up.
             # Subscribe and hope something gets published to this end-point.
             subscribe(deferrable, options[:timeout])

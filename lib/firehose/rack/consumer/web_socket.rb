@@ -96,6 +96,7 @@ module Firehose
               subscribe sequence
             end
             @deferrable.errback do |e|
+              Firehose.logger.error "WS Error: #{e}"
               EM.next_tick { raise e.inspect } unless e == :disconnect
             end
           end
@@ -169,12 +170,12 @@ module Firehose
             @subscriptions[channel_name] = subscription
 
             deferrable.callback do |message, sequence|
-              Firehose.logger.debug "WS sent `#{message}` to `#{channel_name}` with sequence `#{sequence}`"
               send_message(
                 channel: channel_name,
                 message: message,
                 last_sequence: last_sequence
               )
+              Firehose.logger.debug "WS sent `#{message}` to `#{channel_name}` with sequence `#{sequence}`"
               subscribe channel_name, sequence
             end
 
