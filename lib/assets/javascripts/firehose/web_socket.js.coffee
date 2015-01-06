@@ -71,8 +71,10 @@ class Firehose.WebSocket extends Firehose.Transport
     if @_needToNotifyOfDisconnect
       @_needToNotifyOfDisconnect = false
       @config.disconnected()
-    if @_succeeded then @connect @_retryDelay
-    else @config.failed @
+    if @_succeeded
+      @connect @_retryDelay
+    else if @config.failed
+      @config.failed @
 
   _cleanUp: =>
     @_clearKeepalive()
