@@ -23,19 +23,17 @@ describe 'Firehose.MultiplexedConsumer', ->
       @instance.connect()
 
       for i in [1..5]
-        @instance.message({channel: "/foo", message: "msg-#{i}"})
+        @instance.message({channel: "/foo", message: JSON.stringify { message: "msg-#{i}" } })
       for i in [6..10]
-        @instance.message({channel: "/bar", message: "msg-#{i}"})
+        @instance.message({channel: "/bar", message: JSON.stringify { message: "msg-#{i}" } })
 
       @instance.unsubscribe("/foo")
 
       for i in [11..15]
-        @instance.message({channel: "/foo", message: "msg-#{i}"})
+        @instance.message({channel: "/foo", message: JSON.stringify { message: "msg-#{i}" } })
       for i in [16..20]
-        @instance.message({channel: "/bar", message: "msg-#{i}"})
+        @instance.message({channel: "/bar", message: JSON.stringify { message: "msg-#{i}" } })
 
-      expect(@receivedMessages).toEqual [
-        "msg-1", "msg-2", "msg-3", "msg-4", "msg-5",
-        "msg-6", "msg-7", "msg-8", "msg-9", "msg-10",
-        "msg-16", "msg-17", "msg-18", "msg-19", "msg-20",
-      ]
+      expect(@receivedMessages).toEqual(
+        {message: "msg-#{i}"} for i in [1,2,3,4,5,6,7,8,9,10,16,17,18,19,20]
+      )
