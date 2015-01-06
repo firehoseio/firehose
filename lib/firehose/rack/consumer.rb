@@ -10,10 +10,10 @@ module Firehose
       autoload :HttpLongPoll, 'firehose/rack/consumer/http_long_poll'
       autoload :WebSocket,    'firehose/rack/consumer/web_socket'
 
-      MULTIPLEX_CHANNEL = "/channels@firehose"
+      MULTIPLEX_CHANNEL = "channels@firehose"
 
       def self.multiplexing_request?(env)
-        env["REQUEST_PATH"] == MULTIPLEX_CHANNEL
+        env["REQUEST_PATH"].include? MULTIPLEX_CHANNEL
       end
 
       def self.multiplex_subscriptions(env)
