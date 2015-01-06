@@ -96,8 +96,10 @@ module Firehose
               subscribe sequence
             end
             @deferrable.errback do |e|
-              Firehose.logger.error "WS Error: #{e}"
-              EM.next_tick { raise e.inspect } unless e == :disconnect
+              unless e == :disconnect
+                Firehose.logger.error "WS Error: #{e}"
+                EM.next_tick { raise e.inspect }
+              end
             end
           end
         end
