@@ -8,6 +8,12 @@ class Firehose.MultiplexedConsumer extends Firehose.Consumer
       ].join(",")
     }
 
+  @normalizeChannels: (config) ->
+    for chan, opts of config.channels
+      if chan[0] != "/"
+        delete config.channels[chan]
+        config.channels["/" + chan] = opts
+
   constructor: (@config = {}) ->
     @messageHandlers = {}
     @config.message ||= @message
@@ -15,6 +21,7 @@ class Firehose.MultiplexedConsumer extends Firehose.Consumer
 
     @config.params = Firehose.MultiplexedConsumer.subscriptionQuery(@config)
 
+    Firehose.MultiplexedConsumer.normalizeChannels(@config)
     for channel, opts of @config.channels
       @subscribe(channel, opts)
 
