@@ -1,4 +1,4 @@
 module Firehose
-  VERSION  = "1.2.20"
-  CODENAME = "Onprogress of Doom"
+  VERSION  = "1.3.0"
+  CODENAME = "Multiplexed Wonderland"
 end
