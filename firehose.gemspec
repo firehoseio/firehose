@@ -5,8 +5,8 @@ require "firehose/version"
 Gem::Specification.new do |s|
   s.name        = "firehose"
   s.version     = Firehose::VERSION
-  s.authors     = ["Brad Gessler", "Steel Fu", "Paul Cortens", "Zach Zolton"]
-  s.email       = ["brad@polleverywhere.com", "steel@polleverywhere.com", "paul@polleverywhere.com", "zach@polleverywhere.com"]
+  s.authors     = ["Brad Gessler", "Steel Fu", "Paul Cortens", "Zach Zolton", "Christopher Bertels"]
+  s.email       = ["brad@polleverywhere.com", "steel@polleverywhere.com", "paul@polleverywhere.com", "zach@polleverywhere.com", "christopher@polleverywhere.com"]
   s.homepage    = "http://firehose.io/"
   s.summary     = %q{Build realtime Ruby web applications}
   s.description = %q{Firehose is a realtime web application toolkit for building realtime Ruby web applications.}
