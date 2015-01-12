@@ -1,5 +1,6 @@
 require 'faye/websocket'
 require 'json'
+require "rack/utils"
 
 module Firehose
   module Rack
@@ -8,7 +9,11 @@ module Firehose
         # Setup a handler for the websocket connection.
         def call(env)
           ws = Faye::WebSocket.new(env)
-          Handler.new(ws)
+          if Consumer.multiplexing_request?(env)
+            MultiplexingHandler.new(ws)
+          else
+            DefaultHandler.new(ws)
+          end
           ws.rack_response
         end
 
@@ -17,9 +22,6 @@ module Firehose
           Faye::WebSocket.websocket?(env)
         end
 
-        # Manages connection state for the web socket that's connected
-        # by the Consumer::WebSocket class. Deals with message sequence,
-        # connection, failures, and subscription state.
         class Handler
           def initialize(ws)
             @ws = ws
@@ -31,31 +33,36 @@ module Firehose
             @ws.onmessage = method :message
           end
 
-          # Subscribe the client to the channel on the server. Asks for
-          # the last sequence for clients that reconnect.
-          def subscribe(last_sequence)
-            @subscribed = true
-            @channel    = Server::Channel.new @req.path
-            @deferrable = @channel.next_message last_sequence
-            @deferrable.callback do |message, sequence|
-              Firehose.logger.debug "WS sent `#{message}` to `#{@req.path}` with sequence `#{sequence}`"
-              @ws.send self.class.wrap_frame(message, last_sequence)
-              subscribe sequence
-            end
-            @deferrable.errback do |e|
-              EM.next_tick { raise e.inspect } unless e == :disconnect
-            end
+          def parse_message(event)
+            JSON.parse(event.data, :symbolize_names => true) rescue {}
           end
 
+          # Send a JSON message to the client
+          # Expects message to be a Hash
+          def send_message(message)
+            @ws.send JSON.generate(message)
+          end
+
+          # Log errors if a socket fails. `close` will fire after this to clean up any
+          # remaining connectons.
+          def error(event)
+            Firehose.logger.error "WS connection `#{@req.path}` error. Message: `#{event.message.inspect}`"
+          end
+        end
+
+        # Manages connection state for the web socket that's connected
+        # by the Consumer::WebSocket class. Deals with message sequence,
+        # connection, failures, and subscription state.
+        class DefaultHandler < Handler
           # Manages messages sent from the connect client to the server. This is mostly
           # used to handle heart-beats that are designed to prevent the WebSocket connection
           # from timing out from inactivity.
           def message(event)
-            msg = JSON.parse(event.data, :symbolize_names => true) rescue {}
+            msg = parse_message(event)
             seq = msg[:message_sequence]
             if msg[:ping] == 'PING'
               Firehose.logger.debug "WS ping received, sending pong"
-              @ws.send JSON.generate :pong => 'PONG'
+              send_message pong: "PONG"
             elsif !@subscribed && seq.kind_of?(Integer)
               Firehose.logger.debug "Subscribing at message_sequence #{seq}"
               subscribe seq
@@ -77,16 +84,116 @@ module Firehose
             Firehose.logger.debug "WS connection `#{@req.path}` closing. Code: #{event.code.inspect}; Reason #{event.reason.inspect}"
           end
 
-          # Log errors if a socket fails. `close` will fire after this to clean up any
-          # remaining connectons.
-          def error(event)
-            Firehose.logger.error "WS connection `#{@req.path}` error. Message: `#{event.message.inspect}`"
+          # Subscribe the client to the channel on the server. Asks for
+          # the last sequence for clients that reconnect.
+          def subscribe(last_sequence)
+            @subscribed = true
+            @channel    = Server::Channel.new @req.path
+            @deferrable = @channel.next_message last_sequence
+            @deferrable.callback do |message, sequence|
+              Firehose.logger.debug "WS sent `#{message}` to `#{@req.path}` with sequence `#{sequence}`"
+              send_message message: message, last_sequence: last_sequence
+              subscribe sequence
+            end
+            @deferrable.errback do |e|
+              unless e == :disconnect
+                Firehose.logger.error "WS Error: #{e}"
+                EM.next_tick { raise e.inspect }
+              end
+            end
+          end
+        end
+
+        class MultiplexingHandler < Handler
+          class Subscription < Struct.new(:channel, :deferrable)
+            def close
+              deferrable.fail :disconnect
+              channel.unsubscribe(deferrable)
+            end
           end
 
-          # Wrap a message in a sequence so that the client can record this and give us
-          # the sequence when it reconnects.
-          def self.wrap_frame(message, last_sequence)
-            JSON.generate :message => message, :last_sequence => last_sequence
+          def initialize(ws)
+            super(ws)
+            @subscriptions = {}
+
+            channel_subscriptions = Consumer.multiplex_subscriptions(ws.env)
+
+            if channel_subscriptions.empty?
+              Firehose.logger.debug "No channel subscriptions provided: #{env["QUERY_STRING"]}"
+              return
+            end
+
+            subscribe_multiplexed(channel_subscriptions)
+          end
+
+          def message(event)
+            msg = parse_message(event)
+
+            if subscriptions = msg[:multiplex_subscribe]
+              return subscribe_multiplexed(subscriptions)
+            end
+
+            if channel_names = msg[:multiplex_unsubscribe]
+              return unsubscribe(channel_names)
+            end
+
+            if msg[:ping] == 'PING'
+              Firehose.logger.debug "WS ping received, sending pong"
+              return send_message pong: "PONG"
+            end
+          end
+
+          def open(event)
+            Firehose.logger.debug "Multiplexing Websocket connected: #{@req.path}"
+          end
+
+          def close(event)
+            @subscriptions.each_value(&:close)
+            @subscriptions.clear
+          end
+
+          def subscribe_multiplexed(subscriptions)
+            Array(subscriptions).each do |sub|
+              channel, sequence = sub[:channel], sub[:message_sequence]
+              next if channel.nil?
+
+              Firehose.logger.debug "Subscribing multiplexed to: #{sub}"
+              subscribe(channel, sequence.to_i)
+            end
+          end
+
+          # Subscribe the client to the channel on the server. Asks for
+          # the last sequence for clients that reconnect.
+          def subscribe(channel_name, last_sequence)
+            channel      = Server::Channel.new channel_name
+            deferrable   = channel.next_message last_sequence
+            subscription = Subscription.new(channel, deferrable)
+
+            @subscriptions[channel_name] = subscription
+
+            deferrable.callback do |message, sequence|
+              send_message(
+                channel: channel_name,
+                message: message,
+                last_sequence: last_sequence
+              )
+              Firehose.logger.debug "WS sent `#{message}` to `#{channel_name}` with sequence `#{sequence}`"
+              subscribe channel_name, sequence
+            end
+
+            deferrable.errback do |e|
+              EM.next_tick { raise e.inspect } unless e == :disconnect
+            end
+          end
+
+          def unsubscribe(channel_names)
+            Firehose.logger.debug "Unsubscribing from channels: #{channel_names}"
+            Array(channel_names).each do |chan|
+              if sub = @subscriptions[chan]
+                sub.close
+                @subscriptions.delete(chan)
+              end
+            end
           end
         end
       end

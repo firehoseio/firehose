@@ -13,8 +13,6 @@ describe 'Firehose.Transport', ->
     it 'sets a retry delay',      -> expect( @instance._retryDelay ).toEqual jasmine.any Number
 
   describe '#connect', ->
-    it 'returns itself', -> expect( @instance.connect() ).toBe @instance
-
     describe 'when given a 500 delay', ->
       beforeEach ->
         @clock = sinon.useFakeTimers()

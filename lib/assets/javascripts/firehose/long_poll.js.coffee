@@ -39,7 +39,7 @@ class Firehose.LongPoll extends Firehose.Transport
     # Set the Last Message Sequence in a query string.
     # Ideally we'd use an HTTP header, but android devices don't let us
     # set any HTTP headers for CORS requests.
-    data = @config.params
+    data = @_requestParams()
     data.last_message_sequence = @_lastMessageSequence
     # TODO: Some of these options will be deprecated in jQuery 1.8
     #       See: http://api.jquery.com/jQuery.ajax/#jqXHR
@@ -52,6 +52,9 @@ class Firehose.LongPoll extends Firehose.Transport
       success:      @_success
       error:        @_error
       cache:        false
+
+  _requestParams: =>
+    @config.params
 
   stop: =>
     @_stopRequestLoop = true
@@ -85,7 +88,7 @@ class Firehose.LongPoll extends Firehose.Transport
       method:       'HEAD'
       crossDomain:  true
       firehose:     true
-      data:         @config.params
+      data:         @_requestParams()
       success:      =>
         if @_needToNotifyOfReconnect
           @_needToNotifyOfReconnect = false
@@ -147,3 +150,33 @@ if $?.browser?.msie and parseInt($.browser.version, 10) in [8, 9]
             xdr.onerror = jQuery.noop()
             xdr.abort()
       }
+
+class Firehose.MultiplexedLongPoll extends Firehose.LongPoll
+  getLastMessageSequence: =>
+    @_lastMessageSequence or {}
+
+  _requestParams: =>
+    for channel, opts of @config.channels
+      if @_lastMessageSequence
+        opts.last_sequence = @_lastMessageSequence[channel]
+      else
+        opts.last_sequence = 0
+
+
+    @config.params = Firehose.MultiplexedConsumer.subscriptionQuery(@config)
+    @config.params
+
+  _success: (data, status, jqXhr) =>
+    if @_needToNotifyOfReconnect or not @_succeeded
+      @_needToNotifyOfReconnect = false
+      @_open data
+    return if @_stopRequestLoop
+    if jqXhr.status is 200
+      # Of course, IE's XDomainRequest doesn't support non-200 success codes.
+      try
+        message = JSON.parse jqXhr.responseText
+        @_lastMessageSequence ||= {}
+        @_lastMessageSequence[message.channel] = message.last_sequence
+        @config.message message
+      catch e
+    @connect @_okInterval

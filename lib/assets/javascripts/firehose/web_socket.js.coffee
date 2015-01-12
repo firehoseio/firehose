@@ -17,7 +17,7 @@ class Firehose.WebSocket extends Firehose.Transport
     # Run this in a try/catch block because IE10 inside of a .NET control
     # complains about security zones.
     try
-      @socket = new (if module?.exports? then global else window).WebSocket "#{@_protocol()}:#{@config.uri}?#{$.param @config.params}"
+      @socket = new (if module?.exports? then global else window).WebSocket "#{@_protocol()}:#{@config.uri}?#{$.param @_requestParams()}"
       @socket.onopen    = @_open
       @socket.onclose   = @_close
       @socket.onerror   = @_error
@@ -28,6 +28,9 @@ class Firehose.WebSocket extends Firehose.Transport
   # Protocol schema we should use for talking to firehose server.
   _protocol: =>
     if @config.ssl then "wss" else "ws"
+
+  _requestParams: =>
+    @config.params
 
   _open: =>
     sendPing @socket
@@ -68,8 +71,10 @@ class Firehose.WebSocket extends Firehose.Transport
     if @_needToNotifyOfDisconnect
       @_needToNotifyOfDisconnect = false
       @config.disconnected()
-    if @_succeeded then @connect @_retryDelay
-    else @config.failed @
+    if @_succeeded
+      @connect @_retryDelay
+    else if @config.failed
+      @config.failed @
 
   _cleanUp: =>
     @_clearKeepalive()
@@ -94,6 +99,30 @@ class Firehose.WebSocket extends Firehose.Transport
     if @keepaliveTimeout?
       clearTimeout @keepaliveTimeout
       @keepaliveTimeout = null
+
+class Firehose.MultiplexedWebSocket extends Firehose.WebSocket
+  getLastMessageSequence: =>
+    @_lastMessageSequence or {}
+
+  _requestParams: =>
+    for channel, opts of @config.channels
+      if @_lastMessageSequence
+        opts.last_sequence = @_lastMessageSequence[channel]
+      else
+        opts.last_sequence = 0
+
+    @config.params = Firehose.MultiplexedConsumer.subscriptionQuery(@config)
+    @config.params
+
+  _message: (event) =>
+    frame = @config.parse event.data
+    @_restartKeepAlive()
+    unless isPong frame
+      try
+        @_lastMessageSequence ||= {}
+        @_lastMessageSequence[frame.channel] = frame.last_sequence
+        @config.message frame
+      catch e
 
 sendPing = (socket) ->
   socket.send JSON.stringify ping: 'PING'

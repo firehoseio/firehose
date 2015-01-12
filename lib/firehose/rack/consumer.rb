@@ -10,6 +10,26 @@ module Firehose
       autoload :HttpLongPoll, 'firehose/rack/consumer/http_long_poll'
       autoload :WebSocket,    'firehose/rack/consumer/web_socket'
 
+      MULTIPLEX_CHANNEL = "channels@firehose"
+
+      def self.multiplexing_request?(env)
+        env["REQUEST_PATH"].include? MULTIPLEX_CHANNEL
+      end
+
+      def self.multiplex_subscriptions(env)
+        query_params = ::Rack::Utils.parse_query(env["QUERY_STRING"])
+
+        query_params["subscribe"].to_s.split(",").map do |sub|
+          chan, last_sequence = sub.split("!")
+          last_sequence = last_sequence.to_i
+          last_sequence = 0 if last_sequence < 0
+          {
+            channel: chan,
+            message_sequence: last_sequence
+          }
+        end
+      end
+
       # Let the client configure the consumer on initialization.
       def initialize
         yield self if block_given?

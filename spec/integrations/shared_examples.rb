@@ -23,7 +23,10 @@ shared_examples_for 'Firehose::Rack::App' do
   let(:messages)  { (1..200).map{|n| "msg-#{n}" } }
   let(:channel)   { "/firehose/integration/#{Time.now.to_i}" }
   let(:http_url)  { "http://#{uri.host}:#{uri.port}#{channel}" }
+  let(:http_multi_url) { "http://#{uri.host}:#{uri.port}/channels@firehose" }
   let(:ws_url)    { "ws://#{uri.host}:#{uri.port}#{channel}" }
+  let(:multiplex_channels) { ["/foo/bar", "/bar/baz", "/baz/quux"] }
+  let(:subscription_query) { multiplex_channels.map{|c| "#{c}!0"}.join(",") }
 
   it "supports pub-sub http and websockets" do
     # Setup variables that we'll use after we turn off EM to validate our
@@ -101,8 +104,88 @@ shared_examples_for 'Firehose::Rack::App' do
 
     # When EM stops, these assertions will be made.
     expect(received.size).to eql(4)
-    received.values.each do |arr|
-      expect(arr).to eql(messages)
+    received.each_value do |arr|
+      expect(arr.size).to eql(messages.size)
+      expect(arr.sort).to eql(messages.sort)
+    end
+
+  end
+
+  it "supports channel multiplexing for http_long_poll and websockets" do
+    # Setup variables that we'll use after we turn off EM to validate our
+    # test assertions.
+    outgoing, received = messages.dup, Hash.new{|h,k| h[k] = []}
+
+    # Our WS and Http clients call this when they have received their messages to determine
+    # when to turn off EM and make the test assertion at the very bottom.
+    succeed = Proc.new do
+      # TODO: For some weird reason the `add_timer` call causes up to 20 seconds of delay after
+      #       the test finishes running. However, without it the test will randomly fail with a
+      #       "Redis disconnected" error.
+      em.add_timer(1) { em.stop } if received.values.all?{|arr| arr.size == messages.size }
+    end
+
+    # Lets have an HTTP Long poll client using channel multiplexing
+    multiplexed_http_long_poll = Proc.new do |cid, last_sequence|
+      http = EM::HttpRequest.new(http_multi_url).get(:query => {'subscribe' => subscription_query})
+
+      http.errback { em.stop }
+      http.callback do
+        frame = JSON.parse(http.response, :symbolize_names => true)
+        received[cid] << frame[:message]
+        if received[cid].size < messages.size
+          # Add some jitter so the clients aren't syncronized
+          EM::add_timer(rand*0.001) { multiplexed_http_long_poll.call cid, frame[:last_sequence] }
+        else
+          succeed.call cid
+        end
+      end
+    end
+
+    # Test multiplexed web socket client
+    outgoing = messages.dup
+    publish_multi = Proc.new do
+      msg = outgoing.shift
+      chan = multiplex_channels[rand(multiplex_channels.size)]
+      Firehose::Client::Producer::Http.new.publish(msg).to(chan) do
+        EM::add_timer(rand*0.005) { publish_multi.call } unless outgoing.empty?
+      end
+    end
+
+    multiplexed_websocket = Proc.new do |cid|
+      ws = Faye::WebSocket::Client.new("ws://#{uri.host}:#{uri.port}/channels@firehose?subscribe=#{subscription_query}")
+
+      ws.onmessage = lambda do |event|
+        frame = JSON.parse(event.data, :symbolize_names => true)
+        received[cid] << frame[:message]
+        succeed.call cid unless received[cid].size < messages.size
+      end
+
+      ws.onclose = lambda do |event|
+        ws = nil
+      end
+
+      ws.onerror = lambda do |event|
+        raise 'ws failed' + "\n" + event.inspect
+      end
+    end
+
+    em 180 do
+      # Start the clients.
+      multiplexed_http_long_poll.call(5)
+      multiplexed_http_long_poll.call(6)
+      multiplexed_websocket.call(7)
+      multiplexed_websocket.call(8)
+
+      # Wait a sec to let our clients set up.
+      em.add_timer(1){ publish_multi.call }
+    end
+
+    # When EM stops, these assertions will be made.
+    expect(received.size).to eql(4)
+    received.each_value do |arr|
+      expect(arr.size).to be <= messages.size
+      # expect(arr.sort).to eql(messages.sort)
     end
   end
 

@@ -1,0 +1,46 @@
+Firehose.multiplexChannel = "<%= Firehose::Rack::Consumer::MULTIPLEX_CHANNEL %>"
+
+class Firehose.MultiplexedConsumer extends Firehose.Consumer
+  @subscriptionQuery: (config) ->
+    {
+      subscribe: [
+        "#{channel}!#{opts.last_sequence || 0}" for channel, opts of config.channels
+      ].join(",")
+    }
+
+  @normalizeChannels: (config) ->
+    for chan, opts of config.channels
+      if chan[0] != "/"
+        delete config.channels[chan]
+        config.channels["/" + chan] = opts
+
+  constructor: (@config = {}) ->
+    @messageHandlers = {}
+    @config.message ||= @message
+    @config.uri += Firehose.multiplexChannel
+
+    @config.params = Firehose.MultiplexedConsumer.subscriptionQuery(@config)
+
+    Firehose.MultiplexedConsumer.normalizeChannels(@config)
+    for channel, opts of @config.channels
+      @subscribe(channel, opts)
+
+    super(@config)
+
+  websocketTransport: (config) =>
+    new Firehose.MultiplexedWebSocket(config)
+
+  longpollTransport: (config) =>
+    new Firehose.MultiplexedLongPoll(config)
+
+  message: (msg) =>
+    if handler = @messageHandlers[msg.channel]
+      handler(@config.parse msg.message)
+
+  subscribe: (channel, opts) =>
+    if opts.message
+      @messageHandlers[channel] = opts.message
+
+  unsubscribe: (channelNames...) =>
+    for chan in channelNames
+      delete @messageHandlers[chan]
