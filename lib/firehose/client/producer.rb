@@ -42,8 +42,9 @@ module Firehose
 
         # Publish the message via HTTP.
         def put(message, channel, opts, &block)
-          ttl = opts[:ttl]
-          timeout = opts[:timeout] || @timeout || DEFAULT_TIMEOUT
+          ttl         = opts[:ttl]
+          timeout     = opts[:timeout] || @timeout || DEFAULT_TIMEOUT
+          buffer_size = opts[:buffer_size]
 
           response = conn.put do |req|
             req.options[:timeout] = timeout
@@ -60,6 +61,7 @@ module Firehose
             end
             req.body = message
             req.headers['Cache-Control'] = "max-age=#{ttl.to_i}" if ttl
+            req.headers["X-Firehose-Buffer-Size"] = buffer_size.to_s if buffer_size
           end
           response.on_complete do
             case response.status

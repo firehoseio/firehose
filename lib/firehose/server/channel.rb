@@ -2,7 +2,8 @@ module Firehose
   module Server
     # Connects to a specific channel on Redis and listens for messages to notify subscribers.
     class Channel
-      attr_reader :channel_key, :redis, :subscriber, :list_key, :sequence_key
+      attr_reader :channel_key, :list_key, :sequence_key
+      attr_reader :redis, :subscriber
 
       def self.redis
         @redis ||= EM::Hiredis.connect
@@ -13,8 +14,11 @@ module Firehose
       end
 
       def initialize(channel_key, redis=self.class.redis, subscriber=self.class.subscriber)
-        @channel_key, @redis, @subscriber = channel_key, redis, subscriber
-        @list_key, @sequence_key = Server.key(channel_key, :list), Server.key(channel_key, :sequence)
+        @redis        = redis
+        @subscriber   = subscriber
+        @channel_key  = channel_key
+        @list_key     = Server.key(channel_key, :list)
+        @sequence_key = Server.key(channel_key, :sequence)
       end
 
       def next_message(last_sequence=nil, options={})
@@ -28,7 +32,7 @@ module Firehose
         redis.multi
           redis.get(sequence_key).
             errback {|e| deferrable.fail e }
-          redis.lrange(list_key, 0, Server::Publisher::MAX_MESSAGES).
+          redis.lrange(list_key, 0, Server::Publisher::BUFFER_SIZE).
             errback {|e| deferrable.fail e }
         redis.exec.callback do |(sequence, message_list)|
           Firehose.logger.debug "exec returned: `#{sequence}` and `#{message_list.inspect}`"
@@ -39,7 +43,7 @@ module Firehose
             # Either this resource has never been seen before or we are all caught up.
             # Subscribe and hope something gets published to this end-point.
             subscribe(deferrable, options[:timeout])
-          elsif last_sequence > 0 && diff < Server::Publisher::MAX_MESSAGES
+          elsif last_sequence > 0 && diff < Server::Publisher::BUFFER_SIZE
             # The client is kinda-sorta running behind, but has a chance to catch
             # up. Catch them up FTW.
             # But we won't "catch them up" if last_sequence was zero/nil because
