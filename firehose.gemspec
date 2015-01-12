@@ -23,7 +23,9 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency "eventmachine", ">= 1.0.0"
   s.add_runtime_dependency "em-hiredis", ">= 0.2.0"
   s.add_runtime_dependency "thor"
-  s.add_runtime_dependency "faraday"
+  # faraday 0.9.1 causes some specs to fail
+  # need to investigate this further
+  s.add_runtime_dependency "faraday", "0.9.0"
   s.add_runtime_dependency "faye-websocket"
   s.add_runtime_dependency "em-http-request", ">= 1.0.0"
   s.add_runtime_dependency "json"
