@@ -13,7 +13,7 @@ module Firehose
       MULTIPLEX_CHANNEL = "channels@firehose"
 
       def self.multiplexing_request?(env)
-        env["REQUEST_PATH"].include? MULTIPLEX_CHANNEL
+        env["PATH_INFO"].include? MULTIPLEX_CHANNEL
       end
 
       def self.multiplex_subscriptions(env)

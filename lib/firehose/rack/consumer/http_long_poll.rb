@@ -34,7 +34,8 @@ module Firehose
           def call(env)
             request = request(env)
 
-            case request.request_method
+            method = request.request_method
+            case method
             # GET is how clients subscribe to the queue. When a messages comes in, we flush out a response,
             # close down the requeust, and the client then reconnects.
             when 'GET'
@@ -45,7 +46,7 @@ module Firehose
 
             else
               Firehose.logger.debug "HTTP #{method} not supported"
-              response(501, "#{method} not supported.")
+              response(405, "#{method} not supported.", "Allow" => "GET")
             end
           end
 
