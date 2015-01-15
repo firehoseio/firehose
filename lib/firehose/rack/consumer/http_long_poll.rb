@@ -46,7 +46,7 @@ module Firehose
 
             else
               Firehose.logger.debug "HTTP #{method} not supported"
-              response(501, "#{method} not supported.")
+              response(405, "#{method} not supported.", "Allow" => "GET")
             end
           end
 
