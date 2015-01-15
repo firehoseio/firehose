@@ -34,7 +34,8 @@ module Firehose
           def call(env)
             request = request(env)
 
-            case request.request_method
+            method = request.request_method
+            case method
             # GET is how clients subscribe to the queue. When a messages comes in, we flush out a response,
             # close down the requeust, and the client then reconnects.
             when 'GET'
