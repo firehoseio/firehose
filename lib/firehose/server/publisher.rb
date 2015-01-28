@@ -64,9 +64,10 @@ module Firehose
         [channel_key, sequence, message].join(PAYLOAD_DELIMITER)
       end
 
-      # Deserealize components of a message back into Ruby.
+      # Deserialize components of a message back into Ruby.
       def self.from_payload(payload)
-        payload.split(PAYLOAD_DELIMITER, method(:to_payload).arity)
+        @payload_size ||= method(:to_payload).arity
+        payload.split(PAYLOAD_DELIMITER, @payload_size)
       end
 
       # TODO: Make this FAR more robust. Ideally we'd whitelist the permitted
