@@ -13,6 +13,9 @@ class Firehose.WebSocket extends Firehose.Transport
     @config.webSocket ||= {}
     @config.webSocket.connectionVerified = @config.connectionVerified
 
+  _sendMessage: (message) =>
+    @socket?.send(JSON.stringify message)
+
   _request: =>
     # Run this in a try/catch block because IE10 inside of a .NET control
     # complains about security zones.
@@ -46,7 +49,7 @@ class Firehose.WebSocket extends Firehose.Transport
   sendStartingMessageSequence: (message_sequence) =>
     @_lastMessageSequence = message_sequence
     @socket.onmessage     = @_message
-    @socket.send JSON.stringify {message_sequence}
+    @_sendMessage({message_sequence})
     @_needToNotifyOfDisconnect = true
     Firehose.Transport::_open.call @
 
@@ -101,6 +104,19 @@ class Firehose.WebSocket extends Firehose.Transport
       @keepaliveTimeout = null
 
 class Firehose.MultiplexedWebSocket extends Firehose.WebSocket
+  constructor: (args) ->
+    super args
+
+  subscribe: (channel, opts) =>
+    @_sendMessage
+      multiplex_subscribe:
+        channel: channel
+        message_sequence: opts.last_sequence
+
+  unsubscribe: (channelNames...) =>
+    @_sendMessage
+      multiplex_unsubscribe: channelNames
+
   getLastMessageSequence: =>
     @_lastMessageSequence or {}
 

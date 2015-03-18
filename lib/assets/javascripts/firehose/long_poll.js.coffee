@@ -152,6 +152,12 @@ if $?.browser?.msie and parseInt($.browser.version, 10) in [8, 9]
       }
 
 class Firehose.MultiplexedLongPoll extends Firehose.LongPoll
+  subscribe: (channel, opts) =>
+    # nothing to be done
+
+  unsubscribe: (channelNames...) =>
+    # same here
+
   getLastMessageSequence: =>
     @_lastMessageSequence or {}
 

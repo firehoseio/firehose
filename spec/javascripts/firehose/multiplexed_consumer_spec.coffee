@@ -37,3 +37,30 @@ describe 'Firehose.MultiplexedConsumer', ->
       expect(@receivedMessages).toEqual(
         {message: "msg-#{i}"} for i in [1,2,3,4,5,6,7,8,9,10,16,17,18,19,20]
       )
+
+  describe "dynamic subscription handling", ->
+    it "subscribes & unsubscribes to a channel dynamically", ->
+      @instance.connect()
+      messages = []
+
+      @instance.message({channel: "/dynamic", message: JSON.stringify { message: "hello 1" }})
+      @instance.message({channel: "/dynamic", message: JSON.stringify { message: "hello 2" }})
+
+      expect(messages).toEqual([])
+
+      @instance.subscribe "/dynamic",
+        message: (msg) ->
+          messages.push(msg)
+
+      @instance.message({channel: "/dynamic", message: JSON.stringify { message: "hello 3" }})
+      @instance.message({channel: "/dynamic", message: JSON.stringify { message: "hello 4" }})
+
+      @instance.unsubscribe "/dynamic"
+
+      @instance.message({channel: "/dynamic", message: JSON.stringify { message: "hello 5" }})
+      @instance.message({channel: "/dynamic", message: JSON.stringify { message: "hello 6" }})
+
+      expect(messages).toEqual([
+        {message: "hello 3"},
+        {message: "hello 4"},
+      ])
