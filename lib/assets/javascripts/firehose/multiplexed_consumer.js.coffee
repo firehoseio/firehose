@@ -17,6 +17,7 @@ class Firehose.MultiplexedConsumer extends Firehose.Consumer
   constructor: (@config = {}) ->
     @messageHandlers = {}
     @config.message ||= @message
+    @config.channels ||= {}
     @config.uri += Firehose.multiplexChannel
 
     @config.params = Firehose.MultiplexedConsumer.subscriptionQuery(@config)
