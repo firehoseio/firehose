@@ -14,6 +14,12 @@ class Firehose.MultiplexedConsumer extends Firehose.Consumer
         delete config.channels[chan]
         config.channels["/" + chan] = opts
 
+  @normalizeChannel: (channel) ->
+    if channel[0] != "/"
+      return "/" + channel
+    else
+      return channel
+
   constructor: (@config = {}) ->
     @messageHandlers = {}
     @config.message ||= @message
@@ -51,6 +57,7 @@ class Firehose.MultiplexedConsumer extends Firehose.Consumer
     @config.params = Firehose.MultiplexedConsumer.subscriptionQuery(@config)
 
   subscribe: (channel, opts = {}) =>
+    channel = Firehose.MultiplexedConsumer.normalizeChannel(channel)
     @config.channels[channel] = opts
 
     @_updateParams()
@@ -59,6 +66,7 @@ class Firehose.MultiplexedConsumer extends Firehose.Consumer
 
   unsubscribe: (channelNames...) =>
     for channel in channelNames
+      channel = Firehose.MultiplexedConsumer.normalizeChannel(channel)
       delete @config.channels[channel]
 
     @_updateParams()

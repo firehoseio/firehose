@@ -25,10 +25,11 @@ class Firehose.LongPoll extends Firehose.Transport
     @config.longPoll.timeout ||= 25000
     # TODO - What is @_lagTime for? Can't we just use the @_timeout value?
     # We use the lag time to make the client live longer than the server.
-    @_lagTime         = 5000
-    @_timeout         = @config.longPoll.timeout + @_lagTime
-    @_okInterval      = @config.okInterval || 0
-    @_stopRequestLoop = false
+    @_lagTime                  = 5000
+    @_timeout                  = @config.longPoll.timeout + @_lagTime
+    @_okInterval               = @config.okInterval || 0
+    @_stopRequestLoop          = false
+    @_lastMessageSequence      = 0
 
   # Protocol schema we should use for talking to firehose server.
   _protocol: =>
@@ -74,7 +75,7 @@ class Firehose.LongPoll extends Firehose.Transport
       # Of course, IE's XDomainRequest doesn't support non-200 success codes.
       try
         {message, last_sequence} = JSON.parse jqXhr.responseText
-        @_lastMessageSequence    = last_sequence
+        @_lastMessageSequence    = last_sequence || 0
         @config.message @config.parse message
       catch e
     @connect @_okInterval
@@ -84,7 +85,7 @@ class Firehose.LongPoll extends Firehose.Transport
     # jQuery CORS doesn't support timeouts and there is no way to access xhr2 object
     # directly so we can't manually set a timeout.
     @_lastPingRequest = $.ajax
-      url:          @config.longPoll.url
+      url:          @config.uri
       method:       'HEAD'
       crossDomain:  true
       firehose:     true
@@ -152,22 +153,36 @@ if $?.browser?.msie and parseInt($.browser.version, 10) in [8, 9]
       }
 
 class Firehose.MultiplexedLongPoll extends Firehose.LongPoll
+  constructor: (args) ->
+    super args
+    @_lastMessageSequence = {}
+
   subscribe: (channel, opts) =>
     # nothing to be done
 
   unsubscribe: (channelNames...) =>
     # same here
 
-  getLastMessageSequence: =>
-    @_lastMessageSequence or {}
+  _request: =>
+    return if @_stopRequestLoop
+    data = @_requestParams()
+
+    @_lastRequest = $.ajax
+      url:          @config.uri
+      firehose:     true
+      crossDomain:  true
+      data:         data
+      timeout:      @_timeout
+      success:      @_success
+      error:        @_error
+      cache:        false
 
   _requestParams: =>
     for channel, opts of @config.channels
-      if @_lastMessageSequence
-        opts.last_sequence = @_lastMessageSequence[channel]
+      if seq = @_lastMessageSequence[channel]
+        opts.last_sequence = seq
       else
         opts.last_sequence = 0
-
 
     @config.params = Firehose.MultiplexedConsumer.subscriptionQuery(@config)
     @config.params

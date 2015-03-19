@@ -119,7 +119,7 @@ module Firehose
             channel_subscriptions = Consumer.multiplex_subscriptions(ws.env)
 
             if channel_subscriptions.empty?
-              Firehose.logger.debug "No channel subscriptions provided: #{env["QUERY_STRING"]}"
+              Firehose.logger.debug "No channel subscriptions provided: #{ws.env["QUERY_STRING"]}"
               return
             end
 
