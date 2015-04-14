@@ -55,7 +55,7 @@ class Firehose.LongPoll extends Firehose.Transport
       cache:        false
 
   _requestParams: =>
-    @config.params
+    @config.params || {}
 
   stop: =>
     @_stopRequestLoop = true
@@ -100,7 +100,7 @@ class Firehose.LongPoll extends Firehose.Transport
   _error: (jqXhr, status, error) =>
     unless @_needToNotifyOfReconnect or @_stopRequestLoop
       @_needToNotifyOfReconnect = true
-      @config.disconnected()
+      @config.disconnected?()
     unless @_stopRequestLoop
       # Ping the server to make sure this isn't a network connectivity error
       setTimeout @_ping, @_retryDelay + @_lagTime
