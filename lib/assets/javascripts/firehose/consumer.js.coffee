@@ -18,8 +18,18 @@ class Firehose.Consumer
     # Do stuff before we send the message into config.message. The sensible
     # default on the webs is to parse JSON.
     @config.parse        ||= JSON.parse
+
+    @_isConnected = false
+    origConnected = @config.connected
+    @config.connected = =>
+      @_isConnected = true
+      origConnected()
+
     # Make sure we return ourself out of the constructor so we can chain.
     this
+
+  connected: =>
+    @_isConnected
 
   websocketTransport: (config) =>
     new Firehose.WebSocket(config)

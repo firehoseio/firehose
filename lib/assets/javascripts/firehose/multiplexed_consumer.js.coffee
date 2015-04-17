@@ -65,6 +65,8 @@ class Firehose.MultiplexedConsumer extends Firehose.Consumer
     @transport.subscribe(channel, opts)
 
   unsubscribe: (channelNames...) =>
+    return unless @connected()
+
     for channel in channelNames
       channel = Firehose.MultiplexedConsumer.normalizeChannel(channel)
       delete @config.channels[channel]
