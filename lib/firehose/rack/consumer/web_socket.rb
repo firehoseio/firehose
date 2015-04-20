@@ -130,6 +130,7 @@ module Firehose
             msg = parse_message(event)
 
             if subscriptions = msg[:multiplex_subscribe]
+              subscriptions = [subscriptions] unless subscriptions.is_a?(Array)
               return subscribe_multiplexed(subscriptions)
             end
 
@@ -153,11 +154,12 @@ module Firehose
           end
 
           def subscribe_multiplexed(subscriptions)
-            Array(subscriptions).each do |sub|
+            subscriptions.each do |sub|
+              Firehose.logger.debug "Subscribing multiplexed to: #{sub}"
+
               channel, sequence = sub[:channel], sub[:message_sequence]
               next if channel.nil?
 
-              Firehose.logger.debug "Subscribing multiplexed to: #{sub}"
               subscribe(channel, sequence.to_i)
             end
           end
