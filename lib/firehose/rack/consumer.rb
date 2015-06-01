@@ -16,12 +16,31 @@ module Firehose
         env["PATH_INFO"].include? MULTIPLEX_CHANNEL
       end
 
-      def self.multiplex_subscriptions(env)
+      def self.multiplex_subscriptions(request)
+        if request.get?
+          query_string_subscriptions(request.env)
+        elsif request.post?
+          post_subscriptions(request)
+        end
+      end
+
+      def self.query_string_subscriptions(env)
         query_params = ::Rack::Utils.parse_query(env["QUERY_STRING"])
 
         query_params["subscribe"].to_s.split(",").map do |sub|
           chan, last_sequence = sub.split("!")
           last_sequence = last_sequence.to_i
+          last_sequence = 0 if last_sequence < 0
+          {
+            channel: chan,
+            message_sequence: last_sequence
+          }
+        end
+      end
+
+      def self.post_subscriptions(request)
+        body = request.body.read
+        subs = JSON.parse(body).map do |chan, last_sequence|
           last_sequence = 0 if last_sequence < 0
           {
             channel: chan,

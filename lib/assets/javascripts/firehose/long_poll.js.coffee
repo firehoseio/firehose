@@ -165,27 +165,33 @@ class Firehose.MultiplexedLongPoll extends Firehose.LongPoll
 
   _request: =>
     return if @_stopRequestLoop
-    data = @_requestParams()
+    data = @_subscriptions()
 
     @_lastRequest = $.ajax
       url:          @config.uri
-      firehose:     true
-      crossDomain:  true
+      method:       "POST"
       data:         data
+      dataType:     "json"
+      crossDomain:  true
       timeout:      @_timeout
       success:      @_success
       error:        @_error
       cache:        false
 
-  _requestParams: =>
+  _updateLastMessageSequences: =>
     for channel, opts of @config.channels
       if seq = @_lastMessageSequence[channel]
         opts.last_sequence = seq
       else
-        opts.last_sequence = 0
+        unless opts.last_sequence
+          opts.last_sequence = 0
 
-    @config.params = Firehose.MultiplexedConsumer.subscriptionQuery(@config)
-    @config.params
+  _subscriptions: =>
+    @_updateLastMessageSequences()
+    subs = {}
+    for channel, opts of @config.channels
+      subs[channel] = opts.last_sequence || 0
+    JSON.stringify(subs)
 
   _success: (data, status, jqXhr) =>
     if @_needToNotifyOfReconnect or not @_succeeded

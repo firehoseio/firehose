@@ -33,21 +33,24 @@ module Firehose
 
           def call(env)
             request = request(env)
+            method  = request.request_method
 
-            method = request.request_method
             case method
             # GET is how clients subscribe to the queue. When a messages comes in, we flush out a response,
             # close down the requeust, and the client then reconnects.
-            when 'GET'
-              handle_get_request(request, env)
-
-              # Tell the web server that this will be an async response.
-              ASYNC_RESPONSE
-
-            else
-              Firehose.logger.debug "HTTP #{method} not supported"
-              response(405, "#{method} not supported.", "Allow" => "GET")
+            when "GET"
+              handle_request(request, env)
+              return ASYNC_RESPONSE
+            # we use post messages for http long poll multiplexing
+            when "POST"
+              if Consumer.multiplexing_request?(env)
+                handle_request(request, env)
+                return ASYNC_RESPONSE
+              end
             end
+
+            Firehose.logger.debug "HTTP #{method} not supported"
+            response(405, "#{method} not supported.", "Allow" => "GET")
           end
 
           private
@@ -71,8 +74,6 @@ module Firehose
           end
 
           def respond_async(channel, last_sequence, env)
-            log_get_request(channel, last_sequence, env)
-
             EM.next_tick do
               if last_sequence < 0
                 env['async.callback'].call response(400, "The last_message_sequence parameter may not be less than zero", response_headers(env))
@@ -97,17 +98,19 @@ module Firehose
             JSON.generate :message => message, :last_sequence => last_sequence
           end
 
-          def log_get_request(path, last_sequence, env)
+          def log_request(path, last_sequence, env)
             Firehose.logger.debug "HTTP GET with last_sequence #{last_sequence} for path #{path} with query #{env["QUERY_STRING"].inspect}"
           end
 
-          def handle_get_request(request, env)
+          def handle_request(request, env)
             # Get the Last Message Sequence from the query string.
             # Ideally we'd use an HTTP header, but android devices don't let us
             # set any HTTP headers for CORS requests.
             last_sequence = request.params['last_message_sequence'].to_i
+            channel       = request.path
 
-            respond_async(request.path, last_sequence, env)
+            log_request   channel, last_sequence, env
+            respond_async channel, last_sequence, env
           end
         end
 
@@ -116,12 +119,17 @@ module Firehose
             JSON.generate channel: channel, :message => message, :last_sequence => last_sequence
           end
 
-          def log_get_request(path, last_sequence, env)
-            Firehose.logger.debug "HTTP multiplexing GET with query #{env["QUERY_STRING"].inspect}"
+          def log_request(request, subscriptions, env)
+            if request.post?
+              Firehose.logger.debug "HTTP multiplexing POST, subscribing #{subscriptions.inspect}"
+            else
+              Firehose.logger.debug "HTTP multiplexing GET with query #{env["QUERY_STRING"].inspect}"
+            end
           end
 
-          def handle_get_request(request, env)
-            subscriptions = Consumer.multiplex_subscriptions(env)
+          def handle_request(request, env)
+            subscriptions = Consumer.multiplex_subscriptions(request)
+            log_request request, subscriptions, env
             subscriptions.each do |sub|
               respond_async(sub[:channel], sub[:message_sequence], env)
             end

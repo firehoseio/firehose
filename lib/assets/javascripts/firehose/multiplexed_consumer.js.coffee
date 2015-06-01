@@ -26,9 +26,8 @@ class Firehose.MultiplexedConsumer extends Firehose.Consumer
     @config.channels ||= {}
     @config.uri += Firehose.multiplexChannel
 
-    @config.params = Firehose.MultiplexedConsumer.subscriptionQuery(@config)
+    @_updateSubscriptions()
 
-    Firehose.MultiplexedConsumer.normalizeChannels(@config)
     for channel, opts of @config.channels
       @_addSubscriptionHandler(channel, opts)
 
@@ -52,15 +51,14 @@ class Firehose.MultiplexedConsumer extends Firehose.Consumer
     for chan in channelNames
       delete @messageHandlers[chan]
 
-  _updateParams: =>
+  _updateSubscriptions: =>
     Firehose.MultiplexedConsumer.normalizeChannels(@config)
-    @config.params = Firehose.MultiplexedConsumer.subscriptionQuery(@config)
 
   subscribe: (channel, opts = {}) =>
     channel = Firehose.MultiplexedConsumer.normalizeChannel(channel)
     @config.channels[channel] = opts
 
-    @_updateParams()
+    @_updateSubscriptions()
     @_addSubscriptionHandler(channel, opts)
     @transport.subscribe(channel, opts)
 
@@ -71,6 +69,6 @@ class Firehose.MultiplexedConsumer extends Firehose.Consumer
       channel = Firehose.MultiplexedConsumer.normalizeChannel(channel)
       delete @config.channels[channel]
 
-    @_updateParams()
+    @_updateSubscriptions()
     @_removeSubscriptionHandler(channelNames...)
     @transport.unsubscribe(channelNames...)

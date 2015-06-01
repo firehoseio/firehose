@@ -115,15 +115,7 @@ module Firehose
           def initialize(ws)
             super(ws)
             @subscriptions = {}
-
-            channel_subscriptions = Consumer.multiplex_subscriptions(ws.env)
-
-            if channel_subscriptions.empty?
-              Firehose.logger.debug "No channel subscriptions provided: #{ws.env["QUERY_STRING"]}"
-              return
-            end
-
-            subscribe_multiplexed(channel_subscriptions)
+            subscribe_multiplexed Consumer.multiplex_subscriptions(@req)
           end
 
           def message(event)
