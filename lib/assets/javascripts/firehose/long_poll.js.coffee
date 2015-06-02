@@ -169,10 +169,11 @@ class Firehose.MultiplexedLongPoll extends Firehose.LongPoll
 
     @_lastRequest = $.ajax
       url:          @config.uri
+      firehose:     true
+      crossDomain:  true
       method:       "POST"
       data:         data
       dataType:     "json"
-      crossDomain:  true
       timeout:      @_timeout
       success:      @_success
       error:        @_error
