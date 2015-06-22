@@ -73,19 +73,34 @@ module Firehose
             env['parsed_request'] ||= ::Rack::Request.new(env)
           end
 
+          def async_callback(env, code, message = "", headers = nil)
+            resp_headers = response_headers(env)
+
+            if headers
+              resp_headers.merge!(headers)
+            end
+
+            if cb = env["async.callback"]
+              cb.call response(code, message, resp_headers)
+            else
+              Firehose.logger.error "async.callback not set for response: #{message.inspect}"
+            end
+          end
+
           def respond_async(channel, last_sequence, env)
             EM.next_tick do
               if last_sequence < 0
-                env['async.callback'].call response(400, "The last_message_sequence parameter may not be less than zero", response_headers(env))
+                async_callback env, 400, "The last_message_sequence parameter may not be less than zero"
               else
                 Server::Channel.new(channel).next_message(last_sequence, :timeout => @timeout).callback do |message, sequence|
-                  env['async.callback'].call response(200, wrap_frame(channel, message, sequence), response_headers(env))
+                  async_callback env, 200, wrap_frame(channel, message, sequence)
                 end.errback do |e|
                   if e == :timeout
-                    env['async.callback'].call response(204, '', response_headers(env))
+                    Firehose.logger.info "Channel#next_message timed out for #{channel} with last_sequence #{last_sequence}"
+                    async_callback env, 204
                   else
-                    Firehose.logger.error "Unexpected error when trying to GET last_sequence #{last_sequence} for path #{path}: #{e.inspect}"
-                    env['async.callback'].call response(500, 'Unexpected error', response_headers(env))
+                    Firehose.logger.error "Unexpected error when trying to GET last_sequence #{last_sequence} for path #{channel}: #{e.inspect}"
+                    async_callback env, 500, "Unexpected error"
                   end
                 end
               end
