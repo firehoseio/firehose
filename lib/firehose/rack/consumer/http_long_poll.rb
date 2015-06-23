@@ -96,7 +96,6 @@ module Firehose
                   async_callback env, 200, wrap_frame(channel, message, sequence)
                 end.errback do |e|
                   if e == :timeout
-                    Firehose.logger.info "Channel#next_message timed out for #{channel} with last_sequence #{last_sequence}"
                     async_callback env, 204
                   else
                     Firehose.logger.error "Unexpected error when trying to GET last_sequence #{last_sequence} for path #{channel}: #{e.inspect}"
