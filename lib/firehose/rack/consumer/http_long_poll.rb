@@ -1,4 +1,4 @@
-require 'json'
+require 'oj'
 
 module Firehose
   module Rack
@@ -109,7 +109,7 @@ module Firehose
 
         class DefaultHandler < Handler
           def wrap_frame(channel, message, last_sequence)
-            JSON.generate :message => message, :last_sequence => last_sequence
+            Oj.dump "message" => message, "last_sequence" => last_sequence
           end
 
           def log_request(path, last_sequence, env)
@@ -130,7 +130,7 @@ module Firehose
 
         class MultiplexingHandler < Handler
           def wrap_frame(channel, message, last_sequence)
-            JSON.generate channel: channel, :message => message, :last_sequence => last_sequence
+            Oj.dump "channel" => channel, "message" => message, "last_sequence" => last_sequence
           end
 
           def log_request(request, subscriptions, env)

@@ -1,6 +1,6 @@
 require 'spec_helper'
 require 'integrations/integration_test_helper'
-require 'json'
+require 'oj'
 
 shared_examples_for 'Firehose::Rack::App' do
   include EM::TestHelper
@@ -56,11 +56,11 @@ shared_examples_for 'Firehose::Rack::App' do
       http = EM::HttpRequest.new(http_url).get(:query => {'last_message_sequence' => last_sequence})
       http.errback { em.stop }
       http.callback do
-        frame = JSON.parse(http.response, :symbolize_names => true)
-        received[cid] << frame[:message]
+        frame = Oj.load(http.response)
+        received[cid] << frame["message"]
         if received[cid].size < messages.size
           # Add some jitter so the clients aren't syncronized
-          EM::add_timer(rand*0.001) { http_long_poll.call cid, frame[:last_sequence] }
+          EM::add_timer(rand*0.001) { http_long_poll.call cid, frame["last_sequence"] }
         else
           succeed.call cid
         end
@@ -76,8 +76,8 @@ shared_examples_for 'Firehose::Rack::App' do
       end
 
       ws.onmessage = lambda do |event|
-        frame = JSON.parse(event.data, :symbolize_names => true)
-        received[cid] << frame[:message]
+        frame = Oj.load(event.data)
+        received[cid] << frame["message"]
         succeed.call cid unless received[cid].size < messages.size
       end
 
@@ -131,11 +131,11 @@ shared_examples_for 'Firehose::Rack::App' do
 
       http.errback { em.stop }
       http.callback do
-        frame = JSON.parse(http.response, :symbolize_names => true)
-        received[cid] << frame[:message]
+        frame = Oj.load(http.response)
+        received[cid] << frame["message"]
         if received[cid].size < messages.size
           # Add some jitter so the clients aren't syncronized
-          EM::add_timer(rand*0.001) { multiplexed_http_long_poll.call cid, frame[:last_sequence] }
+          EM::add_timer(rand*0.001) { multiplexed_http_long_poll.call cid, frame["last_sequence"] }
         else
           succeed.call cid
         end
@@ -156,8 +156,8 @@ shared_examples_for 'Firehose::Rack::App' do
       ws = Faye::WebSocket::Client.new("ws://#{uri.host}:#{uri.port}/channels@firehose?subscribe=#{subscription_query}")
 
       ws.onmessage = lambda do |event|
-        frame = JSON.parse(event.data, :symbolize_names => true)
-        received[cid] << frame[:message]
+        frame = Oj.load(event.data)
+        received[cid] << frame["message"]
         succeed.call cid unless received[cid].size < messages.size
       end
 

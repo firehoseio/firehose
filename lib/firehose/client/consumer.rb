@@ -1,4 +1,4 @@
-require 'json'
+require 'oj'
 
 # TODO - Spec this thing out. Unfortunately its not tested at all, mostly because the JSON client
 # is more important (and tested). Still, this should be tested, at least used by the specs
@@ -6,7 +6,7 @@ require 'json'
 module Firehose
   module Client
     module Consumer
-      # TODO - Test this libs. I had to throw these quickly into our app so that we could get 
+      # TODO - Test this libs. I had to throw these quickly into our app so that we could get
       #        some stress testing out of the way.
       # TODO - Replace the integration test clients with these guys. You'll want to refactor each
       #        transport to use on(:message), on(:conncect), and on(:disconnect) callbacks.
@@ -65,7 +65,7 @@ module Firehose
           http.callback do
             case status = http.response_header.status
             when 200
-              json = JSON.parse(http.response)
+              json = Oj.load(http.response)
               next_sequence = json['last_sequence'].to_i
               message = json['message']
 

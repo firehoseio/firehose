@@ -1,4 +1,4 @@
-require 'json'
+require 'oj'
 
 module Firehose
   module Rack
@@ -40,7 +40,7 @@ module Firehose
 
       def self.post_subscriptions(request)
         body = request.body.read
-        subs = JSON.parse(body).map do |chan, last_sequence|
+        subs = Oj.load(body).map do |chan, last_sequence|
           last_sequence = 0 if last_sequence < 0
           {
             channel: chan,

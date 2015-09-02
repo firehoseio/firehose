@@ -1,5 +1,5 @@
 require 'faye/websocket'
-require 'json'
+require 'oj'
 require "rack/utils"
 
 module Firehose
@@ -34,13 +34,13 @@ module Firehose
           end
 
           def parse_message(event)
-            JSON.parse(event.data, :symbolize_names => true) rescue {}
+            Oj.load(event.data) rescue {}
           end
 
           # Send a JSON message to the client
           # Expects message to be a Hash
           def send_message(message)
-            @ws.send JSON.generate(message)
+            @ws.send Oj.dump(message)
           end
 
           # Log errors if a socket fails. `close` will fire after this to clean up any
@@ -59,10 +59,10 @@ module Firehose
           # from timing out from inactivity.
           def message(event)
             msg = parse_message(event)
-            seq = msg[:message_sequence]
-            if msg[:ping] == 'PING'
+            seq = msg["message_sequence"]
+            if msg["ping"] == "PING"
               Firehose.logger.debug "WS ping received, sending pong"
-              send_message pong: "PONG"
+              send_message "pong" => "PONG"
             elsif !@subscribed && seq.kind_of?(Integer)
               Firehose.logger.debug "Subscribing at message_sequence #{seq}"
               subscribe seq
@@ -92,7 +92,7 @@ module Firehose
             @deferrable = @channel.next_message last_sequence
             @deferrable.callback do |message, sequence|
               Firehose.logger.debug "WS sent `#{message}` to `#{@req.path}` with sequence `#{sequence}`"
-              send_message message: message, last_sequence: last_sequence
+              send_message "message" => message, "last_sequence" => last_sequence
               subscribe sequence
             end
             @deferrable.errback do |e|
@@ -132,7 +132,7 @@ module Firehose
 
             if msg[:ping] == 'PING'
               Firehose.logger.debug "WS ping received, sending pong"
-              return send_message pong: "PONG"
+              return send_message "pong" => "PONG"
             end
           end
 
@@ -167,9 +167,9 @@ module Firehose
 
             deferrable.callback do |message, sequence|
               send_message(
-                channel: channel_name,
-                message: message,
-                last_sequence: last_sequence
+                "channel" => channel_name,
+                "message" => message,
+                "last_sequence" => last_sequence
               )
               Firehose.logger.debug "WS sent `#{message}` to `#{channel_name}` with sequence `#{sequence}`"
               subscribe channel_name, sequence
