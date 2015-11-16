@@ -1,10 +1,16 @@
+require "rack/auth/basic"
+
 module Firehose
   module Rack
     # Acts as the glue between the HTTP/WebSocket world and the Firehose::Server class,
     # which talks directly to the Redis server. Also dispatches between HTTP and WebSocket
     # transport handlers depending on the clients' request.
     class App
-      def initialize
+      def initialize(publish_secret = nil)
+        @publish_secret = publish_secret
+        if @publish_secret
+          Firehose.logger.info "Requiring HTTP Basic Auth for publishing"
+        end
         yield self if block_given?
       end
 
@@ -38,7 +44,15 @@ module Firehose
 
       private
       def publisher
-        @publisher ||= Publisher.new
+        @publisher ||= @publish_secret ? secured_publisher : Publisher.new
+      end
+
+      def secured_publisher
+        pub = ::Rack::Auth::Basic.new(Publisher.new) do |username, password|
+          username == "firehose" && password == @publish_secret
+        end
+        pub.realm = "Firehose #{Firehose::VERSION}"
+        pub
       end
 
       def ping

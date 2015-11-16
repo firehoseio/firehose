@@ -1,4 +1,4 @@
 module Firehose
-  VERSION  = "1.3.3"
-  CODENAME = "Multiplexed Wonderland"
+  VERSION  = "1.4.0"
+  CODENAME = "Secured Streamer"
 end

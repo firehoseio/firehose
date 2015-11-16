@@ -8,6 +8,7 @@ module Firehose
         @port   = opts[:port]   || Firehose::URI.port
         @host   = opts[:host]   || Firehose::URI.host
         @server = opts[:server] || :rainbows
+        @publish_secret = opts[:publish_secret]
 
         Firehose.logger.info "Starting #{Firehose::VERSION} '#{Firehose::CODENAME}', in #{ENV['RACK_ENV']}"
       end
@@ -29,7 +30,7 @@ module Firehose
         opts = rackup[:options]
         opts[:config_file] = File.expand_path('../../../../config/rainbows.rb', __FILE__)
 
-        server = Rainbows::HttpServer.new(Firehose::Rack::App.new, opts)
+        server = Rainbows::HttpServer.new(Firehose::Rack::App.new(@publish_secret), opts)
         server.start.join
       end
 
@@ -44,7 +45,7 @@ module Firehose
         Thin::Logging.silent = true if Firehose.logger.level == Logger::ERROR
 
         server = Thin::Server.new(@host, @port) do
-          run Firehose::Rack::App.new
+          run Firehose::Rack::App.new(@publish_secret)
         end.start
       end
     end

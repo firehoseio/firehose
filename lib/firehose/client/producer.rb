@@ -28,6 +28,7 @@ module Firehose
 
         # URI for the Firehose server. This URI does not include the path of the channel.
         attr_reader :uri, :timeout
+        attr_accessor :publish_secret
 
         def initialize(uri = Firehose::URI, timeout=DEFAULT_TIMEOUT)
           @uri = ::URI.parse(uri.to_s)
@@ -103,6 +104,9 @@ module Firehose
         def conn
           @conn ||= Faraday.new(:url => uri.to_s) do |builder|
             builder.adapter self.class.adapter
+            if @publish_secret
+              builder.basic_auth("firehose", @publish_secret)
+            end
           end
         end
       end

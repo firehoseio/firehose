@@ -28,6 +28,7 @@ module Firehose
     method_option :port,   :type => :numeric, :default => ENV['PORT'] || Firehose::URI.port, :required => false, :aliases => '-p'
     method_option :host,   :type => :string,  :default => ENV['HOST'] || Firehose::URI.host, :required => false, :aliases => '-h'
     method_option :server, :type => :string,  :default => ENV['SERVER'] ||'rainbows', :required => false, :aliases => '-s'
+    method_option :publish_secret, :type => :string, :default => ENV['PUBLISH_SECRET'], :required => false
     def server
       begin
         Firehose::Server::App.new(options).start
