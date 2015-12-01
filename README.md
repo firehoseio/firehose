@@ -7,7 +7,7 @@
     
     Build realtime web applications in Ruby and JS
 
-[![Build Status](https://travis-ci.org/polleverywhere/firehose.png)](https://travis-ci.org/polleverywhere/firehose)
+[![Build Status](https://travis-ci.org/firehoseio/firehose.png)](https://travis-ci.org/firehoseio/firehose)
 
 # What is Firehose?
 
@@ -263,7 +263,7 @@ The recommended method of deploying firehose is to deploy it separately from you
 gem "firehose"
 gem "airbrake"
 gem "rainbows",   :require => false
-gem "rack", "~> 1.4.0" # if you're using Rainbows. See https://github.com/polleverywhere/firehose/commit/dfe55fff
+gem "rack", "~> 1.4.0" # if you're using Rainbows. See https://github.com/firehoseio/firehose/commit/dfe55fff
 gem "foreman",    :require => false
 gem "capistrano", :require => false
 ```
