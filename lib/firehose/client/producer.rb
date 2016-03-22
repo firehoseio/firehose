@@ -70,7 +70,8 @@ module Firehose
             else
               # don't pass along basic auth header, if present
               response_data = response.inspect.gsub(/"Authorization"=>"Basic \S+"/, '"Authorization" => "Basic [HIDDEN]"')
-              error_handler.call PublishError.new("Could not publish #{message.inspect} to '#{uri.to_s}/#{channel}': #{response_data}")
+              uri = uri.to_s.gsub(/:\/\/\S+@/, "://")
+              error_handler.call PublishError.new("Could not publish #{message.inspect} to '#{uri}/#{channel}': #{response_data}")
             end
           end
 
