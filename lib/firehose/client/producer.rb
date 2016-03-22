@@ -68,7 +68,9 @@ module Firehose
             when 202 # Fire off the callback if everything worked out OK.
               block.call(response) if block
             else
-              error_handler.call PublishError.new("Could not publish #{message.inspect} to '#{uri.to_s}/#{channel}': #{response.inspect}")
+              # don't pass along basic auth header, if present
+              response_data = response.inspect.gsub(/"Authorization"=>"Basic \w+"/, '"Authorization" => "Basic [HIDDEN]"')
+              error_handler.call PublishError.new("Could not publish #{message.inspect} to '#{uri.to_s}/#{channel}': #{response_data}")
             end
           end
 
