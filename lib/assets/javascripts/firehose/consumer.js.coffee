@@ -18,6 +18,9 @@ class Firehose.Consumer
     # Do stuff before we send the message into config.message. The sensible
     # default on the webs is to parse JSON.
     @config.parse        ||= JSON.parse
+    # callback that get's called if the client missed messages due to a
+    # disconnect or any other issue
+    @config.dropped      ||= ->
 
     @_isConnected = false
     origConnected = @config.connected
