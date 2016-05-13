@@ -36,7 +36,7 @@ module Firehose
             errback {|e| deferrable.fail e }
         redis.exec.callback do |(sequence, message_list)|
           sequence = sequence.to_i
-          messages = MessageSequence.new(message_list, sequence, last_sequence)
+          messages = MessageOffset.new(message_list, sequence, last_sequence)
           if messages.subscribable?
             Firehose.logger.debug "No message available yet, subscribing. sequence: `#{sequence}` last_sequence: #{last_sequence}"
             # Either this resource has never been seen before or we are all caught up.

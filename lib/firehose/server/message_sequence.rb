@@ -2,7 +2,7 @@ module Firehose
   module Server
     # Encapsulates a sequence of messages from the server along with their
     # last_sequence_ids calculate by offset.
-    class Offset
+    class MessageOffset
       include Enumerable
       extend Forwardable
       def_delegator :@messages, :size
@@ -21,6 +21,12 @@ module Firehose
           # TODO: Where should we log this?
           # Firehose.logger.debug "Sending latest message `#{message.payload}` and sequence `#{message.sequence}` to client directly."
           Message.new(payload, @sequence + index)
+        end
+      end
+
+      def each
+        messages.each do |m|
+          yield m
         end
       end
 

@@ -1,7 +1,7 @@
 require 'spec_helper'
 
-describe Firehose::Server::Offset do
-  subject { Firehose::Server::Offset.new(messages, sequence, last_sequence) }
+describe Firehose::Server::MessageOffset do
+  subject { Firehose::Server::MessageOffset.new(messages, sequence, last_sequence) }
   let(:messages) { %w[f g h i j] }
   let(:sequence) { 10 }
   context "nil sequence" do

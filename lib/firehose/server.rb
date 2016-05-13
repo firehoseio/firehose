@@ -9,7 +9,7 @@ module Firehose
   # This mostly handles message sequencing and different HTTP channel names.
   module Server
     # TODO: Rename file when I figure out what I want to call this class.
-    autoload :Offset,           'firehose/server/message_sequence'
+    autoload :MessageOffset,    'firehose/server/message_sequence'
     autoload :Subscriber,       'firehose/server/subscriber'
     autoload :Publisher,        'firehose/server/publisher'
     autoload :Channel,          'firehose/server/channel'
