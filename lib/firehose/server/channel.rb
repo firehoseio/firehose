@@ -21,7 +21,7 @@ module Firehose
         @sequence_key = Server.key(channel_key, :sequence)
       end
 
-      def next_message(last_sequence=nil, options={})
+      def next_messages(last_sequence=nil, options={})
         last_sequence = last_sequence.to_i
 
         deferrable = EM::DefaultDeferrable.new
@@ -35,28 +35,15 @@ module Firehose
           redis.lrange(list_key, 0, Server::Publisher::BUFFER_SIZE).
             errback {|e| deferrable.fail e }
         redis.exec.callback do |(sequence, message_list)|
-          Firehose.logger.debug "exec returned: `#{sequence}` and `#{message_list.inspect}`"
           sequence = sequence.to_i
-
-          if sequence.nil? || (diff = sequence - last_sequence) <= 0
+          messages = MessageSequence.new(message_list, sequence, last_sequence)
+          if messages.subscribable?
             Firehose.logger.debug "No message available yet, subscribing. sequence: `#{sequence}` last_sequence: #{last_sequence}"
             # Either this resource has never been seen before or we are all caught up.
             # Subscribe and hope something gets published to this end-point.
             subscribe(deferrable, options[:timeout])
-          elsif last_sequence > 0 && diff < Server::Publisher::BUFFER_SIZE
-            # The client is kinda-sorta running behind, but has a chance to catch
-            # up. Catch them up FTW.
-            # But we won't "catch them up" if last_sequence was zero/nil because
-            # that implies the client is connecting for the 1st time.
-            message = message_list[diff-1]
-            Firehose.logger.debug "Sending old message `#{message}` and sequence `#{sequence}` to client directly. Client is `#{diff}` behind, at `#{last_sequence}`."
-            deferrable.succeed message, last_sequence + 1
-          else
-            # The client is hopelessly behind and underwater. Just reset
-            # their whole world with the lastest message.
-            message = message_list[0]
-            Firehose.logger.debug "Sending latest message `#{message}` and sequence `#{sequence}` to client directly."
-            deferrable.succeed message, sequence
+          else # Either the client is under water or caught up to head.
+            deferrable.succeed messages
           end
         end.errback {|e| deferrable.fail e }
 

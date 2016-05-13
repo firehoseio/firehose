@@ -27,7 +27,7 @@ module Firehose
             Firehose.logger.debug "Redis notifying #{deferrables.count} deferrable(s) at `#{channel_key}` with sequence `#{sequence}` and message `#{message}`"
             deferrables.each do |deferrable|
               Firehose.logger.debug "Sending message #{message} and sequence #{sequence} to client from subscriber"
-              deferrable.succeed message, sequence.to_i
+              deferrable.succeed MessageSequence.new(Array(message), sequence.to_i)
             end
           end
         end

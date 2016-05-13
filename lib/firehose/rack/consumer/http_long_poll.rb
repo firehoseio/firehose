@@ -92,7 +92,7 @@ module Firehose
               if last_sequence < 0
                 async_callback env, 400, "The last_message_sequence parameter may not be less than zero"
               else
-                Server::Channel.new(channel).next_message(last_sequence, :timeout => @timeout).callback do |message, sequence|
+                Server::Channel.new(channel).next_messages(last_sequence, :timeout => @timeout).callback do |message, sequence|
                   async_callback env, 200, wrap_frame(channel, message, sequence)
                 end.errback do |e|
                   if e == :timeout

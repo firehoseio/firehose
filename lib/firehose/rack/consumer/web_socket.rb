@@ -89,11 +89,13 @@ module Firehose
           def subscribe(last_sequence)
             @subscribed = true
             @channel    = Server::Channel.new @req.path
-            @deferrable = @channel.next_message last_sequence
-            @deferrable.callback do |message, sequence|
-              Firehose.logger.debug "WS sent `#{message}` to `#{@req.path}` with sequence `#{sequence}`"
-              send_message message: message, last_sequence: last_sequence
-              subscribe sequence
+            @deferrable = @channel.next_messages last_sequence
+            @deferrable.callback do |messages|
+              messages.each do |message, sequence|
+                Firehose.logger.debug "WS sent `#{message}` to `#{@req.path}` with sequence `#{sequence}`"
+                send_message message: message, last_sequence: sequence
+              end
+              subscribe messages.last_sequence
             end
             @deferrable.errback do |e|
               unless e == :disconnect
@@ -160,19 +162,21 @@ module Firehose
           # the last sequence for clients that reconnect.
           def subscribe(channel_name, last_sequence)
             channel      = Server::Channel.new channel_name
-            deferrable   = channel.next_message last_sequence
+            deferrable   = channel.next_messages last_sequence
             subscription = Subscription.new(channel, deferrable)
 
             @subscriptions[channel_name] = subscription
 
-            deferrable.callback do |message, sequence|
-              send_message(
-                channel: channel_name,
-                message: message,
-                last_sequence: last_sequence
-              )
-              Firehose.logger.debug "WS sent `#{message}` to `#{channel_name}` with sequence `#{sequence}`"
-              subscribe channel_name, sequence
+            deferrable.callback do |messages|
+              messages.each do |message, sequence|
+                send_message(
+                  channel: channel_name,
+                  message: message,
+                  last_sequence: last_sequence
+                )
+                Firehose.logger.debug "WS sent `#{message}` to `#{channel_name}` with sequence `#{sequence}`"
+              end
+              subscribe channel_name, messages.last_sequence
             end
 
             deferrable.errback do |e|
