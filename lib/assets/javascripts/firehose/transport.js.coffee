@@ -42,3 +42,30 @@ class Firehose.Transport
   # Useful for reconnecting after any networking hiccups
   getLastMessageSequence: =>
     @_lastMessageSequence or 0
+
+  _sequencesDropped: (droppedCallback, startSequence, amount) =>
+    for droppedSequence in [startSequence...startSequence + amount]
+      droppedCallback(droppedSequence)
+
+  _checkDroppedMessages: (message) =>
+    unless @_lastMessageSequence
+      return
+
+    unless message.last_sequence
+      return
+
+    droppedCount = @_lastMessageSequence - message.last_sequence - 1 # don't count last message we got
+    if droppedCount > 0
+      @_sequencesDropped(@config.dropped, message.last_sequence + 1, droppedCount)
+
+  _checkMultiplexedDroppedMessages: (message) =>
+    unless @_lastMessageSequence
+      return
+
+    unless message.last_sequence
+      return
+
+    if currentServerSequence = @_lastMessageSequence[message.channel]
+      droppedCount = currentServerSequence - message.last_sequence - 1 # don't count last message we got
+      if droppedCount > 0 && cb = @config.channels[message.channel].dropped
+        @_sequencesDropped(cb, message.last_sequence + 1, droppedCount)
