@@ -6,6 +6,13 @@ require 'faye/websocket'
 require 'hiredis'
 require 'firehose'
 
+# Test coverage reports on CodeClimate.
+begin
+  require "codeclimate-test-reporter"
+  CodeClimate::TestReporter.start
+rescue LoadError
+end
+
 # We use both EM::Http and Net::Http in this test lib. When EM:Http is fired up
 # we're usually hitting Rainbows! for integrations, and when Net::Http we want
 # to mock that up.
