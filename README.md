@@ -9,6 +9,8 @@
 
 [![Build Status](https://travis-ci.org/firehoseio/firehose.png)](https://travis-ci.org/firehoseio/firehose)
 
+[![Code Climate](https://codeclimate.com/github/firehoseio/firehose/badges/gpa.svg)](https://codeclimate.com/github/firehoseio/firehose)
+
 # What is Firehose?
 
 Firehose is both a Rack application and JavaScript library that makes building real-time web applications possible.
@@ -255,7 +257,7 @@ end
 
 # Deployment
 
-The recommended method of deploying firehose is to deploy it separately from your main app.
+The recommended method ofGdeploying firehose is to deploy it separately from your main app.
 
 1. Create a new project with a Gemfile such as
 
@@ -279,8 +281,8 @@ Of course, you could use `exceptional` instead of `airbrake` and `thin` instead 
 For a new release of Firehose, bump the version number in `lib/firehose/version.rb` as well as `package.json`.
 Make sure, they have the same version number.
 
-## Support
+# Support
 
-# Ruby version
+## Ruby version
 
 Firehose will support the latest minor 2.x revisions of Ruby that are officially supported by the Ruby community. More details at https://www.ruby-lang.org/.
