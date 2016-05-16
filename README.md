@@ -1,10 +1,10 @@
-      __ _          _                    
-     / _(_)        | |                   
-    | |_ _ _ __ ___| |__   ___  ___  ___ 
+      __ _          _
+     / _(_)        | |
+    | |_ _ _ __ ___| |__   ___  ___  ___
     |  _| | '__/ _ \ '_ \ / _ \/ __|/ _ \
     | | | | | |  __/ | | | (_) \__ \  __/
     |_| |_|_|  \___|_| |_|\___/|___/\___|
-    
+
     Build realtime web applications in Ruby and JS
 
 [![Build Status](https://travis-ci.org/firehoseio/firehose.png)](https://travis-ci.org/firehoseio/firehose)
@@ -278,3 +278,9 @@ Of course, you could use `exceptional` instead of `airbrake` and `thin` instead 
 
 For a new release of Firehose, bump the version number in `lib/firehose/version.rb` as well as `package.json`.
 Make sure, they have the same version number.
+
+## Support
+
+# Ruby version
+
+Firehose will support the latest minor 2.x revisions of Ruby that are officially supported by the Ruby community. More details at https://www.ruby-lang.org/.
