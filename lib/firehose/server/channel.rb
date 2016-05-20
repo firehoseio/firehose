@@ -33,11 +33,6 @@ module Firehose
           redis.lrange(list_key, 0, -1).
             errback {|e| deferrable.fail e }
         redis.exec.callback do |(channel_sequence, message_list)|
-          # Reverse the messages so they can be correctly procesed by the MessageBuffer class. There's
-          # a patch in the message-buffer-redis branch that moves this concern into the Publisher LUA
-          # script. We kept it out of this for now because it represents a deployment risk and `reverse!`
-          # is a cheap operation in Ruby.
-          message_list.reverse!
           buffer = MessageBuffer.new(message_list, channel_sequence, consumer_sequence)
           if buffer.remaining_messages.empty?
             Firehose.logger.debug "No messages in buffer, subscribing. sequence: `#{channel_sequence}` consumer_sequence: #{consumer_sequence}"

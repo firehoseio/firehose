@@ -120,8 +120,11 @@ module Firehose
 
         redis.call('set', sequence_key, sequence)
         redis.call('expire', sequence_key, ttl)
-        redis.call('lpush', list_key, message)
-        redis.call('ltrim', list_key, 0, buffer_size - 1)
+        redis.call('rpush', list_key, message)
+        local list_size = redis.call('llen', list_key)
+        if tonumber(buffer_size) < tonumber(list_size) then
+          redis.call('ltrim', list_key, list_size - buffer_size, -1)
+        end
         redis.call('expire', list_key, ttl)
         redis.call('publish', channel_key, message_payload)
 
