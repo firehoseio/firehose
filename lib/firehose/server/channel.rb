@@ -21,42 +21,31 @@ module Firehose
         @sequence_key = Server.key(channel_key, :sequence)
       end
 
-      def next_message(last_sequence=nil, options={})
-        last_sequence = last_sequence.to_i
-
+      def next_messages(consumer_sequence=nil, options={})
         deferrable = EM::DefaultDeferrable.new
         # TODO - Think this through a little harder... maybe some tests ol buddy!
         deferrable.errback {|e| EM.next_tick { raise e } unless [:timeout, :disconnect].include?(e) }
 
-        # TODO: Use HSET so we don't have to pull 100 messages back every time.
         redis.multi
           redis.get(sequence_key).
             errback {|e| deferrable.fail e }
-          redis.lrange(list_key, 0, Server::Publisher::BUFFER_SIZE).
+          # Fetch entire list: http://stackoverflow.com/questions/10703019/redis-fetch-all-value-of-list-without-iteration-and-without-popping
+          redis.lrange(list_key, 0, -1).
             errback {|e| deferrable.fail e }
-        redis.exec.callback do |(sequence, message_list)|
-          Firehose.logger.debug "exec returned: `#{sequence}` and `#{message_list.inspect}`"
-          sequence = sequence.to_i
-
-          if sequence.nil? || (diff = sequence - last_sequence) <= 0
-            Firehose.logger.debug "No message available yet, subscribing. sequence: `#{sequence}` last_sequence: #{last_sequence}"
+        redis.exec.callback do |(channel_sequence, message_list)|
+          # Reverse the messages so they can be correctly procesed by the MessageBuffer class. There's
+          # a patch in the message-buffer-redis branch that moves this concern into the Publisher LUA
+          # script. We kept it out of this for now because it represents a deployment risk and `reverse!`
+          # is a cheap operation in Ruby.
+          message_list.reverse!
+          buffer = MessageBuffer.new(message_list, channel_sequence, consumer_sequence)
+          if buffer.remaining_messages.empty?
+            Firehose.logger.debug "No messages in buffer, subscribing. sequence: `#{channel_sequence}` consumer_sequence: #{consumer_sequence}"
             # Either this resource has never been seen before or we are all caught up.
             # Subscribe and hope something gets published to this end-point.
             subscribe(deferrable, options[:timeout])
-          elsif last_sequence > 0 && diff < Server::Publisher::BUFFER_SIZE
-            # The client is kinda-sorta running behind, but has a chance to catch
-            # up. Catch them up FTW.
-            # But we won't "catch them up" if last_sequence was zero/nil because
-            # that implies the client is connecting for the 1st time.
-            message = message_list[diff-1]
-            Firehose.logger.debug "Sending old message `#{message}` and sequence `#{sequence}` to client directly. Client is `#{diff}` behind, at `#{last_sequence}`."
-            deferrable.succeed message, last_sequence + 1
-          else
-            # The client is hopelessly behind and underwater. Just reset
-            # their whole world with the lastest message.
-            message = message_list[0]
-            Firehose.logger.debug "Sending latest message `#{message}` and sequence `#{sequence}` to client directly."
-            deferrable.succeed message, sequence
+          else # Either the client is under water or caught up to head.
+            deferrable.succeed buffer.remaining_messages
           end
         end.errback {|e| deferrable.fail e }
 

@@ -18,9 +18,10 @@ describe Firehose::Server::Subscriber do
 
     it "calls succeed on the deferrable when a message is published" do
       deferrable = EM::DefaultDeferrable.new
-      deferrable.callback do |msg, sequence|
-        expect(msg).to eql(message)
-        expect(sequence).to eql(1) # The publisher is fresh, so the sequence ID will be 1.
+      deferrable.callback do |messages|
+        msg = messages.first
+        expect(msg.payload).to eql(message)
+        expect(msg.sequence).to eql(1) # The publisher is fresh, so the sequence ID will be 1.
         em.next_tick { em.stop }
       end
 
@@ -32,8 +33,8 @@ describe Firehose::Server::Subscriber do
 
     it "doesn't call succeed on the deferrable when a 2nd message is published" do
       deferrable = EM::DefaultDeferrable.new
-      deferrable.should_receive(:succeed).with(message, 1) # The publisher is fresh, so the sequence ID will be 1.
-      deferrable.should_not_receive(:succeed).with('2nd message', 2)
+      deferrable.should_receive(:succeed).with([Firehose::Server::MessageBuffer::Message.new(message, 1)]) # The publisher is fresh, so the sequence ID will be 1.
+      deferrable.should_not_receive(:succeed).with([Firehose::Server::MessageBuffer::Message.new('2nd message', 2)])
       em do
         subscriber.subscribe(channel_key, deferrable)
         publisher.publish(channel_key, message).callback do

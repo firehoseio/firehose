@@ -92,8 +92,12 @@ module Firehose
               if last_sequence < 0
                 async_callback env, 400, "The last_message_sequence parameter may not be less than zero"
               else
-                Server::Channel.new(channel).next_message(last_sequence, :timeout => @timeout).callback do |message, sequence|
-                  async_callback env, 200, wrap_frame(channel, message, sequence)
+                Server::Channel.new(channel).next_messages(last_sequence, :timeout => @timeout).callback do |messages|
+                  # TODO: Can we send all of these messages down in one request? Sending one message per
+                  # request is slow and inefficient. If we change the protocol (3.0?) we could batch the
+                  # messages and send them all down the pipe, then close the conneciton.
+                  message = messages.first
+                  async_callback env, 200, wrap_frame(channel, message)
                 end.errback do |e|
                   if e == :timeout
                     async_callback env, 204
@@ -108,8 +112,8 @@ module Firehose
         end
 
         class DefaultHandler < Handler
-          def wrap_frame(channel, message, last_sequence)
-            JSON.generate :message => message, :last_sequence => last_sequence
+          def wrap_frame(channel, message)
+            JSON.generate :message => message.payload, :last_sequence => message.sequence
           end
 
           def log_request(path, last_sequence, env)
@@ -129,8 +133,8 @@ module Firehose
         end
 
         class MultiplexingHandler < Handler
-          def wrap_frame(channel, message, last_sequence)
-            JSON.generate channel: channel, :message => message, :last_sequence => last_sequence
+          def wrap_frame(channel, message)
+            JSON.generate channel: channel, :message => message.payload, :last_sequence => message.sequence
           end
 
           def log_request(request, subscriptions, env)

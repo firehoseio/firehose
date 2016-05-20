@@ -14,12 +14,13 @@ describe Firehose::Server::Channel do
     redis_exec 'set', "firehose:#{channel_key}:sequence", '100'
   end
 
-  describe "#next_message" do
+  describe "#next_messages" do
     it "waits for message if message was not published before subscription" do
       em do
-        channel.next_message.callback do |msg, seq|
-          expect(msg).to eql(message)
-          expect(seq).to eql(1)
+        channel.next_messages.callback do |messages|
+          msg = messages.first
+          expect(msg.payload).to eql(message)
+          expect(msg.sequence).to eql(1)
           em.next_tick { em.stop }
         end
 
@@ -31,9 +32,10 @@ describe Firehose::Server::Channel do
       push_message
 
       em do
-        channel.next_message.callback do |msg, seq|
-          expect(msg).to eql(message)
-          expect(seq).to eql(100)
+        channel.next_messages.callback do |messages|
+          msg = messages.first
+          expect(msg.payload).to eql(message)
+          expect(msg.sequence).to eql(100)
 
           # This must happen _after_ the callback runs in order to pass consistently.
           em.next_tick { em.stop }
@@ -45,7 +47,9 @@ describe Firehose::Server::Channel do
       push_message
 
       em 3 do
-        channel.next_message(100).callback do |msg, seq|
+        channel.next_messages(100).callback do |messages|
+          msg = messages.first.payload
+          seq = messages.first.sequence
           expect(msg).to eql(message)
           expect(seq).to eql(101)
           em.next_tick { em.stop }
@@ -59,7 +63,9 @@ describe Firehose::Server::Channel do
       push_message
 
       em 3 do
-        channel.next_message(101).callback do |msg, seq|
+        channel.next_messages(101).callback do |messages|
+          msg = messages.first.payload
+          seq = messages.first.sequence
           expect(msg).to eql(message)
           expect(seq).to eql(101)
           em.next_tick { em.stop }
@@ -74,7 +80,9 @@ describe Firehose::Server::Channel do
 
       em 3 do
         publish_messages(messages) do
-          channel.next_message(2).callback do |msg, seq|
+          channel.next_messages(2).callback do |messages|
+            msg = messages.first.payload
+            seq = messages.first.sequence
             expect(msg).to eql('c')
             expect(seq).to eql(3)
 
@@ -90,7 +98,9 @@ describe Firehose::Server::Channel do
 
       em 3 do
         publish_messages(messages) do
-          channel.next_message(2).callback do |msg, seq|
+          channel.next_messages(2).callback do |msgs|
+            msg = msgs.last.payload
+            seq = msgs.last.sequence
             expect(msg).to eql(messages.last)
             expect(seq).to eql(messages.size)
 
@@ -106,7 +116,9 @@ describe Firehose::Server::Channel do
         push_message
 
         em 3 do
-          channel.next_message(100, :timeout => 1).callback do |msg, seq|
+          channel.next_messages(100, :timeout => 1).callback do |messages|
+            msg = messages.first.payload
+            seq = messages.first.sequence
             raise 'test failed'
           end.errback do |e|
             expect(e).to eql(:timeout)
@@ -123,7 +135,9 @@ describe Firehose::Server::Channel do
         push_message
 
         em 3 do
-          d = channel.next_message(100, :timeout => 2).callback do |msg, seq|
+          d = channel.next_messages(100, :timeout => 2).callback do |messages|
+            msg = messages.first.payload
+            seq = messages.first.sequence
             expect(msg).to eql(message)
             expect(seq).to eql(101)
             EM::add_timer(1) do

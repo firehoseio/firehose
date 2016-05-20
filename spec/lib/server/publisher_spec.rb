@@ -7,10 +7,6 @@ describe Firehose::Server::Publisher do
   let(:channel_key) { "/firehose/publisher/test/#{Time.now.to_i}" }
   let(:message)     { "howdy friends!" }
 
-  it "has 100 BUFFER_SIZE" do
-    expect(Firehose::Server::Publisher::BUFFER_SIZE).to eql(100)
-  end
-
   it "has 1 day TTL" do
     expect(Firehose::Server::Publisher::TTL).to eql(86400)
   end
@@ -45,20 +41,20 @@ describe Firehose::Server::Publisher do
       expect(redis_exec('lpop', "firehose:#{channel_key}:list")).to eql(message)
     end
 
-    it "limits list to BUFFER_SIZE messages" do
+    it "limits list to DEFAULT_SIZE messages" do
       em do
-        Firehose::Server::Publisher::BUFFER_SIZE.times do |n|
+        Firehose::Server::MessageBuffer::DEFAULT_SIZE.times do |n|
           publisher.publish(channel_key, message)
         end
         publisher.publish(channel_key, message).callback { em.stop }
       end
-      expect(redis_exec('llen', "firehose:#{channel_key}:list")).to eql(Firehose::Server::Publisher::BUFFER_SIZE)
+      expect(redis_exec('llen', "firehose:#{channel_key}:list")).to eql(Firehose::Server::MessageBuffer::DEFAULT_SIZE)
     end
 
     it "limits message list to a custom buffer size" do
       buffer_size = rand(100)
       em do
-        Firehose::Server::Publisher::BUFFER_SIZE.times do |n|
+        Firehose::Server::MessageBuffer::DEFAULT_SIZE.times do |n|
           publisher.publish(channel_key, message)
         end
         publisher.publish(channel_key, message, buffer_size: buffer_size).callback { em.stop }

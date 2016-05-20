@@ -21,13 +21,13 @@ module Firehose
           errback{|e| EM.next_tick { raise e } }.
           callback { Firehose.logger.debug "Redis subscribed to `#{channel_updates_key}`" }
         pubsub.on(:message) do |_, payload|
-          channel_key, sequence, message = Server::Publisher.from_payload(payload)
-
+          channel_key, channel_sequence, message = Server::Publisher.from_payload(payload)
+          messages = [ MessageBuffer::Message.new(message, channel_sequence.to_i) ]
           if deferrables = subscriptions.delete(channel_key)
-            Firehose.logger.debug "Redis notifying #{deferrables.count} deferrable(s) at `#{channel_key}` with sequence `#{sequence}` and message `#{message}`"
+            Firehose.logger.debug "Redis notifying #{deferrables.count} deferrable(s) at `#{channel_key}` with channel_sequence `#{channel_sequence}` and message `#{message}`"
             deferrables.each do |deferrable|
-              Firehose.logger.debug "Sending message #{message} and sequence #{sequence} to client from subscriber"
-              deferrable.succeed message, sequence.to_i
+              Firehose.logger.debug "Sending message #{message} and channel_sequence #{channel_sequence} to client from subscriber"
+              deferrable.succeed messages
             end
           end
         end

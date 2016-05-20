@@ -1,10 +1,6 @@
 module Firehose
   module Server
     class Publisher
-      # Number of messages that Redis buffers for the client if its
-      # connection drops, then reconnects.
-      BUFFER_SIZE = 100
-
       # Seconds that the message buffer should live before Redis expires it.
       TTL = 60*60*24
 
@@ -16,7 +12,7 @@ module Firehose
       def publish(channel_key, message, opts={})
         # How long should we hang on to the resource once is published?
         ttl = (opts[:ttl] || TTL).to_i
-        buffer_size = (opts[:buffer_size] || BUFFER_SIZE).to_i
+        buffer_size = (opts[:buffer_size] || MessageBuffer::DEFAULT_SIZE).to_i
 
         # TODO hi-redis isn't that awesome... we have to setup an errback per even for wrong
         # commands because of the lack of a method_missing whitelist. Perhaps implement a whitelist in

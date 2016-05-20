@@ -108,7 +108,6 @@ shared_examples_for 'Firehose::Rack::App' do
       expect(arr.size).to eql(messages.size)
       expect(arr.sort).to eql(messages.sort)
     end
-
   end
 
   it "supports channel multiplexing for http_long_poll and websockets" do
