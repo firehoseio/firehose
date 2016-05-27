@@ -1,4 +1,4 @@
 module Firehose
-  VERSION  = "1.3.4"
-  CODENAME = "Multiplexed Wonderland"
+  VERSION  = "1.3.5"
+  CODENAME = "Turn on, tune in, drop out"
 end
