@@ -160,6 +160,9 @@ module Firehose
           end
 
           def subscribe_multiplexed(subscriptions)
+            channels = subscriptions.map{|s| s[:channel]}
+            Firehose::Server.metrics.channels_subscribed_multiplexed!(channels)
+
             subscriptions.each do |sub|
               Firehose.logger.debug "Subscribing multiplexed to: #{sub}"
 

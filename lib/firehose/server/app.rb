@@ -13,6 +13,7 @@ module Firehose
       end
 
       def start
+        Firehose::Server::MetricsCollector.new.start
         self.send("start_#{@server}")
       end
 
