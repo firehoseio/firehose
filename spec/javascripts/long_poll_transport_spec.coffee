@@ -1,6 +1,6 @@
-describe 'Firehose.LongPoll', ->
+describe 'Firehose.LongPollTransport', ->
   beforeEach ->
-    @klass    = Firehose.LongPoll
+    @klass    = Firehose.LongPollTransport
     @instance = new @klass()
 
   afterEach -> @instance.stop()

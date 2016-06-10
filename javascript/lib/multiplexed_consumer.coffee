@@ -1,6 +1,8 @@
-Firehose.multiplexChannel = "channels@firehose"
+Consumer = require "./consumer"
+MultiplexedWebSocket = require "./multiplexed_web_socket"
+MultiplexedLongPoll = require "./multiplexed_long_poll"
 
-class Firehose.MultiplexedConsumer extends Firehose.Consumer
+class MultiplexedConsumer extends Consumer
   @subscriptionQuery: (config) ->
     {
       subscribe: [
@@ -24,7 +26,7 @@ class Firehose.MultiplexedConsumer extends Firehose.Consumer
     @messageHandlers = {}
     @config.message ||= @message
     @config.channels ||= {}
-    @config.uri += Firehose.multiplexChannel
+    @config.uri += Consumer.multiplexChannel
 
     @_updateSubscriptions()
 
@@ -34,10 +36,10 @@ class Firehose.MultiplexedConsumer extends Firehose.Consumer
     super(@config)
 
   websocketTransport: (config) =>
-    new Firehose.MultiplexedWebSocket(config)
+    new MultiplexedWebSocket(config)
 
   longpollTransport: (config) =>
-    new Firehose.MultiplexedLongPoll(config)
+    new MultiplexedLongPoll(config)
 
   message: (msg) =>
     if handler = @messageHandlers[msg.channel]
@@ -52,10 +54,10 @@ class Firehose.MultiplexedConsumer extends Firehose.Consumer
       delete @messageHandlers[chan]
 
   _updateSubscriptions: =>
-    Firehose.MultiplexedConsumer.normalizeChannels(@config)
+    MultiplexedConsumer.normalizeChannels(@config)
 
   subscribe: (channel, opts = {}) =>
-    channel = Firehose.MultiplexedConsumer.normalizeChannel(channel)
+    channel = MultiplexedConsumer.normalizeChannel(channel)
     @config.channels[channel] = opts
 
     @_updateSubscriptions()
@@ -66,9 +68,11 @@ class Firehose.MultiplexedConsumer extends Firehose.Consumer
     return unless @connected()
 
     for channel in channelNames
-      channel = Firehose.MultiplexedConsumer.normalizeChannel(channel)
+      channel = MultiplexedConsumer.normalizeChannel(channel)
       delete @config.channels[channel]
 
     @_updateSubscriptions()
     @_removeSubscriptionHandler(channelNames...)
     @transport.unsubscribe(channelNames...)
+
+module.exports = MultiplexedConsumer
