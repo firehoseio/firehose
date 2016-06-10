@@ -1,4 +1,4 @@
-class Firehose.Transport
+class Transport
   # Class method to determine whether transport is supported by the current browser. Note that while
   # the transport may be supported by the browser, its possible that the network connection won't
   # succeed. That should be accounted for during the initial connecting to the server.
@@ -69,3 +69,5 @@ class Firehose.Transport
       droppedCount = currentServerSequence - message.last_sequence - 1 # don't count last message we got
       if droppedCount > 0 && cb = @config.channels[message.channel].dropped
         @_sequencesDropped(cb, message.last_sequence + 1, droppedCount)
+
+module.exports = Transport

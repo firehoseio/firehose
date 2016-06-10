@@ -1,0 +1,10 @@
+{
+  "spec_dir": "spec/javascripts",
+  "spec_files": [
+    "*_spec.coffee"
+  ],
+  "helpers": [
+    "support/jasmine.js",
+    "support/spec_helper.coffee"
+  ]
+}

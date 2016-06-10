@@ -1,11 +1,17 @@
+Transport = require "./transport"
+WebSocket = require "ws"
+
 INITIAL_PING_TIMEOUT   =  2000
 KEEPALIVE_PING_TIMEOUT = 20000
 
-class Firehose.WebSocket extends Firehose.Transport
+sendPing = (socket) ->
+  socket.send JSON.stringify ping: 'PING'
+
+class WebSocketTransport extends Transport
   name: -> 'WebSocket'
 
   @ieSupported:-> (document.documentMode || 10) > 9
-  @supported  :-> (if module?.exports? then global else window).WebSocket? # Check if WebSocket is an object in the window.
+  @supported  :-> WebSocket? # Check if WebSocket is an object in the window.
 
   constructor: (args) ->
     super args
@@ -20,7 +26,7 @@ class Firehose.WebSocket extends Firehose.Transport
     # Run this in a try/catch block because IE10 inside of a .NET control
     # complains about security zones.
     try
-      @socket = new (if module?.exports? then global else window).WebSocket "#{@_protocol()}:#{@config.uri}?#{$.param @_requestParams()}"
+      @socket = new WebSocket "#{@_protocol()}:#{@config.uri}?#{$.param @_requestParams()}"
       @socket.onopen    = @_open
       @socket.onclose   = @_close
       @socket.onerror   = @_error
@@ -51,7 +57,7 @@ class Firehose.WebSocket extends Firehose.Transport
     @socket.onmessage     = @_message
     @_sendMessage({message_sequence})
     @_needToNotifyOfDisconnect = true
-    Firehose.Transport::_open.call @
+    Transport::_open.call @
 
   stop: =>
     @_cleanUp()
@@ -88,7 +94,7 @@ class Firehose.WebSocket extends Firehose.Transport
       @socket.onerror   = null
       @socket.onmessage = null
       @socket.close()
-      delete @socket
+      # delete @socket
 
   _restartKeepAlive: =>
     doPing = =>
@@ -104,47 +110,4 @@ class Firehose.WebSocket extends Firehose.Transport
       clearTimeout @keepaliveTimeout
       @keepaliveTimeout = null
 
-class Firehose.MultiplexedWebSocket extends Firehose.WebSocket
-  constructor: (args) ->
-    super args
-
-  subscribe: (channel, opts) =>
-    @_sendMessage
-      multiplex_subscribe:
-        channel: channel
-        message_sequence: opts.last_sequence
-
-  unsubscribe: (channelNames...) =>
-    @_sendMessage
-      multiplex_unsubscribe: channelNames
-
-  getLastMessageSequence: =>
-    @_lastMessageSequence or {}
-
-  _open: =>
-    super()
-    for channel, opts of @config.channels
-      if @_lastMessageSequence
-        opts.last_sequence = @_lastMessageSequence[channel]
-
-      unless opts.last_sequence
-        opts.last_sequence = 0
-
-      @subscribe channel, opts
-
-  _message: (event) =>
-    frame = @config.parse event.data
-    @_restartKeepAlive()
-    unless isPong frame
-      try
-        @_lastMessageSequence ||= {}
-        _checkMultiplexedDroppedMessages(frame)
-        @_lastMessageSequence[frame.channel] = frame.last_sequence
-        @config.message frame
-      catch e
-
-sendPing = (socket) ->
-  socket.send JSON.stringify ping: 'PING'
-
-isPong = (o) ->
-  o.pong is 'PONG'
+module.exports = WebSocketTransport

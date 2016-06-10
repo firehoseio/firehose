@@ -1,4 +1,7 @@
-class Firehose.Consumer
+WebSocketTransport = require "./web_socket_transport"
+LongPollTransport = require "./long_poll_transport"
+
+class Consumer
   constructor: (@config = {}) ->
     # Empty handler for messages.
     @config.message      ||= ->
@@ -35,16 +38,16 @@ class Firehose.Consumer
     @_isConnected
 
   websocketTransport: (config) =>
-    new Firehose.WebSocket(config)
+    new WebSocketTransport(config)
 
   longpollTransport: (config) =>
-    new Firehose.LongPoll(config)
+    new LongPollTransport(config)
 
   connect: (delay=0) =>
     promise = @_connectPromise()
 
     @config.connectionVerified = @_upgradeTransport
-    if Firehose.WebSocket.supported()
+    if WebSocketTransport.supported()
       @upgradeTimeout = setTimeout =>
         ws = @websocketTransport(@config)
         ws.connect delay
@@ -87,3 +90,7 @@ class Firehose.Consumer
   #      origDisconnected()
 
     deferred.promise()
+
+Consumer.multiplexChannel = "channels@firehose"
+
+module.exports = Consumer
