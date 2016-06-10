@@ -1,4 +1,4 @@
-class Firehose.Transport
+class Transport
   # Class method to determine whether transport is supported by the current browser. Note that while
   # the transport may be supported by the browser, its possible that the network connection won't
   # succeed. That should be accounted for during the initial connecting to the server.
@@ -42,3 +42,5 @@ class Firehose.Transport
   # Useful for reconnecting after any networking hiccups
   getLastMessageSequence: =>
     @_lastMessageSequence or 0
+
+module.exports = Transport
