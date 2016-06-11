@@ -1,5 +1,5 @@
 {
-  "name": "firehose",
+  "name": "firehose-client",
   "version": "2.0.0",
   "codeName": "Multiplexed Wonderland",
   "main": "javascript/index.js",
