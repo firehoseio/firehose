@@ -1,7 +1,7 @@
-describe 'Firehose.WebSocket', ->
+describe 'Firehose.WebSocketTransport', ->
   beforeEach ->
-    @klass    = Firehose.WebSocket
-    @instance = new @klass()
+    @klass    = Firehose.WebSocketTransport
+    @instance = new @klass(uri: 'ws://localhost/test')
 
   #= Specs ===
 
@@ -18,7 +18,7 @@ describe 'Firehose.WebSocket', ->
     beforeEach ->
       # call _request directly so we don't have to wait for the setTimeout
       # call to call _request in the next event loop iteration
-      @instance.connect( uri: '//localhost/test' )._request()
+      @instance._request()
       sinon.spy @instance.socket, 'close'
       Object.freeze @instance # stop _cleanUp method deleting the socket
 
