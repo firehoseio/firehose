@@ -6,6 +6,9 @@ jsdom = require("jsdom")
 global.document = jsdom.jsdom("<html></html>")
 global.window = document.defaultView
 
+# Node environments need this, browsers implement it themselves
+global.WebSocket = require "ws"
+
 # URIjs dependencies
 
 # Set a location so that URIjs behaves correctly
