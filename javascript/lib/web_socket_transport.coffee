@@ -1,5 +1,4 @@
 Transport = require "./transport"
-WebSocket = require "ws"
 
 INITIAL_PING_TIMEOUT   =  2000
 KEEPALIVE_PING_TIMEOUT = 20000
@@ -7,11 +6,14 @@ KEEPALIVE_PING_TIMEOUT = 20000
 sendPing = (socket) ->
   socket.send JSON.stringify ping: 'PING'
 
+getWebSocket = ->
+  window?.WebSocket || global?.WebSocket
+
 class WebSocketTransport extends Transport
   name: -> 'WebSocket'
 
   @ieSupported:-> (document.documentMode || 10) > 9
-  @supported  :-> WebSocket? # Check if WebSocket is an object in the window.
+  @supported  :-> !!getWebSocket() # Check if WebSocket is an object in the window.
 
   constructor: (args) ->
     super args
@@ -26,7 +28,7 @@ class WebSocketTransport extends Transport
     # Run this in a try/catch block because IE10 inside of a .NET control
     # complains about security zones.
     try
-      @socket = new WebSocket "#{@_protocol()}:#{@config.uri}?#{$.param @_requestParams()}"
+      @socket = new getWebSocket()("#{@_protocol()}:#{@config.uri}?#{$.param @_requestParams()}")
       @socket.onopen    = @_open
       @socket.onclose   = @_close
       @socket.onerror   = @_error
