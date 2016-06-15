@@ -4,9 +4,11 @@
   "codeName": "Multiplexed Wonderland",
   "main": "javascript/index.js",
   "scripts": {
+    "build": "webpack -p",
     "test": "JASMINE_CONFIG_PATH=./spec/javascripts/support/jasmine.json jasmine"
   },
   "devDependencies": {
+    "clean-webpack-plugin": "^0.1.9",
     "codo": "git://github.com/coffeedoc/codo.git",
     "coffee-loader": "^0.7.2",
     "coffeelint": "^1.14.0",
@@ -14,7 +16,9 @@
     "coffeelint-prefer-double-quotes": "^0.1.0",
     "coffeelint-prefer-symbol-operator": "^0.1.1",
     "jasmine": "^2.4.1",
-    "sinon": "^1.17.4"
+    "json-loader": "^0.5.4",
+    "sinon": "^1.17.4",
+    "webpack": "^1.13.1"
   },
   "dependencies": {
     "coffee-script": "^1.10.0",
