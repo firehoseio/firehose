@@ -1,3 +1,3 @@
 global.sinon = require "sinon"
-require "../../../javascript/lib/globals"
+require "../../../helpers/node"
 global.Firehose = require "../../../javascript/index"
