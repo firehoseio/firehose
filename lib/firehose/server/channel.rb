@@ -22,15 +22,14 @@ module Firehose
       end
 
       def next_messages(consumer_sequence=nil, options={})
-        deferrable = EM::DefaultDeferrable.new
-        deferrable.errback {|e| EM.next_tick { raise e } unless [:timeout, :disconnect].include?(e) }
+        handler = Firehose::Server::MessageHandler.new(channel: self)
 
         redis.multi
           redis.get(sequence_key).
-            errback {|e| deferrable.fail e }
+            errback {|e| handler.deferrable.fail e }
           # Fetch entire list: http://stackoverflow.com/questions/10703019/redis-fetch-all-value-of-list-without-iteration-and-without-popping
           redis.lrange(list_key, 0, -1).
-            errback {|e| deferrable.fail e }
+            errback {|e| handler.deferrable.fail e }
         redis.exec.callback do |(channel_sequence, message_list)|
           # Reverse the messages so they can be correctly procesed by the MessageBuffer class. There's
           # a patch in the message-buffer-redis branch that moves this concern into the Publisher LUA
@@ -42,30 +41,23 @@ module Firehose
             Firehose.logger.debug "No messages in buffer, subscribing. sequence: `#{channel_sequence}` consumer_sequence: #{consumer_sequence}"
             # Either this resource has never been seen before or we are all caught up.
             # Subscribe and hope something gets published to this end-point.
-            subscribe(deferrable, options[:timeout])
+            subscribe(handler, options[:timeout])
           else # Either the client is under water or caught up to head.
-            deferrable.succeed buffer.remaining_messages
+            handler.process buffer.remaining_messages
           end
         end.errback {|e| deferrable.fail e }
 
-        deferrable
+        handler.deferrable
       end
 
-      def unsubscribe(deferrable)
-        subscriber.unsubscribe channel_key, deferrable
+      def unsubscribe(handler)
+        subscriber.unsubscribe channel_key, handler
       end
 
       private
-      def subscribe(deferrable, timeout=nil)
-        subscriber.subscribe(channel_key, deferrable)
-        if timeout
-          timer = EventMachine::Timer.new(timeout) do
-            deferrable.fail :timeout
-            unsubscribe deferrable
-          end
-          # Cancel the timer if when the deferrable succeeds
-          deferrable.callback { timer.cancel }
-        end
+      def subscribe(handler, timeout=nil)
+        subscriber.subscribe(channel_key, handler)
+        handler.timeout(timeout){ unsubscribe handler } if timeout
       end
     end
   end

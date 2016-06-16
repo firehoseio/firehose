@@ -4,10 +4,12 @@ describe Firehose::Server::Subscriber do
   include EM::TestHelper
 
   let(:channel_key)     { '/bears/are/mean' }
+  let(:channel)         { Firehose::Channel.new(channel_key) }
   let(:subscriber)      { Firehose::Server::Subscriber.new(Firehose::Server.redis.connection) }
   let(:dummy_subscriber){ Firehose::Server::Subscriber.new(double('redis', :pubsub => double('pubsub', :subscribe => EM::DefaultDeferrable.new, :on => nil))) }
   let(:message)         { 'Raaaarrrrrr!!!!' }
   let(:publisher)       { Firehose::Server::Publisher.new }
+  let(:defferable)      { Firehose::Server::MessageHandler.new(channel) }
 
   describe "#subscribe" do
     it "adds the deferrable to the subscriptions hash" do
