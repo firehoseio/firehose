@@ -1,4 +1,6 @@
-class Firehose.LongPoll extends Firehose.Transport
+Transport = require "./transport"
+
+class LongPollTransport extends Transport
   messageSequenceHeader: 'Pragma'
   name: -> 'LongPoll'
 
@@ -11,7 +13,7 @@ class Firehose.LongPoll extends Firehose.Transport
   @supported: ->
     # IE 8+, FF 3.5+, Chrome 4+, Safari 4+, Opera 12+, iOS 3.2+, Android 2.1+
     if xhr = $.ajaxSettings.xhr()
-      "withCredentials" of xhr || Firehose.LongPoll.ieSupported()
+      "withCredentials" of xhr || LongPollTransport.ieSupported()
 
   constructor: (args) ->
     super args
@@ -107,104 +109,4 @@ class Firehose.LongPoll extends Firehose.Transport
       # Reconnect with delay
       setTimeout @_request, @_retryDelay
 
-# Let's try to hack in support for IE8-9 via the XDomainRequest object!
-# This was adapted from code shamelessly stolen from:
-# https://github.com/jaubourg/ajaxHooks/blob/master/src/ajax/xdr.js
-if $?.browser?.msie and parseInt($.browser.version, 10) in [8, 9]
-  jQuery.ajaxTransport (s) ->
-    if s.crossDomain and s.async and s.firehose
-      if s.timeout
-        s.xdrTimeout = s.timeout
-        delete s.timeout
-      xdr = undefined
-      return {
-        send: (_, complete) ->
-          callback = (status, statusText, responses, responseHeaders) ->
-            xdr.onload = xdr.onerror = xdr.ontimeout = jQuery.noop
-            xdr = undefined
-            complete status, statusText, responses, responseHeaders
-
-          xdr = new XDomainRequest()
-
-          xdr.open s.type, s.url
-
-          xdr.onload = ->
-            headers = "Content-Type: #{xdr.contentType}"
-            callback 200, "OK", {text: xdr.responseText}, headers
-
-          xdr.onerror = -> callback 404, "Not Found"
-
-          # This is critical for long poll to work in IE9.
-          # Without it, the initial request will work but
-          # subsequent requests will fail silently.
-          # http://social.msdn.microsoft.com/Forums/ie/en-US/30ef3add-767c-4436-b8a9-f1ca19b4812e/ie9-rtm-xdomainrequest-issued-requests-may-abort-if-all-event-handlers-not-specified?forum=iewebdevelopment
-          xdr.onprogress = -> {}
-
-          if s.xdrTimeout?
-            xdr.ontimeout = -> callback 0, "timeout"
-            xdr.timeout   = s.xdrTimeout
-
-          xdr.send (s.hasContent and s.data) or null
-
-        abort: ->
-          if xdr?
-            xdr.onerror = jQuery.noop()
-            xdr.abort()
-      }
-
-class Firehose.MultiplexedLongPoll extends Firehose.LongPoll
-  constructor: (args) ->
-    super args
-    @_lastMessageSequence = {}
-
-  subscribe: (channel, opts) =>
-    # nothing to be done
-
-  unsubscribe: (channelNames...) =>
-    # same here
-
-  _request: =>
-    return if @_stopRequestLoop
-    data = @_subscriptions()
-
-    @_lastRequest = $.ajax
-      url:          @config.uri
-      firehose:     true
-      crossDomain:  true
-      method:       "POST"
-      data:         data
-      dataType:     "json"
-      timeout:      @_timeout
-      success:      @_success
-      error:        @_error
-      cache:        false
-
-  _updateLastMessageSequences: =>
-    for channel, opts of @config.channels
-      if seq = @_lastMessageSequence[channel]
-        opts.last_sequence = seq
-      else
-        unless opts.last_sequence
-          opts.last_sequence = 0
-
-  _subscriptions: =>
-    @_updateLastMessageSequences()
-    subs = {}
-    for channel, opts of @config.channels
-      subs[channel] = opts.last_sequence || 0
-    JSON.stringify(subs)
-
-  _success: (data, status, jqXhr) =>
-    if @_needToNotifyOfReconnect or not @_succeeded
-      @_needToNotifyOfReconnect = false
-      @_open data
-    return if @_stopRequestLoop
-    if jqXhr.status is 200
-      # Of course, IE's XDomainRequest doesn't support non-200 success codes.
-      try
-        message = JSON.parse jqXhr.responseText
-        @_lastMessageSequence ||= {}
-        @_lastMessageSequence[message.channel] = message.last_sequence
-        @config.message message
-      catch e
-    @connect @_okInterval
+module.exports = LongPollTransport

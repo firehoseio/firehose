@@ -1,3 +1,3 @@
-#= require ./jquery-1.11.1
-#= require ./json2
-#= require ./sinon-1.7.3
+global.sinon = require "sinon"
+require "../../../helpers/node"
+global.Firehose = require "../../../javascript/index"

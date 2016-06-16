@@ -42,4 +42,3 @@ describe 'Firehose.Consumer', ->
       it 'stops the upgrade timeout', ->
         @instance.stop()
         expect( @instance.upgradeTimeout? ).toBe false
-
