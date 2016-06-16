@@ -8,7 +8,6 @@ module Firehose
   # Firehose components that sit between the Rack HTTP software and the Redis server.
   # This mostly handles message sequencing and different HTTP channel names.
   module Server
-    # TODO: Rename file when I figure out what I want to call this class.
     autoload :MessageBuffer,    'firehose/server/message_buffer'
     autoload :Subscriber,       'firehose/server/subscriber'
     autoload :Publisher,        'firehose/server/publisher'
