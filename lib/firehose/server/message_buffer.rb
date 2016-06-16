@@ -18,6 +18,10 @@ module Firehose
           @payload = payload
           @sequence = sequence
         end
+
+        def ==(other)
+          payload == other.payload && sequence == other.sequence
+        end
       end
 
       def initialize(message_list, channel_sequence, consumer_sequence = nil)

@@ -8,6 +8,7 @@ describe Firehose::Server::Channel do
   let(:subscriber)      { Firehose::Server::Subscriber.new(Firehose::Server.redis.connection) }
   let(:message)         { 'Raaaarrrrrr!!!!' }
   let(:publisher)       { Firehose::Server::Publisher.new }
+  let(:consumer)        { Firehose::Server::Consumer.new }
 
   def push_message
     redis_exec 'lpush', "firehose:#{channel_key}:list", message
@@ -17,7 +18,7 @@ describe Firehose::Server::Channel do
   describe "#next_messages" do
     it "waits for message if message was not published before subscription" do
       em do
-        channel.next_messages.callback do |messages|
+        channel.next_messages(consumer).callback do |messages|
           msg = messages.first
           expect(msg.payload).to eql(message)
           expect(msg.sequence).to eql(1)
@@ -32,7 +33,7 @@ describe Firehose::Server::Channel do
       push_message
 
       em do
-        channel.next_messages.callback do |messages|
+        channel.next_messages(consumer).callback do |messages|
           msg = messages.first
           expect(msg.payload).to eql(message)
           expect(msg.sequence).to eql(100)
@@ -44,10 +45,11 @@ describe Firehose::Server::Channel do
     end
 
     it "waits for message if most recent sequence is given" do
+      consumer.sequence = 100
       push_message
 
       em 3 do
-        channel.next_messages(100).callback do |messages|
+        channel.next_messages(consumer).callback do |messages|
           msg = messages.first.payload
           seq = messages.first.sequence
           expect(msg).to eql(message)
@@ -60,10 +62,11 @@ describe Firehose::Server::Channel do
     end
 
     it "waits for message if a future sequence is given" do
+      consumer.sequence = 101
       push_message
 
       em 3 do
-        channel.next_messages(101).callback do |messages|
+        channel.next_messages(consumer).callback do |messages|
           msg = messages.first.payload
           seq = messages.first.sequence
           expect(msg).to eql(message)
@@ -76,11 +79,12 @@ describe Firehose::Server::Channel do
     end
 
     it "immediatly gets a message if message sequence is behind and in list" do
+      consumer.sequence = 2
       messages = %w[a b c d e]
 
       em 3 do
         publish_messages(messages) do
-          channel.next_messages(2).callback do |messages|
+          channel.next_messages(consumer).callback do |messages|
             msg = messages.first.payload
             seq = messages.first.sequence
             expect(msg).to eql('c')
@@ -94,11 +98,12 @@ describe Firehose::Server::Channel do
     end
 
     it "gets current message if sequence is really far behind in list" do
+      consumer.sequence = 2
       messages = ('aa'..'zz').to_a
 
       em 3 do
         publish_messages(messages) do
-          channel.next_messages(2).callback do |msgs|
+          channel.next_messages(consumer).callback do |msgs|
             msg = msgs.last.payload
             seq = msgs.last.sequence
             expect(msg).to eql(messages.last)
@@ -113,10 +118,12 @@ describe Firehose::Server::Channel do
 
     context "a timeout is set" do
       it "times out if message isn't published in time" do
+        consumer.sequence = 100
+        consumer.timeout = 2
         push_message
 
         em 3 do
-          channel.next_messages(100, :timeout => 1).callback do |messages|
+          channel.next_messages(consumer).callback do |messages|
             msg = messages.first.payload
             seq = messages.first.sequence
             raise 'test failed'
@@ -132,10 +139,13 @@ describe Firehose::Server::Channel do
       end
 
       it "does not timeout if message is published in time" do
+        consumer.sequence = 100
+        consumer.timeout = 2
+
         push_message
 
         em 3 do
-          d = channel.next_messages(100, :timeout => 2).callback do |messages|
+          d = channel.next_messages(consumer).callback do |messages|
             msg = messages.first.payload
             seq = messages.first.sequence
             expect(msg).to eql(message)

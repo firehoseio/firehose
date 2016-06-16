@@ -89,7 +89,9 @@ module Firehose
           def subscribe(last_sequence)
             @subscribed = true
             @channel    = Server::Channel.new @req.path
-            @deferrable = @channel.next_messages last_sequence
+            # TODO: Implement metadata parsing
+            consumer    = Server::Consumer.new(sequence: last_sequence)
+            @deferrable = @channel.next_messages consumer
             @deferrable.callback do |messages|
               messages.each do |message|
                 Firehose.logger.debug "WS sent `#{message.payload}` to `#{@req.path}` with sequence `#{message.sequence}`"
@@ -162,7 +164,9 @@ module Firehose
           # the last sequence for clients that reconnect.
           def subscribe(channel_name, last_sequence)
             channel      = Server::Channel.new channel_name
-            deferrable   = channel.next_messages last_sequence
+            # TODO: Implement metadata parsing.
+            consumer     = Server::Consumer.new(sequence: last_sequence)
+            deferrable   = channel.next_messages consumer
             subscription = Subscription.new(channel, deferrable)
 
             @subscriptions[channel_name] = subscription

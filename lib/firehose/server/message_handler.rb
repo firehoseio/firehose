@@ -2,17 +2,20 @@ module Firehose
   module Server
     # Handles processing message middleware in either a channel or a subscription.
     class MessageHandler
-      attr_reader :channel, :deferrable
+      attr_reader :channel, :deferrable, :consumer
 
-      def initialize(channel: )
+      def initialize(channel: , consumer: )
+        @consumer = consumer
         @deferrable = EM::DefaultDeferrable.new
         @channel = channel
         # Raise exceptions for timeouts an disconnects in EM
         deferrable.errback {|e| EM.next_tick { raise e } unless [:timeout, :disconnect].include?(e) }
       end
 
-      def timeout(timeout, &block)
-        timer = EventMachine::Timer.new(timeout) do
+      def timeout(&block)
+        return if consumer.timeout.nil?
+
+        timer = EventMachine::Timer.new(consumer.timeout) do
           deferrable.fail :timeout
           block.call self
         end
@@ -21,20 +24,7 @@ module Firehose
       end
 
       def process(messages)
-        processed_messages = Array(messages).map do |message|
-          message
-        end
-        # processed_messages = Array(messages).map do |message|
-        #   p(message)
-        #   message.payload = Middleware.new(
-        #     message: message.payload,
-        #     subscriber: channel.subscriber,
-        #     channel: channel
-        #   ).process
-        #   messages
-        # end
-
-        deferrable.succeed processed_messages
+        deferrable.succeed messages
       end
     end
   end

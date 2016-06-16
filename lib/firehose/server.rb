@@ -13,6 +13,7 @@ module Firehose
     autoload :Subscriber,       'firehose/server/subscriber'
     autoload :Publisher,        'firehose/server/publisher'
     autoload :Channel,          'firehose/server/channel'
+    autoload :Consumer,         'firehose/server/consumer'
     autoload :App,              'firehose/server/app'
     autoload :Redis,            'firehose/server/redis'
 

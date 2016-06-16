@@ -87,12 +87,14 @@ module Firehose
             end
           end
 
-          def respond_async(channel, last_sequence, env)
+          def respond_async(channel, consumer, env)
             EM.next_tick do
-              if last_sequence < 0
+              if consumer.sequence < 0
                 async_callback env, 400, "The last_message_sequence parameter may not be less than zero"
               else
-                Server::Channel.new(channel).next_messages(last_sequence, :timeout => @timeout).callback do |messages|
+                # TODO: Implement timeout in consumer.
+                consumer.timeout = @timeout
+                Server::Channel.new(channel).next_messages(consumer).callback do |messages|
                   # TODO: Can we send all of these messages down in one request? Sending one message per
                   # request is slow and inefficient. If we change the protocol (3.0?) we could batch the
                   # messages and send them all down the pipe, then close the conneciton.
@@ -102,7 +104,7 @@ module Firehose
                   if e == :timeout
                     async_callback env, 204
                   else
-                    Firehose.logger.error "Unexpected error when trying to GET last_sequence #{last_sequence} for path #{channel}: #{e.inspect}"
+                    Firehose.logger.error "Unexpected error when trying to GET consumer.sequence #{consumer.sequence} for path #{channel}: #{e.inspect}"
                     async_callback env, 500, "Unexpected error"
                   end
                 end
@@ -116,8 +118,8 @@ module Firehose
             JSON.generate :message => message.payload, :last_sequence => message.sequence
           end
 
-          def log_request(path, last_sequence, env)
-            Firehose.logger.debug "HTTP GET with last_sequence #{last_sequence} for path #{path} with query #{env["QUERY_STRING"].inspect}"
+          def log_request(path, consumer, env)
+            Firehose.logger.debug "HTTP GET with last_sequence #{consumer.sequence} for path #{path} with query #{env["QUERY_STRING"].inspect}"
           end
 
           def handle_request(request, env)
@@ -127,8 +129,11 @@ module Firehose
             last_sequence = request.params['last_message_sequence'].to_i
             channel       = request.path
 
-            log_request   channel, last_sequence, env
-            respond_async channel, last_sequence, env
+            # TODO: Implement metadata parsing.
+            consumer = Server::Consumer.new(sequence: last_sequence)
+
+            log_request   channel, consumer, env
+            respond_async channel, consumer, env
           end
         end
 
@@ -149,7 +154,9 @@ module Firehose
             subscriptions = Consumer.multiplex_subscriptions(request)
             log_request request, subscriptions, env
             subscriptions.each do |sub|
-              respond_async(sub[:channel], sub[:message_sequence], env)
+              # TODO: Implement metadata parsing.
+              consumer = Server::Consumer.new(sequence: sub[:message_sequence])
+              respond_async(sub[:channel], consumer, env)
             end
           end
         end

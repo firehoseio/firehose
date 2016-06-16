@@ -21,9 +21,8 @@ module Firehose
         @sequence_key = Server::Redis.key(channel_key, :sequence)
       end
 
-      def next_messages(consumer_sequence=nil, options={})
-        handler = Firehose::Server::MessageHandler.new(channel: self)
-
+      def next_messages(consumer)
+        handler = Firehose::Server::MessageHandler.new(channel: self, consumer: consumer)
         redis.multi
           redis.get(sequence_key).
             errback {|e| handler.deferrable.fail e }
@@ -36,12 +35,12 @@ module Firehose
           # script. We kept it out of this for now because it represents a deployment risk and `reverse!`
           # is a cheap operation in Ruby.
           message_list.reverse!
-          buffer = MessageBuffer.new(message_list, channel_sequence, consumer_sequence)
+          buffer = MessageBuffer.new(message_list, channel_sequence, consumer.sequence)
           if buffer.remaining_messages.empty?
-            Firehose.logger.debug "No messages in buffer, subscribing. sequence: `#{channel_sequence}` consumer_sequence: #{consumer_sequence}"
+            Firehose.logger.debug "No messages in buffer, subscribing. sequence: `#{channel_sequence}` consumer.sequence: #{consumer.sequence}"
             # Either this resource has never been seen before or we are all caught up.
             # Subscribe and hope something gets published to this end-point.
-            subscribe(handler, options[:timeout])
+            subscribe(handler)
           else # Either the client is under water or caught up to head.
             handler.process buffer.remaining_messages
           end
@@ -55,9 +54,9 @@ module Firehose
       end
 
       private
-      def subscribe(handler, timeout=nil)
+      def subscribe(handler)
         subscriber.subscribe(channel_key, handler)
-        handler.timeout(timeout){ unsubscribe handler } if timeout
+        handler.timeout { unsubscribe handler }
       end
     end
   end
