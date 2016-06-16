@@ -61,7 +61,6 @@ class Firehose.WebSocket extends Firehose.Transport
     @_restartKeepAlive()
     unless isPong frame
       try
-        _checkDroppedMessages(@_lastMessageSequence, frame.last_sequence)
         @_lastMessageSequence = frame.last_sequence
         @config.message @config.parse frame.message
       catch e
@@ -138,7 +137,6 @@ class Firehose.MultiplexedWebSocket extends Firehose.WebSocket
     unless isPong frame
       try
         @_lastMessageSequence ||= {}
-        _checkMultiplexedDroppedMessages(frame)
         @_lastMessageSequence[frame.channel] = frame.last_sequence
         @config.message frame
       catch e

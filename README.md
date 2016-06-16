@@ -84,9 +84,6 @@ new Firehose.Consumer({
   error: function(){
     console.log("Well then, something went horribly wrong.");
   },
-  dropped: function(sequence) {
-    console.log("Dropped message with sequence:", sequence);
-  }
   // Note that we do NOT specify a protocol here because we don't
   // know that yet.
   uri: '//localhost:7474/hello'
@@ -128,18 +125,12 @@ new Firehose.MultiplexedConsumer({
       message: function(msg) {
         console.log("got message on channel 1:");
         console.log(msg);
-      },
-      dropped: function(sequence) {
-        console.log("Dropped message on channel 1 with sequence:", sequence);
       }
     },
     "/my/channel/2": {
       message: function(msg) {
         console.log("got message on channel 2:");
         console.log(msg);
-      },
-      dropped: function(sequence) {
-        console.log("Dropped message on channel 2 with sequence:", sequence);
       }
     }
   }
