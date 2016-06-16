@@ -12,27 +12,36 @@ module Firehose
       def initialize(message_list, channel_sequence, consumer_sequence = nil)
         @message_list = message_list
         @channel_sequence = channel_sequence.to_i
-        @consumer_sequence = consumer_sequence.to_i
+
+        if consumer_sequence
+          @consumer_sequence = consumer_sequence.to_i
+        else
+          @consumer_sequence = @message_list.size - 1
+        end
       end
 
       def consumed_messages
-        messages.take(offset)
+        messages.take consumed_message_count
       end
 
       def remaining_messages
-        messages.drop(offset)
+        messages.drop consumed_message_count
       end
 
-      def offset
-        # Somehow the sequence is negative. Consumer needs all messages
-        if @consumer_sequence < 0
+      def consumed_message_count
+        # Consumer is starting at 0 or somehow the value is negative. Start the consumer off
+        # with the lastest message.
+        if @message_list.empty?
           0
+        elsif @consumer_sequence < 0
+          @message_list.size - 1
         # Somehow the sequence is ahead of the channel. Consumer has all the messages.
         elsif @consumer_sequence > @channel_sequence
           @message_list.size
-        # Consumer is under water since the last request. Consumer needs messages.
+        # Consumer is under water since the last request. Drop everytying and give the consumer
+        # the latest message.
         elsif @consumer_sequence < @channel_sequence - @message_list.size
-          0
+          @message_list.size - 1
         # Consumer is behind a few messages and can catch up. Consumer only needs a few messages.
         else
           # Message list of 50
