@@ -1,0 +1,7 @@
+# Spin up dependent services so tests can be run locally.
+version: "2"
+services:
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"
