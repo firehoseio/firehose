@@ -172,7 +172,6 @@ module Firehose
                 send_message(
                   channel: channel_name,
                   message: message.payload,
-                  # TODO: Is the last_sequence right or do we want message.last_sequence?
                   last_sequence: message.sequence
                 )
                 Firehose.logger.debug "WS sent `#{message.payload}` to `#{channel_name}` with sequence `#{message.sequence}`"

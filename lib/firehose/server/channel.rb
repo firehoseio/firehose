@@ -23,7 +23,6 @@ module Firehose
 
       def next_messages(consumer_sequence=nil, options={})
         deferrable = EM::DefaultDeferrable.new
-        # TODO - Think this through a little harder... maybe some tests ol buddy!
         deferrable.errback {|e| EM.next_tick { raise e } unless [:timeout, :disconnect].include?(e) }
 
         redis.multi
