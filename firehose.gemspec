@@ -28,7 +28,6 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency "faraday", "0.9.0"
   s.add_runtime_dependency "faye-websocket"
   s.add_runtime_dependency "em-http-request", ">= 1.0.0"
-  s.add_runtime_dependency "json"
   s.add_runtime_dependency "rack"
 
   s.add_development_dependency "rspec", "~> 2"
