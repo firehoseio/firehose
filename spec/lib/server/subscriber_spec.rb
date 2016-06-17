@@ -9,15 +9,14 @@ describe Firehose::Server::Subscriber do
   let(:message)         { 'Raaaarrrrrr!!!!' }
   let(:publisher)       { Firehose::Server::Publisher.new }
   let(:consumer)        { Firehose::Server::Consumer.new }
-  let(:handler)         { Firehose::Server::MessageHandler.new(channel: channel, consumer: consumer) }
-  let(:deferrable)      { handler.deferrable }
   let(:channel)         { consumer.channel(channel_key) }
+  let(:deferrable)      { channel.deferrable }
 
   describe "#subscribe" do
     it "adds the deferrable to the subscriptions hash" do
       em do
-        dummy_subscriber.subscribe(channel_key, handler)
-        expect(dummy_subscriber.send(:subscriptions)[channel_key]).to eql([handler])
+        dummy_subscriber.subscribe(channel)
+        expect(dummy_subscriber.send(:subscriptions)[channel_key]).to eql([channel])
         em.next_tick { em.stop }
       end
     end
@@ -31,7 +30,7 @@ describe Firehose::Server::Subscriber do
           em.next_tick { em.stop }
         end
 
-        subscriber.subscribe(channel_key, handler)
+        subscriber.subscribe(channel)
         publisher.publish(channel_key, message)
       end
     end
@@ -41,7 +40,7 @@ describe Firehose::Server::Subscriber do
         deferrable.should_receive(:succeed).with([Firehose::Server::MessageBuffer::Message.new(message, 1)]) # The publisher is fresh, so the sequence ID will be 1.
         deferrable.should_not_receive(:succeed).with([Firehose::Server::MessageBuffer::Message.new('2nd message', 2)])
 
-        subscriber.subscribe(channel_key, handler)
+        subscriber.subscribe(channel)
         publisher.publish(channel_key, message).callback do
           publisher.publish(channel_key, '2nd message').callback do
             em.stop
@@ -54,8 +53,8 @@ describe Firehose::Server::Subscriber do
 
   describe "#unsubscribe" do
     it "removes the deferrable from the subscriptions hash" do
-      dummy_subscriber.subscribe(channel_key, handler)
-      dummy_subscriber.unsubscribe(channel_key, handler)
+      dummy_subscriber.subscribe(channel)
+      dummy_subscriber.unsubscribe(channel)
       expect(dummy_subscriber.send(:subscriptions).has_key?(channel_key)).to be_falsey
     end
 
@@ -63,8 +62,8 @@ describe Firehose::Server::Subscriber do
       em do
         deferrable.should_not_receive(:succeed).with(message, 1) # The publisher is fresh, so the sequence ID will be 1.
 
-        subscriber.subscribe(channel_key, handler)
-        subscriber.unsubscribe(channel_key, handler)
+        subscriber.subscribe(channel)
+        subscriber.unsubscribe(channel)
         publisher.publish(channel_key, message).callback do
           em.stop
         end

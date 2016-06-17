@@ -2,8 +2,7 @@ module Firehose
   module Server
     # Connects to a specific channel on Redis and listens for messages to notify subscribers.
     class Channel
-      attr_reader :channel_key, :list_key, :sequence_key
-      attr_reader :redis, :subscriber, :consumer, :handler
+      attr_reader :redis, :subscriber, :consumer, :name, :deferrable
 
       def self.redis
         @redis ||= Firehose::Server.redis.connection
@@ -13,24 +12,24 @@ module Firehose
         @subscriber ||= Server::Subscriber.new(Firehose::Server.redis.connection)
       end
 
-      def initialize(channel_key: , consumer: )
-        # TODO: Remove these instance vars...
+      def initialize(name: , consumer: )
         @redis        = self.class.redis
         @subscriber   = self.class.subscriber
         @consumer     = consumer
-        @channel_key  = channel_key
+        @name         = name
         @list_key     = Server::Redis.key(channel_key, :list)
         @sequence_key = Server::Redis.key(channel_key, :sequence)
-        @handler = Firehose::Server::MessageHandler.new(channel: self, consumer: consumer)
+        @deferrable   = EM::DefaultDeferrable.new
+        @deferrable.errback {|e| EM.next_tick { raise e } unless [:timeout, :disconnect].include?(e) }
       end
 
       def next_messages
         redis.multi
-          redis.get(sequence_key).
-            errback {|e| handler.deferrable.fail e }
+          redis.get(@sequence_key).
+            errback {|e| deferrable.fail e }
           # Fetch entire list: http://stackoverflow.com/questions/10703019/redis-fetch-all-value-of-list-without-iteration-and-without-popping
-          redis.lrange(list_key, 0, -1).
-            errback {|e| handler.deferrable.fail e }
+          redis.lrange(@list_key, 0, -1).
+            errback {|e| deferrable.fail e }
         redis.exec.callback do |(channel_sequence, message_list)|
           # Reverse the messages so they can be correctly procesed by the MessageBuffer class. There's
           # a patch in the message-buffer-redis branch that moves this concern into the Publisher LUA
@@ -42,23 +41,38 @@ module Firehose
             Firehose.logger.debug "No messages in buffer, subscribing. sequence: `#{channel_sequence}` consumer.sequence: #{consumer.sequence}"
             # Either this resource has never been seen before or we are all caught up.
             # Subscribe and hope something gets published to this end-point.
-            subscribe(handler)
+            subscribe
           else # Either the client is under water or caught up to head.
-            handler.process buffer.remaining_messages
+            send_messages buffer.remaining_messages
           end
         end.errback {|e| deferrable.fail e }
 
-        handler.deferrable
+        @deferrable
       end
 
-      def unsubscribe(handler)
-        subscriber.unsubscribe channel_key, handler
+      def send_messages(messages)
+        @deferrable.succeed messages
+      end
+
+      def unsubscribe
+        subscriber.unsubscribe self
       end
 
       private
-      def subscribe(handler)
-        subscriber.subscribe(channel_key, handler)
-        handler.timeout { unsubscribe handler }
+      def subscribe
+        subscriber.subscribe(self)
+        timeout { unsubscribe }
+      end
+
+      def timeout(&block)
+        return if consumer.timeout.nil?
+
+        timer = EventMachine::Timer.new(consumer.timeout) do
+          deferrable.fail :timeout
+          block.call self
+        end
+        # Cancel the timer if when the deferrable succeeds
+        deferrable.callback { timer.cancel }
       end
     end
   end

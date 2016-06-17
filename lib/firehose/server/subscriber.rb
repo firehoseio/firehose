@@ -22,24 +22,24 @@ module Firehose
           callback { Firehose.logger.debug "Redis subscribed to `#{channel_updates_key}`" }
         pubsub.on(:message) do |_, payload|
           channel_key, channel_sequence, message = Server::Publisher.from_payload(payload)
-          message = [MessageBuffer::Message.new(message, channel_sequence.to_i)]
-          if handlers = subscriptions.delete(channel_key)
-            Firehose.logger.debug "Redis notifying #{handlers.count} deferrable(s) at `#{channel_key}` with channel_sequence `#{channel_sequence}` and message `#{message}`"
-            handlers.each do |handler|
+          message = MessageBuffer::Message.new(message, channel_sequence.to_i)
+          if channels = subscriptions.delete(channel_key)
+            Firehose.logger.debug "Redis notifying #{channels.count} deferrable(s) at `#{channel_key}` with channel_sequence `#{channel_sequence}` and message `#{message}`"
+            channels.each do |channel|
               Firehose.logger.debug "Sending message #{message} and channel_sequence #{channel_sequence} to client from subscriber"
-              handler.process message
+              channel.send_messages [ message ]
             end
           end
         end
       end
 
-      def subscribe(channel_key, handler)
-        subscriptions[channel_key].push handler
+      def subscribe(channel)
+        subscriptions[channel.name].push channel
       end
 
-      def unsubscribe(channel_key, handler)
-        subscriptions[channel_key].delete handler
-        subscriptions.delete(channel_key) if subscriptions[channel_key].empty?
+      def unsubscribe(channel)
+        subscriptions[channel.name].delete channel
+        subscriptions.delete(channel.name) if subscriptions[channel.name].empty?
       end
 
       private

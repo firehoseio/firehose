@@ -10,8 +10,8 @@ module Firehose
         @sequence = sequence
       end
 
-      def channel(channel_key)
-        Server::Channel.new channel_key: channel_key, consumer: self
+      def channel(name)
+        Server::Channel.new name: name, consumer: self
       end
     end
   end
