@@ -52,7 +52,7 @@ module Firehose
 
       private
       def redis
-        @redis ||= EM::Hiredis.connect
+        @redis ||= Firehose::Server.redis.connection
       end
 
       # Serialize components of a message into something that can be dropped into Redis.
@@ -78,11 +78,11 @@ module Firehose
       end
 
       def eval_publish_script(channel_key, message, ttl, buffer_size, deferrable)
-        list_key = Server.key(channel_key, :list)
+        list_key = Server::Redis.key(channel_key, :list)
         script_args = [
-          Server.key(channel_key, :sequence),
+          Server::Redis.key(channel_key, :sequence),
           list_key,
-          Server.key(:channel_updates),
+          Server::Redis.key(:channel_updates),
           ttl,
           message,
           buffer_size,

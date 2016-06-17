@@ -27,7 +27,7 @@ module Firehose
         SECONDS_TO_EXPIRE = 60
 
         def self.redis
-          @redis ||= EM::Hiredis.connect
+          @redis ||= Firehose::Server.redis.connection
         end
 
         def initialize(env, redis=nil)

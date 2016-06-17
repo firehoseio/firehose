@@ -16,7 +16,7 @@ module Firehose
         #       with the same error.
         #       The final goal is to allow the failed deferrable bubble back up
         #       so we can send back a nice, clean 500 error to the client.
-        channel_updates_key = Server.key('channel_updates')
+        channel_updates_key = Server::Redis.key('channel_updates')
         pubsub.subscribe(channel_updates_key).
           errback{|e| EM.next_tick { raise e } }.
           callback { Firehose.logger.debug "Redis subscribed to `#{channel_updates_key}`" }

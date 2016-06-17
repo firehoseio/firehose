@@ -14,7 +14,7 @@ describe Firehose::Server::Publisher do
   describe "#publish" do
     it "publishes message change" do
       em do
-        hiredis = EM::Hiredis.connect.pubsub
+        hiredis = Firehose::Server.redis.connection.pubsub
         hiredis.subscribe "firehose:channel_updates"
         hiredis.on(:message) {|_, msg|
           expect(msg).to eql("#{channel_key}\n1\n#{message}")

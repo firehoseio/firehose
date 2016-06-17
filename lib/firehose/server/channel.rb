@@ -6,19 +6,19 @@ module Firehose
       attr_reader :redis, :subscriber
 
       def self.redis
-        @redis ||= EM::Hiredis.connect
+        @redis ||= Firehose::Server.redis.connection
       end
 
       def self.subscriber
-        @subscriber ||= Server::Subscriber.new(EM::Hiredis.connect)
+        @subscriber ||= Server::Subscriber.new(Firehose::Server.redis.connection)
       end
 
       def initialize(channel_key, redis=self.class.redis, subscriber=self.class.subscriber)
         @redis        = redis
         @subscriber   = subscriber
         @channel_key  = channel_key
-        @list_key     = Server.key(channel_key, :list)
-        @sequence_key = Server.key(channel_key, :sequence)
+        @list_key     = Server::Redis.key(channel_key, :list)
+        @sequence_key = Server::Redis.key(channel_key, :sequence)
       end
 
       def next_messages(consumer_sequence=nil, options={})

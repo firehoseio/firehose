@@ -4,8 +4,8 @@ describe Firehose::Server::Channel do
   include EM::TestHelper
 
   let(:channel_key)     { '/bears/are/mean' }
-  let(:channel)         { Firehose::Server::Channel.new(channel_key, EM::Hiredis.connect, subscriber) }
-  let(:subscriber)      { Firehose::Server::Subscriber.new(EM::Hiredis.connect) }
+  let(:channel)         { Firehose::Server::Channel.new(channel_key, Firehose::Server.redis.connection, subscriber) }
+  let(:subscriber)      { Firehose::Server::Subscriber.new(Firehose::Server.redis.connection) }
   let(:message)         { 'Raaaarrrrrr!!!!' }
   let(:publisher)       { Firehose::Server::Publisher.new }
 
