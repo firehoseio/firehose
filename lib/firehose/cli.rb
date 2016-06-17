@@ -16,7 +16,8 @@ module Firehose
 
     desc "javascript", "Compile the Firehose JavaScript."
     def javascript
-      puts Firehose::Assets::Sprockets.javascript
+      $stderr.puts "DEPRECATION WARNING: Firehose JS assets have been moved to https://github.com/firehoseio/js_client"
+      $stdout.puts Firehose::Assets::Sprockets.javascript
     end
 
     desc "version", "Display the current version."
