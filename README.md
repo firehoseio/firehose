@@ -7,7 +7,7 @@
 
     Build realtime web applications in Ruby and JS
 
-[![Build Status](https://travis-ci.org/firehoseio/firehose.png)](https://travis-ci.org/firehoseio/firehose) [![Code Climate](https://codeclimate.com/github/firehoseio/firehose/badges/gpa.svg)](https://codeclimate.com/github/firehoseio/firehose) [![Test Coverage](https://codeclimate.com/github/firehoseio/firehose/badges/coverage.svg)](https://codeclimate.com/github/firehoseio/firehose/coverage)
+[![Build Status](https://travis-ci.org/firehoseio/firehose.svg?branch=master)](https://travis-ci.org/firehoseio/firehose) [![Code Climate](https://codeclimate.com/github/firehoseio/firehose/badges/gpa.svg)](https://codeclimate.com/github/firehoseio/firehose) [![Test Coverage](https://codeclimate.com/github/firehoseio/firehose/badges/coverage.svg)](https://codeclimate.com/github/firehoseio/firehose/coverage)
 
 # What is Firehose?
 
