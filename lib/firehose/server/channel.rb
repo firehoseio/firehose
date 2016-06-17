@@ -3,7 +3,7 @@ module Firehose
     # Connects to a specific channel on Redis and listens for messages to notify subscribers.
     class Channel
       attr_reader :channel_key, :list_key, :sequence_key
-      attr_reader :redis, :subscriber
+      attr_reader :redis, :subscriber, :consumer, :handler
 
       def self.redis
         @redis ||= Firehose::Server.redis.connection
@@ -13,16 +13,18 @@ module Firehose
         @subscriber ||= Server::Subscriber.new(Firehose::Server.redis.connection)
       end
 
-      def initialize(channel_key, redis=self.class.redis, subscriber=self.class.subscriber)
-        @redis        = redis
-        @subscriber   = subscriber
+      def initialize(channel_key: , consumer: )
+        # TODO: Remove these instance vars...
+        @redis        = self.class.redis
+        @subscriber   = self.class.subscriber
+        @consumer     = consumer
         @channel_key  = channel_key
         @list_key     = Server::Redis.key(channel_key, :list)
         @sequence_key = Server::Redis.key(channel_key, :sequence)
+        @handler = Firehose::Server::MessageHandler.new(channel: self, consumer: consumer)
       end
 
-      def next_messages(consumer)
-        handler = Firehose::Server::MessageHandler.new(channel: self, consumer: consumer)
+      def next_messages
         redis.multi
           redis.get(sequence_key).
             errback {|e| handler.deferrable.fail e }

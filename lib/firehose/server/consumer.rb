@@ -9,6 +9,10 @@ module Firehose
         @metadata = metadata
         @sequence = sequence
       end
+
+      def channel(channel_key)
+        Server::Channel.new channel_key: channel_key, consumer: self
+      end
     end
   end
 end

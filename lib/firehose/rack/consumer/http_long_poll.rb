@@ -87,24 +87,24 @@ module Firehose
             end
           end
 
-          def respond_async(channel, consumer, env)
+          def respond_async(channel_key, consumer, env)
             EM.next_tick do
               if consumer.sequence < 0
                 async_callback env, 400, "The last_message_sequence parameter may not be less than zero"
               else
                 # TODO: Implement timeout in consumer.
                 consumer.timeout = @timeout
-                Server::Channel.new(channel).next_messages(consumer).callback do |messages|
+                consumer.channel(channel_key).next_messages.callback do |messages|
                   # TODO: Can we send all of these messages down in one request? Sending one message per
                   # request is slow and inefficient. If we change the protocol (3.0?) we could batch the
                   # messages and send them all down the pipe, then close the conneciton.
                   message = messages.first
-                  async_callback env, 200, wrap_frame(channel, message)
+                  async_callback env, 200, wrap_frame(channel_key, message)
                 end.errback do |e|
                   if e == :timeout
                     async_callback env, 204
                   else
-                    Firehose.logger.error "Unexpected error when trying to GET consumer.sequence #{consumer.sequence} for path #{channel}: #{e.inspect}"
+                    Firehose.logger.error "Unexpected error when trying to GET consumer.sequence #{consumer.sequence} for path #{channel_key}: #{e.inspect}"
                     async_callback env, 500, "Unexpected error"
                   end
                 end

@@ -4,11 +4,17 @@ describe Firehose::Server::Channel do
   include EM::TestHelper
 
   let(:channel_key)     { '/bears/are/mean' }
-  let(:channel)         { Firehose::Server::Channel.new(channel_key, Firehose::Server.redis.connection, subscriber) }
-  let(:subscriber)      { Firehose::Server::Subscriber.new(Firehose::Server.redis.connection) }
   let(:message)         { 'Raaaarrrrrr!!!!' }
   let(:publisher)       { Firehose::Server::Publisher.new }
   let(:consumer)        { Firehose::Server::Consumer.new }
+  let(:channel)         { consumer.channel(channel_key) }
+  # If you use the memoized redis and subscriber connection objects between test
+  # runs, EM won't clean up connections properly, lock forever, fail all of your tests
+  # and remind you that you're wasting your life fighting event machine. Go have a beer.
+  before(:each) do
+    Firehose::Server::Channel.stub(:redis) { Firehose::Server.redis.connection }
+    Firehose::Server::Channel.stub(:subscriber) { Firehose::Server::Subscriber.new(Firehose::Server.redis.connection) }
+  end
 
   def push_message
     redis_exec 'lpush', "firehose:#{channel_key}:list", message
@@ -18,7 +24,7 @@ describe Firehose::Server::Channel do
   describe "#next_messages" do
     it "waits for message if message was not published before subscription" do
       em do
-        channel.next_messages(consumer).callback do |messages|
+        channel.next_messages.callback do |messages|
           msg = messages.first
           expect(msg.payload).to eql(message)
           expect(msg.sequence).to eql(1)
@@ -33,7 +39,7 @@ describe Firehose::Server::Channel do
       push_message
 
       em do
-        channel.next_messages(consumer).callback do |messages|
+        channel.next_messages.callback do |messages|
           msg = messages.first
           expect(msg.payload).to eql(message)
           expect(msg.sequence).to eql(100)
@@ -49,7 +55,7 @@ describe Firehose::Server::Channel do
       push_message
 
       em 3 do
-        channel.next_messages(consumer).callback do |messages|
+        channel.next_messages.callback do |messages|
           msg = messages.first.payload
           seq = messages.first.sequence
           expect(msg).to eql(message)
@@ -66,7 +72,7 @@ describe Firehose::Server::Channel do
       push_message
 
       em 3 do
-        channel.next_messages(consumer).callback do |messages|
+        channel.next_messages.callback do |messages|
           msg = messages.first.payload
           seq = messages.first.sequence
           expect(msg).to eql(message)
@@ -84,7 +90,7 @@ describe Firehose::Server::Channel do
 
       em 3 do
         publish_messages(messages) do
-          channel.next_messages(consumer).callback do |messages|
+          channel.next_messages.callback do |messages|
             msg = messages.first.payload
             seq = messages.first.sequence
             expect(msg).to eql('c')
@@ -103,7 +109,7 @@ describe Firehose::Server::Channel do
 
       em 3 do
         publish_messages(messages) do
-          channel.next_messages(consumer).callback do |msgs|
+          channel.next_messages.callback do |msgs|
             msg = msgs.last.payload
             seq = msgs.last.sequence
             expect(msg).to eql(messages.last)
@@ -123,7 +129,7 @@ describe Firehose::Server::Channel do
         push_message
 
         em 3 do
-          channel.next_messages(consumer).callback do |messages|
+          channel.next_messages.callback do |messages|
             msg = messages.first.payload
             seq = messages.first.sequence
             raise 'test failed'
@@ -145,7 +151,7 @@ describe Firehose::Server::Channel do
         push_message
 
         em 3 do
-          d = channel.next_messages(consumer).callback do |messages|
+          d = channel.next_messages.callback do |messages|
             msg = messages.first.payload
             seq = messages.first.sequence
             expect(msg).to eql(message)
