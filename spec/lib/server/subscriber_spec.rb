@@ -37,8 +37,8 @@ describe Firehose::Server::Subscriber do
 
     it "doesn't call succeed on the deferrable when a 2nd message is published" do
       em do
-        deferrable.should_receive(:succeed).with([Firehose::Server::MessageBuffer::Message.new(message, 1)]) # The publisher is fresh, so the sequence ID will be 1.
-        deferrable.should_not_receive(:succeed).with([Firehose::Server::MessageBuffer::Message.new('2nd message', 2)])
+        deferrable.should_receive(:succeed).with([Firehose::Server::Message.new(message, 1)]) # The publisher is fresh, so the sequence ID will be 1.
+        deferrable.should_not_receive(:succeed).with([Firehose::Server::Message.new('2nd message', 2)])
 
         subscriber.subscribe(channel)
         publisher.publish(channel_key, message).callback do

@@ -9,6 +9,7 @@ module Firehose
   # This mostly handles message sequencing and different HTTP channel names.
   module Server
     autoload :MessageBuffer,    'firehose/server/message_buffer'
+    autoload :Message,          'firehose/server/message'
     autoload :Subscriber,       'firehose/server/subscriber'
     autoload :Publisher,        'firehose/server/publisher'
     autoload :Channel,          'firehose/server/channel'
