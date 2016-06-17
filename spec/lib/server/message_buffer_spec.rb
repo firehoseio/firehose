@@ -15,6 +15,9 @@ describe Firehose::Server::MessageBuffer do
       it "has empty consumed" do
         expect(subject.consumed_messages).to be_empty
       end
+      it "has 0 consumed_message_count" do
+        expect(subject.consumed_message_count).to eql(0)
+      end
     end
     context "nil sequence" do
       let(:consumer_sequence) { nil }
@@ -36,14 +39,6 @@ describe Firehose::Server::MessageBuffer do
   context "has messages (buffer size of 5, at channel sequence 5)" do
     let(:messages) { %w[a b c d e] }
     let(:channel_sequence) { 5 }
-    shared_examples "sequenced messages" do
-      it "returns all messages" do
-        expect(subject.remaining_messages.map(&:payload)).to eql(messages)
-      end
-      it "has correct sequences" do
-        expect(subject.remaining_messages.map(&:sequence)).to eql((1..5).to_a)
-      end
-    end
     shared_examples "no messages consumed" do
       it "consumed is empty" do
         expect(subject.consumed_messages).to be_empty
@@ -51,8 +46,11 @@ describe Firehose::Server::MessageBuffer do
       it "remaining messages" do
         expect(subject.remaining_messages.map(&:payload)).to eql(messages)
       end
-      it "has 0 offset" do
-        expect(subject.offset).to eql(0)
+      it "has correct sequences" do
+        expect(subject.remaining_messages.map(&:sequence)).to eql((1..5).to_a)
+      end
+      it "has 0 consumed_message_count" do
+        expect(subject.consumed_message_count).to eql(0)
       end
     end
     shared_examples "all messages consumed" do
@@ -62,23 +60,31 @@ describe Firehose::Server::MessageBuffer do
       it "remaining messages" do
         expect(subject.remaining_messages).to be_empty
       end
-      it "has 0 offset" do
-        expect(subject.offset).to eql(5)
+      it "has 5 consumed_message_count" do
+        expect(subject.consumed_message_count).to eql(5)
+      end
+    end
+    shared_examples "latest message remaining" do
+      it "consumed all but latest" do
+        expect(subject.consumed_messages.map(&:payload)).to eql(%w[a b c d])
+      end
+      it "latest message remaining" do
+        expect(subject.remaining_messages.map(&:payload)).to eql(%w[e])
+      end
+      it "has 4 consumed_message_count" do
+        expect(subject.consumed_message_count).to eql(4)
       end
     end
     context "nil sequence" do
       let(:consumer_sequence) { nil }
-      it_behaves_like "sequenced messages"
-      it_behaves_like "no messages consumed"
-    end
-    context "0 sequence" do
-      let(:consumer_sequence) { 0 }
-      it_behaves_like "sequenced messages"
-      it_behaves_like "no messages consumed"
+      it_behaves_like "latest message remaining"
     end
     context "negative sequence" do
       let(:consumer_sequence) { -1 }
-      it_behaves_like "sequenced messages"
+      it_behaves_like "latest message remaining"
+    end
+    context "0 sequence" do
+      let(:consumer_sequence) { 0 }
       it_behaves_like "no messages consumed"
     end
     context "running behind" do
@@ -89,8 +95,11 @@ describe Firehose::Server::MessageBuffer do
       it "remaining messages" do
         expect(subject.remaining_messages.map(&:payload)).to eql(%w[c d e])
       end
-      it "has 3 offset" do
-        expect(subject.offset).to eql(2)
+      it "has correct sequences" do
+        expect(subject.remaining_messages.map(&:sequence)).to eql((3..5).to_a)
+      end
+      it "has 2 consumed_message_count" do
+        expect(subject.consumed_message_count).to eql(2)
       end
     end
     context "caught up" do
@@ -105,14 +114,6 @@ describe Firehose::Server::MessageBuffer do
   context "has messages (buffer size of 5, at channel sequence 10)" do
     let(:messages) { %w[f g h i j] }
     let(:channel_sequence) { 10 }
-    shared_examples "sequenced messages" do
-      it "returns all messages" do
-        expect(subject.remaining_messages.map(&:payload)).to eql(messages)
-      end
-      it "has correct sequences" do
-        expect(subject.remaining_messages.map(&:sequence)).to eql((6..10).to_a)
-      end
-    end
     shared_examples "no messages consumed" do
       it "consumed is empty" do
         expect(subject.consumed_messages).to be_empty
@@ -120,8 +121,22 @@ describe Firehose::Server::MessageBuffer do
       it "remaining messages" do
         expect(subject.remaining_messages.map(&:payload)).to eql(messages)
       end
-      it "has 0 offset" do
-        expect(subject.offset).to eql(0)
+      it "has 0 consumed_message_count" do
+        expect(subject.consumed_message_count).to eql(0)
+      end
+      it "has correct sequences" do
+        expect(subject.remaining_messages.map(&:sequence)).to eql((6..10).to_a)
+      end
+    end
+    shared_examples "latest message remaining" do
+      it "consumed all but latest" do
+        expect(subject.consumed_messages.map(&:payload)).to eql(%w[f g h i])
+      end
+      it "latest message remaining" do
+        expect(subject.remaining_messages.map(&:payload)).to eql(%w[j])
+      end
+      it "has 4 consumed_message_count" do
+        expect(subject.consumed_message_count).to eql(4)
       end
     end
     shared_examples "all messages consumed" do
@@ -131,29 +146,25 @@ describe Firehose::Server::MessageBuffer do
       it "remaining messages" do
         expect(subject.remaining_messages).to be_empty
       end
-      it "has 0 offset" do
-        expect(subject.offset).to eql(5)
+      it "has 5 consumed_message_count" do
+        expect(subject.consumed_message_count).to eql(5)
       end
     end
     context "nil sequence" do
       let(:consumer_sequence) { nil }
-      it_behaves_like "sequenced messages"
-      it_behaves_like "no messages consumed"
+      it_behaves_like "latest message remaining"
     end
     context "0 sequence" do
       let(:consumer_sequence) { 0 }
-      it_behaves_like "sequenced messages"
-      it_behaves_like "no messages consumed"
+      it_behaves_like "latest message remaining"
     end
     context "negative sequence" do
       let(:consumer_sequence) { -1 }
-      it_behaves_like "sequenced messages"
-      it_behaves_like "no messages consumed"
+      it_behaves_like "latest message remaining"
     end
     context "underwater" do
       let(:consumer_sequence) { 1 }
-      it_behaves_like "sequenced messages"
-      it_behaves_like "no messages consumed"
+      it_behaves_like "latest message remaining"
     end
     context "running behind" do
       let(:consumer_sequence) { 8 }
@@ -163,9 +174,16 @@ describe Firehose::Server::MessageBuffer do
       it "remaining messages" do
         expect(subject.remaining_messages.map(&:payload)).to eql(%w[i j])
       end
-      it "has 0 offset" do
-        expect(subject.offset).to eql(3)
+      it "has 3 consumed_message_count" do
+        expect(subject.consumed_message_count).to eql(3)
       end
+      it "has correct sequences" do
+        expect(subject.remaining_messages.map(&:sequence)).to eql((9..10).to_a)
+      end
+    end
+    context "start of message sequence boundary" do
+      let(:consumer_sequence) { 5 }
+      it_behaves_like "no messages consumed"
     end
     context "caught up" do
       let(:consumer_sequence) { 10 }
