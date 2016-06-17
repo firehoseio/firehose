@@ -5,11 +5,11 @@ module Firehose
       attr_reader :redis, :subscriber, :consumer, :name, :deferrable
 
       def self.redis
-        @redis ||= Firehose::Server.redis.connection
+        @redis ||= Server.redis.connection
       end
 
       def self.subscriber
-        @subscriber ||= Server::Subscriber.new(Firehose::Server.redis.connection)
+        @subscriber ||= Server::Subscriber.new(Server.redis.connection)
       end
 
       def initialize(name: , consumer: )
@@ -17,8 +17,8 @@ module Firehose
         @subscriber   = self.class.subscriber
         @consumer     = consumer
         @name         = name
-        @list_key     = Server::Redis.key(channel_key, :list)
-        @sequence_key = Server::Redis.key(channel_key, :sequence)
+        @list_key     = Server::Redis.key(name, :list)
+        @sequence_key = Server::Redis.key(name, :sequence)
         @deferrable   = EM::DefaultDeferrable.new
         @deferrable.errback {|e| EM.next_tick { raise e } unless [:timeout, :disconnect].include?(e) }
       end
@@ -60,7 +60,7 @@ module Firehose
 
       private
       def subscribe
-        subscriber.subscribe(self)
+        subscriber.subscribe self
         timeout { unsubscribe }
       end
 
