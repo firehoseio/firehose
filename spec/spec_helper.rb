@@ -40,8 +40,9 @@ end
 module Hiredis::TestHelper
   def redis
     @conn ||= begin
+      redis = Firehose::Server.configuration.redis
       conn = Hiredis::Connection.new
-      conn.connect(Firehose::Server.redis.url.host, Firehose::Server.redis.url.port)
+      conn.connect(redis.url.host, redis.url.port)
       conn
     end
   end

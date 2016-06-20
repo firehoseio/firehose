@@ -165,6 +165,32 @@ firehose.publish(json).to("/my/messages/path")
 
 Firehose can be configured via environmental variables. Take a look at the [`.env.sample`](./.env.sample) file for more info.
 
+## Server Configuration
+
+The Firehose server may be configured via the `Firehose::Server.configuration` object as follows:
+
+```ruby
+require "firehose"
+
+# Implement a custom message handler.
+class MyHandler < Firehose::Server::MessageHandler do
+  def process_message(message: , channel: )
+    # SHOUT AT ALL THE SUBSCRIBERS!
+    name = channel.consumer.metadata["name"]
+    message.payload = "HEY #{name}!, #{message.payload.upcase}!"
+  end
+end
+
+Firehose::Server.configuration do |config|
+  # Custom message handler. This is useful if you want to implement
+  # authorization per-message for Firehose.
+  config.message_handler = MyHandler.new
+
+  # Configure redis connection.
+  config.redis.url = ENV.fetch "FIREHOSE_REDIS_URL", "redis://redis:6379/10"
+end
+```
+
 ## Rack Configuration
 
 There are two rack applications that are included with Firehose: `Firehose::Rack::Producer` which a client can `PUT` HTTP request with message payloads to publish information on Firehose and the `Firehose::Rack::Consumer` application which a client connects to via HTTP long polling or WebSockets to consume a message.

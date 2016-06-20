@@ -12,6 +12,10 @@ module Firehose
         @subscriber ||= Server::Subscriber.new(Server.redis.connection)
       end
 
+      def self.message_handler
+        Server.configuration.message_handler
+      end
+
       def initialize(name: , consumer: )
         @redis        = self.class.redis
         @subscriber   = self.class.subscriber
@@ -51,7 +55,7 @@ module Firehose
       end
 
       def send_messages(messages)
-        @deferrable.succeed messages
+        @deferrable.succeed process_messages messages
       end
 
       def unsubscribe
@@ -59,6 +63,10 @@ module Firehose
       end
 
       private
+      def process_messages(messages)
+        messages.each { |m| self.class.message_handler.process(message: m, channel: self) }
+      end
+
       def subscribe
         subscriber.subscribe self
         timeout { unsubscribe }
