@@ -1,4 +1,4 @@
 module Firehose
-  VERSION  = "1.3.5"
-  CODENAME = "Turn on, tune in, drop out"
+  VERSION  = "1.3.6"
+  CODENAME = "Oops I did it again"
 end

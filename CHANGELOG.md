@@ -1,8 +1,13 @@
-## 1.3.6
+## master
 
 - Configuration of Redis via the `Firehose::Server.redis` object.
 - Less rubygem dependencies: JSON gem removed because its included in Ruby 2.x
 - DEPRECATED: `firehose javascript` command will be removed. Those have been moved to https://github.com/firehoseio/js_client.
+
+## 1.3.6
+
+- DEPRECATION WARNING: `firehose javascript` has been removed from this project.
+- BUG: The null message bug fix in 1.3.5 introduce different behavior into the messages delivered when a client reconnects with a last_sequence. This has been corrected and 1.3.5 will be yanked.
 
 ## 1.3.5
 
