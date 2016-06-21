@@ -15,35 +15,31 @@ module Firehose
         @consumer_sequence = consumer_sequence.to_i
       end
 
-      def consumed_messages
-        messages.take(offset)
-      end
-
       def remaining_messages
-        messages.drop(offset)
-      end
-
-      def offset
-        # Somehow the sequence is negative. Consumer needs all messages
-        if @consumer_sequence < 0
-          0
-        # Somehow the sequence is ahead of the channel. Consumer has all the messages.
-        elsif @consumer_sequence > @channel_sequence
-          @message_list.size
-        # Consumer is under water since the last request. Consumer needs messages.
-        elsif @consumer_sequence < @channel_sequence - @message_list.size
-          0
-        # Consumer is behind a few messages and can catch up. Consumer only needs a few messages.
-        else
-          # Message list of 50
-          # Consumer is at 950
-          # Server is at 967
-          # Consumer NEEDS 17 messages (or client can DROP 33 messages)
-          @message_list.size - (@channel_sequence - @consumer_sequence)
-        end
+        messages.last(remaining_message_count)
       end
 
       private
+
+      def remaining_message_count
+        # Special case to always get the latest message.
+        return 1 unless @consumer_sequence > 0
+
+        count = @channel_sequence - @consumer_sequence
+
+        if count < 0
+          # UNEXPECTED: Somehow the sequence is ahead of the channel.
+          #             It is likely a bug in the consumer, but we'll assume
+          #             the consumer has all the messages.
+          0
+        elsif count > @message_list.size
+          # Consumer is under water since the last request. Just send the most recent message.
+          1
+        else
+          count
+        end
+      end
+
       # Calculates the last_message_sequence per message.
       # [a b c e f]
       def messages
