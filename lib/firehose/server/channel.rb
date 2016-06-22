@@ -9,13 +9,23 @@ module Firehose
       end
 
       def self.subscriber
-        @subscriber ||= Server::Subscriber.new(Firehose::Server.redis.connection)
+        @subscriber ||= Server::Subscriber.new
       end
 
-      def initialize(channel_key, redis: self.class.redis, subscriber: self.class.subscriber)
+      def initialize(channel_key, params: {}, redis: self.class.redis, subscriber: self.class.subscriber)
         @redis        = redis
         @subscriber   = subscriber
         @channel_key  = channel_key
+        on_subscribe(params)
+      end
+
+      def on_subscribe(params)
+      end
+
+      def on_unsubscribe
+      end
+
+      def on_message(message)
       end
 
       def next_messages(consumer_sequence=nil, timeout: nil)
@@ -44,7 +54,8 @@ module Firehose
             # Subscribe and hope something gets published to this end-point.
             subscribe(deferrable, timeout)
           else # Either the client is under water or caught up to head.
-            deferrable.succeed buffer.remaining_messages
+            deferrable.succeed process_messages buffer.remaining_messages
+            deferrable.callback { on_unsubscribe }
           end
         end.errback {|e| deferrable.fail e }
 
@@ -56,6 +67,9 @@ module Firehose
       end
 
       private
+      def process_messages(messages)
+        messages.each { |m| on_message(m) }
+      end
       def subscribe(deferrable, timeout=nil)
         @subscriber.subscribe(channel_key, deferrable)
         if timeout

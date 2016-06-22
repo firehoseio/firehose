@@ -5,13 +5,39 @@ describe Firehose::Server::Channel do
 
   let(:channel_key)     { '/bears/are/mean' }
   let(:channel)         { Firehose::Server::Channel.new(channel_key, redis: Firehose::Server.redis.connection, subscriber: subscriber) }
-  let(:subscriber)      { Firehose::Server::Subscriber.new(Firehose::Server.redis.connection) }
+  let(:subscriber)      { Firehose::Server::Subscriber.new }
   let(:message)         { 'Raaaarrrrrr!!!!' }
   let(:publisher)       { Firehose::Server::Publisher.new }
 
   def push_message
     redis_exec 'lpush', "firehose:#{channel_key}:list", message
     redis_exec 'set', "firehose:#{channel_key}:sequence", '100'
+  end
+
+  context "callbacks" do
+    it "calls #on_message" do
+      push_message
+      em do
+        expect(channel).to receive(:on_message).with(Firehose::Server::MessageBuffer::Message.new(message, 100))
+        channel.next_messages.callback { em.stop }
+      end
+    end
+
+    it "calls #on_subscribe" do
+      expect_any_instance_of(Firehose::Server::Channel).to receive(:on_subscribe).with({})
+      em do
+        channel
+        em.next_tick { em.stop }
+      end
+    end
+
+    it "calls #on_unsubscribe" do
+      push_message
+      em do
+        expect(channel).to receive(:on_unsubscribe).once
+        channel.next_messages.callback { em.stop }
+      end
+    end
   end
 
   describe "#next_messages" do
