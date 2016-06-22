@@ -18,7 +18,7 @@ module Firehose
         @channel_key  = channel_key
       end
 
-      def next_messages(consumer_sequence=nil, options={})
+      def next_messages(consumer_sequence=nil, timeout: nil)
         list_key     = Server::Redis.key(channel_key, :list)
         sequence_key = Server::Redis.key(channel_key, :sequence)
 
@@ -42,7 +42,7 @@ module Firehose
             Firehose.logger.debug "No messages in buffer, subscribing. sequence: `#{channel_sequence}` consumer_sequence: #{consumer_sequence}"
             # Either this resource has never been seen before or we are all caught up.
             # Subscribe and hope something gets published to this end-point.
-            subscribe(deferrable, options[:timeout])
+            subscribe(deferrable, timeout)
           else # Either the client is under water or caught up to head.
             deferrable.succeed buffer.remaining_messages
           end
