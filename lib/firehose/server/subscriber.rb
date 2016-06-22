@@ -4,7 +4,7 @@ module Firehose
     class Subscriber
       attr_reader :pubsub
 
-      def initialize(redis)
+      def initialize(redis = Firehose::Server.redis.connection)
         @pubsub = redis.pubsub
         # TODO: Instead of just raising an exception, it would probably be better
         #       for the errback to set some sort of 'disconnected' state. Then
