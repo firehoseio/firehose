@@ -13,7 +13,7 @@ module Firehose
         @subscriber ||= Server::Subscriber.new(Firehose::Server.redis.connection)
       end
 
-      def initialize(channel_key, redis=self.class.redis, subscriber=self.class.subscriber)
+      def initialize(channel_key, redis: self.class.redis, subscriber: self.class.subscriber)
         @redis        = redis
         @subscriber   = subscriber
         @channel_key  = channel_key
