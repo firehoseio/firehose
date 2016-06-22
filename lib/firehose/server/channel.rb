@@ -2,8 +2,7 @@ module Firehose
   module Server
     # Connects to a specific channel on Redis and listens for messages to notify subscribers.
     class Channel
-      attr_reader :channel_key, :list_key, :sequence_key
-      attr_reader :redis, :subscriber
+      attr_reader :channel_key
 
       def self.redis
         @redis ||= Firehose::Server.redis.connection
@@ -17,21 +16,22 @@ module Firehose
         @redis        = redis
         @subscriber   = subscriber
         @channel_key  = channel_key
-        @list_key     = Server::Redis.key(channel_key, :list)
-        @sequence_key = Server::Redis.key(channel_key, :sequence)
       end
 
       def next_messages(consumer_sequence=nil, options={})
+        list_key     = Server::Redis.key(channel_key, :list)
+        sequence_key = Server::Redis.key(channel_key, :sequence)
+
         deferrable = EM::DefaultDeferrable.new
         deferrable.errback {|e| EM.next_tick { raise e } unless [:timeout, :disconnect].include?(e) }
 
-        redis.multi
-          redis.get(sequence_key).
+        @redis.multi
+          @redis.get(sequence_key).
             errback {|e| deferrable.fail e }
           # Fetch entire list: http://stackoverflow.com/questions/10703019/redis-fetch-all-value-of-list-without-iteration-and-without-popping
-          redis.lrange(list_key, 0, -1).
+          @redis.lrange(list_key, 0, -1).
             errback {|e| deferrable.fail e }
-        redis.exec.callback do |(channel_sequence, message_list)|
+        @redis.exec.callback do |(channel_sequence, message_list)|
           # Reverse the messages so they can be correctly procesed by the MessageBuffer class. There's
           # a patch in the message-buffer-redis branch that moves this concern into the Publisher LUA
           # script. We kept it out of this for now because it represents a deployment risk and `reverse!`
@@ -52,12 +52,12 @@ module Firehose
       end
 
       def unsubscribe(deferrable)
-        subscriber.unsubscribe channel_key, deferrable
+        @subscriber.unsubscribe channel_key, deferrable
       end
 
       private
       def subscribe(deferrable, timeout=nil)
-        subscriber.subscribe(channel_key, deferrable)
+        @subscriber.subscribe(channel_key, deferrable)
         if timeout
           timer = EventMachine::Timer.new(timeout) do
             deferrable.fail :timeout
