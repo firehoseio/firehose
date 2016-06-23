@@ -79,7 +79,7 @@ module Firehose
           def close(event)
             if @deferrable
               @deferrable.fail :disconnect
-              @channel.unsubscribe(@deferrable) if @channel
+              @channel.unsubscribe if @channel
             end
             Firehose.logger.debug "WS connection `#{@req.path}` closing. Code: #{event.code.inspect}; Reason #{event.reason.inspect}"
           end
@@ -110,7 +110,7 @@ module Firehose
           class Subscription < Struct.new(:channel, :deferrable)
             def close
               deferrable.fail :disconnect
-              channel.unsubscribe(deferrable)
+              channel.unsubscribe
             end
           end
 

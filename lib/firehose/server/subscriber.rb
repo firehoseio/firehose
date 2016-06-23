@@ -23,23 +23,23 @@ module Firehose
         pubsub.on(:message) do |_, payload|
           channel_key, channel_sequence, message = Server::Publisher.from_payload(payload)
           messages = [ MessageBuffer::Message.new(message, channel_sequence.to_i) ]
-          if deferrables = subscriptions.delete(channel_key)
-            Firehose.logger.debug "Redis notifying #{deferrables.count} deferrable(s) at `#{channel_key}` with channel_sequence `#{channel_sequence}` and message `#{message}`"
-            deferrables.each do |deferrable|
+          if channels = subscriptions.delete(channel_key)
+            Firehose.logger.debug "Redis notifying #{channels.count} channels(s) at `#{channel_key}` with channel_sequence `#{channel_sequence}` and message `#{message}`"
+            channels.each do |channel|
               Firehose.logger.debug "Sending message #{message} and channel_sequence #{channel_sequence} to client from subscriber"
-              deferrable.succeed messages
+              channel.process_messages messages
             end
           end
         end
       end
 
-      def subscribe(channel_key, deferrable)
-        subscriptions[channel_key].push deferrable
+      def subscribe(channel)
+        subscriptions[channel.channel_key].push channel
       end
 
-      def unsubscribe(channel_key, deferrable)
-        subscriptions[channel_key].delete deferrable
-        subscriptions.delete(channel_key) if subscriptions[channel_key].empty?
+      def unsubscribe(channel)
+        subscriptions[channel.channel_key].delete channel
+        subscriptions.delete(channel.channel_key) if subscriptions[channel.channel_key].empty?
       end
 
       private
