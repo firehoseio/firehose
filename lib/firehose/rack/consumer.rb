@@ -40,12 +40,23 @@ module Firehose
 
       def self.post_subscriptions(request)
         body = request.body.read
-        subs = JSON.parse(body).map do |chan, last_sequence|
-          last_sequence = 0 if last_sequence < 0
-          {
-            channel: chan,
-            message_sequence: last_sequence
-          }
+        subs = JSON.parse(body).map do |chan, val|
+          # Hash is the newer format subscription message that supports
+          # params
+          if val.is_a? Hash
+            {
+              channel: chan,
+              message_sequence: val.delete("last_message_sequence"),
+              params: val
+            }
+          # Otherwise the value of the JSON hash is implicitly the message
+          # sequence
+          else
+            {
+              channel: chan,
+              message_sequence: val
+            }
+          end
         end
       end
 

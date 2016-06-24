@@ -65,7 +65,6 @@ module Firehose
           end
 
           def cors_headers(env)
-            # TODO seperate out CORS logic as an async middleware with a Goliath web server.
             {'Access-Control-Allow-Origin' => cors_origin(env)}
           end
 
@@ -87,12 +86,12 @@ module Firehose
             end
           end
 
-          def respond_async(channel, last_sequence, env)
+          def respond_async(channel, last_sequence, params, env)
             EM.next_tick do
               if last_sequence < 0
                 async_callback env, 400, "The last_message_sequence parameter may not be less than zero"
               else
-                Server::Channel.new(channel).next_messages(last_sequence, :timeout => @timeout).callback do |messages|
+                Server::Channel.new(channel, params: params).next_messages(last_sequence, :timeout => @timeout).callback do |messages|
                   # TODO: Can we send all of these messages down in one request? Sending one message per
                   # request is slow and inefficient. If we change the protocol (3.0?) we could batch the
                   # messages and send them all down the pipe, then close the conneciton.
@@ -124,11 +123,12 @@ module Firehose
             # Get the Last Message Sequence from the query string.
             # Ideally we'd use an HTTP header, but android devices don't let us
             # set any HTTP headers for CORS requests.
-            last_sequence = request.params['last_message_sequence'].to_i
+            params = request.params
+            last_sequence = params.delete('last_message_sequence').to_i
             channel       = request.path
 
             log_request   channel, last_sequence, env
-            respond_async channel, last_sequence, env
+            respond_async channel, last_sequence, params, env
           end
         end
 
@@ -149,7 +149,7 @@ module Firehose
             subscriptions = Consumer.multiplex_subscriptions(request)
             log_request request, subscriptions, env
             subscriptions.each do |sub|
-              respond_async(sub[:channel], sub[:message_sequence], env)
+              respond_async(sub[:channel], sub[:message_sequence], sub[:params], env)
             end
           end
         end
