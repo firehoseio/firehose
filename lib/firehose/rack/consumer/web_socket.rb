@@ -60,12 +60,13 @@ module Firehose
           def message(event)
             msg = parse_message(event)
             seq = msg[:message_sequence]
+            params = msg[:params]
             if msg[:ping] == 'PING'
               Firehose.logger.debug "WS ping received, sending pong"
               send_message pong: "PONG"
             elsif !@subscribed && seq.kind_of?(Integer)
               Firehose.logger.debug "Subscribing at message_sequence #{seq}"
-              subscribe seq
+              subscribe seq, params
             end
           end
 
@@ -86,16 +87,16 @@ module Firehose
 
           # Subscribe the client to the channel on the server. Asks for
           # the last sequence for clients that reconnect.
-          def subscribe(last_sequence)
+          def subscribe(last_sequence, params)
             @subscribed = true
-            @channel    = Server::Channel.new @req.path
+            @channel    = Server::Channel.new @req.path, params: params
             @deferrable = @channel.next_messages last_sequence
             @deferrable.callback do |messages|
               messages.each do |message|
                 Firehose.logger.debug "WS sent `#{message.payload}` to `#{@req.path}` with sequence `#{message.sequence}`"
                 send_message message: message.payload, last_sequence: message.sequence
               end
-              subscribe messages.last.sequence
+              subscribe messages.last.sequence, params
             end
             @deferrable.errback do |e|
               unless e == :disconnect
@@ -151,17 +152,16 @@ module Firehose
             subscriptions.each do |sub|
               Firehose.logger.debug "Subscribing multiplexed to: #{sub}"
 
-              channel, sequence = sub[:channel], sub[:message_sequence]
+              channel, sequence = sub[:channel]
               next if channel.nil?
-
-              subscribe(channel, sequence.to_i)
+              subscribe(channel, sub[:message_sequence].to_i, sub[:params])
             end
           end
 
           # Subscribe the client to the channel on the server. Asks for
           # the last sequence for clients that reconnect.
-          def subscribe(channel_name, last_sequence)
-            channel      = Server::Channel.new channel_name
+          def subscribe(channel_name, last_sequence, params)
+            channel      = Server::Channel.new channel_name, params: params
             deferrable   = channel.next_messages last_sequence
             subscription = Subscription.new(channel, deferrable)
 
@@ -176,7 +176,7 @@ module Firehose
                 )
                 Firehose.logger.debug "WS sent `#{message.payload}` to `#{channel_name}` with sequence `#{message.sequence}`"
               end
-              subscribe channel_name, messages.last.sequence
+              subscribe channel_name, messages.last.sequence, params
             end
 
             deferrable.errback do |e|
