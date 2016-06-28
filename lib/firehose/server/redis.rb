@@ -8,7 +8,7 @@ module Firehose
       KEY_DELIMITER = ":".freeze
       ROOT_KEY = "firehose".freeze
 
-      attr_reader :url
+      attr_accessor :url
 
       def initialize(url = self.class.url)
         @url = URI(url)

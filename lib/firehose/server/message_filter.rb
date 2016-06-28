@@ -5,15 +5,18 @@ module Firehose
     class MessageFilter
       def initialize(channel)
         @channel = channel
+        @params = {}
       end
 
       def process(message)
       end
 
       def on_subscribe(params)
+        @params = params
       end
 
       def on_unsubscribe
+        @params = {}
       end
     end
   end

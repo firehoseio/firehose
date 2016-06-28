@@ -76,7 +76,13 @@ module Firehose
       private
 
       def message_filter
-        @message_filter ||= Firehose::Server::MessageFilter.new(self)
+        @message_filter ||= begin
+          if mf = Server.configuration.message_filter
+            mf.new(self)
+          else
+            Firehose::Server::MessageFilter.new(self)
+          end
+        end
       end
 
       def subscribe(timeout=nil)
