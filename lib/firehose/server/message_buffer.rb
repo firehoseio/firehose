@@ -7,8 +7,6 @@ module Firehose
       # connection drops, then reconnects.
       DEFAULT_SIZE = 100
 
-      Message = Struct.new(:payload, :sequence)
-
       def initialize(message_list, channel_sequence, consumer_sequence = nil)
         @message_list = message_list
         @channel_sequence = channel_sequence.to_i

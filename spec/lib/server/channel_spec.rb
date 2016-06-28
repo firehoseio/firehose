@@ -18,7 +18,7 @@ describe Firehose::Server::Channel do
     it "calls #on_message" do
       push_message
       em do
-        expect(channel).to receive(:on_message).with(Firehose::Server::MessageBuffer::Message.new(message, 100))
+        expect(channel).to receive(:on_message).with(Firehose::Server::Message.new(message, 100))
         channel.next_messages.callback { em.stop }
       end
     end

@@ -21,7 +21,7 @@ describe Firehose::Server::Subscriber do
 
     it "calls process_messages on the deferrable when a message is published" do
       em do
-        expect(channel).to receive(:process_messages)#.with([Firehose::Server::MessageBuffer::Message.new(message, 1)])
+        expect(channel).to receive(:process_messages)#.with([Firehose::Server::Message.new(message, 1)])
         subscriber.subscribe(channel)
         publisher.publish(channel_key, message).callback do
           em.stop
@@ -31,8 +31,8 @@ describe Firehose::Server::Subscriber do
 
     it "doesn't call process_messages on the deferrable when a 2nd message is published" do
       em do
-        channel.should_receive(:process_messages).with([Firehose::Server::MessageBuffer::Message.new(message, 1)]) # The publisher is fresh, so the sequence ID will be 1.
-        channel.should_not_receive(:process_messages).with([Firehose::Server::MessageBuffer::Message.new('2nd message', 2)])
+        channel.should_receive(:process_messages).with([Firehose::Server::Message.new(message, 1)]) # The publisher is fresh, so the sequence ID will be 1.
+        channel.should_not_receive(:process_messages).with([Firehose::Server::Message.new('2nd message', 2)])
 
         subscriber.subscribe(channel)
         publisher.publish(channel_key, message).callback do

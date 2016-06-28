@@ -22,7 +22,7 @@ module Firehose
           callback { Firehose.logger.debug "Redis subscribed to `#{channel_updates_key}`" }
         pubsub.on(:message) do |_, payload|
           channel_key, channel_sequence, message = Server::Publisher.from_payload(payload)
-          messages = [ MessageBuffer::Message.new(message, channel_sequence.to_i) ]
+          messages = [ Message.new(message, channel_sequence.to_i) ]
           if channels = subscriptions.delete(channel_key)
             Firehose.logger.debug "Redis notifying #{channels.count} channels(s) at `#{channel_key}` with channel_sequence `#{channel_sequence}` and message `#{message}`"
             channels.each do |channel|

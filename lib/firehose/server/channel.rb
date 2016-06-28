@@ -22,12 +22,15 @@ module Firehose
       end
 
       def on_subscribe(params)
+        message_filter.on_subscribe(params)
       end
 
       def on_unsubscribe
+        message_filter.on_unsubscribe
       end
 
       def on_message(message)
+        message_filter.process(message)
       end
 
       def next_messages(consumer_sequence=nil, timeout: nil)
@@ -71,6 +74,11 @@ module Firehose
       end
 
       private
+
+      def message_filter
+        @message_filter ||= Firehose::Server::MessageFilter.new(self)
+      end
+
       def subscribe(timeout=nil)
         @subscriber.subscribe self
         if timeout
