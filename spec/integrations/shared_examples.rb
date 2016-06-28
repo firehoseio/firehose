@@ -72,7 +72,7 @@ shared_examples_for 'Firehose::Rack::App' do
       ws = Faye::WebSocket::Client.new(ws_url)
 
       ws.onopen = lambda do |event|
-        ws.send('{"message_sequence":0}')
+        ws.send('{"last_message_sequence":0}')
       end
 
       ws.onmessage = lambda do |event|

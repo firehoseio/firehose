@@ -22,7 +22,7 @@ module Firehose
           Faye::WebSocket.websocket?(env)
         end
 
-        class Handler
+        class Handler < Firehose::Rack::Consumer::BasicHandler
           def initialize(ws)
             @ws = ws
             @req = ::Rack::Request.new ws.env
@@ -59,7 +59,7 @@ module Firehose
           # from timing out from inactivity.
           def message(event)
             msg = parse_message(event)
-            seq = msg[:message_sequence]
+            seq = last_message_sequence(msg)
             params = msg[:params]
             if msg[:ping] == 'PING'
               Firehose.logger.debug "WS ping received, sending pong"
@@ -72,7 +72,7 @@ module Firehose
 
           # Log a message that the client has connected.
           def open(event)
-            Firehose.logger.debug "WebSocket subscribed to `#{@req.path}`. Waiting for message_sequence..."
+            Firehose.logger.debug "WebSocket subscribed to `#{@req.path}`. Waiting for last_message_sequence..."
           end
 
           # Log a message that hte client has disconnected and reset the state for the class. Clean
@@ -153,8 +153,9 @@ module Firehose
               Firehose.logger.debug "Subscribing multiplexed to: #{sub}"
 
               channel, sequence = sub[:channel]
+
               next if channel.nil?
-              subscribe(channel, sub[:message_sequence].to_i, sub[:params])
+              subscribe(channel, last_message_sequence(sub), sub[:params])
             end
           end
 

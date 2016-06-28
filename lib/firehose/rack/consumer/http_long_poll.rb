@@ -23,7 +23,7 @@ module Firehose
           end
         end
 
-        class Handler
+        class Handler < Firehose::Rack::Consumer::BasicHandler
           include Firehose::Rack::Helpers
 
           def initialize(timeout=TIMEOUT)
@@ -149,7 +149,7 @@ module Firehose
             subscriptions = Consumer.multiplex_subscriptions(request)
             log_request request, subscriptions, env
             subscriptions.each do |sub|
-              respond_async(sub[:channel], sub[:message_sequence], sub[:params], env)
+              respond_async(sub[:channel], sub[:last_message_sequence] || sub[:message_sequence], sub[:params], env)
             end
           end
         end

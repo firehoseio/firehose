@@ -59,7 +59,7 @@ A single WebSocket connection subscribes to a channel via the following JSON sub
 
 ```
 {
-  message_sequence: 1,
+  last_message_sequence: 1,
   params: {
     whisky: "tango"
   }
@@ -79,14 +79,14 @@ A client may listen for messages from multiple Firehose channels over one WebSoc
   multiplex_subscribe: [
     {
       channel: "/my/channel",
-      message_sequence: 1,
+      last_message_sequence: 1,
       params: {
         "whisky": "tango"
       }
     },
     {
       channel: "/another/channel",
-      message_sequence: 2,
+      last_message_sequence: 2,
       params: {
         "hotel": "foxtrot"
       }

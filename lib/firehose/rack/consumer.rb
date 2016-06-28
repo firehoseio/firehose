@@ -6,6 +6,20 @@ module Firehose
     # binds that to the Firehose::Server::Subscription class, which is bound to a channel that
     # gets published to.
     class Consumer
+      class BasicHandler
+        def last_message_sequence(subscription)
+          # this is for backwards compatibility
+          # prefer consistent :last_message_sequence from now on
+          lms = subscription[:last_message_sequence] || subscription[:message_sequence]
+
+          if subscription[:message_sequence]
+            Firehose.logger.warn "Client used deprecated :message_sequence subscription format: #{subscription.inspect}"
+          end
+
+          lms.to_i
+        end
+      end
+
       # Rack consumer transports
       autoload :HttpLongPoll, 'firehose/rack/consumer/http_long_poll'
       autoload :WebSocket,    'firehose/rack/consumer/web_socket'
@@ -33,7 +47,7 @@ module Firehose
           last_sequence = 0 if last_sequence < 0
           {
             channel: chan,
-            message_sequence: last_sequence
+            last_message_sequence: last_sequence
           }
         end
       end
@@ -46,7 +60,7 @@ module Firehose
           if val.is_a? Hash
             {
               channel: chan,
-              message_sequence: val.delete("last_message_sequence"),
+              last_message_sequence: val.delete("last_message_sequence"),
               params: val
             }
           # Otherwise the value of the JSON hash is implicitly the message
@@ -54,7 +68,7 @@ module Firehose
           else
             {
               channel: chan,
-              message_sequence: val
+              last_message_sequence: val
             }
           end
         end
