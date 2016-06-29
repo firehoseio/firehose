@@ -191,6 +191,44 @@ Firehose::Server.configuration do |config|
 end
 ```
 
+## Custom MessageFilters
+
+As mentioned above you can define custom MessageFilters which allow you to
+add custom logic for things like authentication & filtering of content.
+By default, the `Firehose::Server::MessageFilter` base class is used, which does
+nothing to the messages being published.
+You can override the following methods in your own implementations:
+
+```ruby
+class MyFilter < Firehose::Server::MessageFilter
+  # Optional override if you need to do any other setup operation.
+  # Make sure to call super(channel).
+  # - channel: name of the channel (String)
+  def initialize(channel)
+    super(channel)
+    MyLogger.info "Subscribing to channel: #{channel}"
+  end
+
+  # Optional, called once before process().
+  # - params: Hash of params of the subscription message the client sent
+  def on_subscribe(params)
+    @my_param = params["my-param"].to_i
+  end
+
+  # Custom logic for a message to be published to client.
+  # - message: Firehose::Server::Message instance
+  def process(message)
+    if @my_param > 10
+      message.payload += "My-Param: #{@my_param}"
+    end
+  end
+
+  # optional cleanup logic
+  def on_unsubscribe
+  end
+end
+```
+
 ## Rack Configuration
 
 There are two rack applications that are included with Firehose: `Firehose::Rack::Producer` which a client can `PUT` HTTP request with message payloads to publish information on Firehose and the `Firehose::Rack::Consumer` application which a client connects to via HTTP long polling or WebSockets to consume a message.
