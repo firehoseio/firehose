@@ -20,9 +20,7 @@ module Firehose
 
     def self.configuration(&block)
       @configuration ||= Configuration.new
-      if block
-        @configuration.instance_eval(&block)
-      end
+      @configuration.instance_eval(&block) if block
       @configuration
     end
 
