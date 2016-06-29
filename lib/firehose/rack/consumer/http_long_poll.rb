@@ -112,7 +112,8 @@ module Firehose
 
         class DefaultHandler < Handler
           def wrap_frame(channel, message)
-            JSON.generate :message => message.payload, :last_sequence => message.sequence
+            JSON.generate message: message.payload,
+                          last_sequence: message.sequence
           end
 
           def log_request(path, last_sequence, env)
@@ -134,7 +135,9 @@ module Firehose
 
         class MultiplexingHandler < Handler
           def wrap_frame(channel, message)
-            JSON.generate channel: channel, :message => message.payload, :last_sequence => message.sequence
+            JSON.generate channel: channel,
+                          message: message.payload,
+                          last_sequence: message.sequence
           end
 
           def log_request(request, subscriptions, env)
