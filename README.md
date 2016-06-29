@@ -182,9 +182,9 @@ class MyFilter < Firehose::Server::MessageFilter
 end
 
 Firehose::Server.configuration do |config|
-  # Custom message handler. This is useful if you want to implement
+  # Custom message filter. This is useful if you want to implement
   # authorization per-message for Firehose.
-  config.message_handler = MyHandler.new
+  config.message_filter = MyFilter
 
   # Configure redis connection.
   config.redis.url = ENV.fetch "FIREHOSE_REDIS_URL", "redis://redis:6379/10"
