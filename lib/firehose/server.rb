@@ -18,9 +18,9 @@ module Firehose
     autoload :App,                 'firehose/server/app'
     autoload :Redis,               'firehose/server/redis'
 
-    def self.configuration(&block)
+    def self.configuration
       @configuration ||= Configuration.new
-      @configuration.instance_eval(&block) if block
+      yield(@configuration) if block_given?
       @configuration
     end
 
