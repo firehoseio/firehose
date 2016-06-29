@@ -91,7 +91,7 @@ module Firehose
               if last_sequence < 0
                 async_callback env, 400, "The last_message_sequence parameter may not be less than zero"
               else
-                Server::Channel.new(channel, params: params).next_messages(last_sequence, :timeout => @timeout).callback do |messages|
+                Server::ChannelSubscription.new(channel, params: params).next_messages(last_sequence, :timeout => @timeout).callback do |messages|
                   # TODO: Can we send all of these messages down in one request? Sending one message per
                   # request is slow and inefficient. If we change the protocol (3.0?) we could batch the
                   # messages and send them all down the pipe, then close the conneciton.

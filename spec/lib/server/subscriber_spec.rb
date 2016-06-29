@@ -4,7 +4,7 @@ describe Firehose::Server::Subscriber do
   include EM::TestHelper
 
   let(:channel_key)     { '/bears/are/mean' }
-  let(:channel)         { Firehose::Server::Channel.new(channel_key) }
+  let(:channel)         { Firehose::Server::ChannelSubscription.new(channel_key) }
   let(:subscriber)      { Firehose::Server::Subscriber.new(Firehose::Server.redis.connection) }
   let(:dummy_subscriber){ Firehose::Server::Subscriber.new(double('redis', :pubsub => double('pubsub', :subscribe => EM::DefaultDeferrable.new, :on => nil))) }
   let(:message)         { 'Raaaarrrrrr!!!!' }

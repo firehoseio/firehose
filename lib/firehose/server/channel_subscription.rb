@@ -1,7 +1,7 @@
 module Firehose
   module Server
     # Connects to a specific channel on Redis and listens for messages to notify subscribers.
-    class Channel
+    class ChannelSubscription
       attr_reader :channel_key
 
       def self.redis

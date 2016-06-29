@@ -89,7 +89,7 @@ module Firehose
           # the last sequence for clients that reconnect.
           def subscribe(last_sequence, params)
             @subscribed = true
-            @channel    = Server::Channel.new @req.path, params: params
+            @channel    = Server::ChannelSubscription.new @req.path, params: params
             @deferrable = @channel.next_messages last_sequence
             @deferrable.callback do |messages|
               messages.each do |message|
@@ -162,7 +162,7 @@ module Firehose
           # Subscribe the client to the channel on the server. Asks for
           # the last sequence for clients that reconnect.
           def subscribe(channel_name, last_sequence, params)
-            channel      = Server::Channel.new channel_name, params: params
+            channel      = Server::ChannelSubscription.new channel_name, params: params
             deferrable   = channel.next_messages last_sequence
             subscription = Subscription.new(channel, deferrable)
 

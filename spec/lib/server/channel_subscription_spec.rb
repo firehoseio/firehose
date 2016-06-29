@@ -1,10 +1,10 @@
 require 'spec_helper'
 
-describe Firehose::Server::Channel do
+describe Firehose::Server::ChannelSubscription do
   include EM::TestHelper
 
   let(:channel_key)     { '/bears/are/mean' }
-  let(:channel)         { Firehose::Server::Channel.new(channel_key, redis: Firehose::Server.redis.connection, subscriber: subscriber) }
+  let(:channel)         { Firehose::Server::ChannelSubscription.new(channel_key, redis: Firehose::Server.redis.connection, subscriber: subscriber) }
   let(:subscriber)      { Firehose::Server::Subscriber.new }
   let(:message)         { 'Raaaarrrrrr!!!!' }
   let(:publisher)       { Firehose::Server::Publisher.new }
@@ -24,7 +24,7 @@ describe Firehose::Server::Channel do
     end
 
     it "calls #on_subscribe" do
-      expect_any_instance_of(Firehose::Server::Channel).to receive(:on_subscribe).with({})
+      expect_any_instance_of(Firehose::Server::ChannelSubscription).to receive(:on_subscribe).with({})
       em do
         channel
         em.next_tick { em.stop }
