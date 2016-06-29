@@ -80,7 +80,7 @@ module Firehose
           def close(event)
             if @deferrable
               @deferrable.fail :disconnect
-              @channel.unsubscribe if @channel
+              @chan_sub.unsubscribe if @chan_sub
             end
             Firehose.logger.debug "WS connection `#{@req.path}` closing. Code: #{event.code.inspect}; Reason #{event.reason.inspect}"
           end
@@ -89,8 +89,10 @@ module Firehose
           # the last sequence for clients that reconnect.
           def subscribe(last_sequence, params)
             @subscribed = true
-            @channel    = Server::ChannelSubscription.new @req.path, params: params
-            @deferrable = @channel.next_messages last_sequence
+            @chan_sub   = Server::ChannelSubscription.new @req.path,
+                                                          params: params,
+                                                          sequence: last_sequence
+            @deferrable = @chan_sub.next_messages
             @deferrable.callback do |messages|
               messages.each do |message|
                 Firehose.logger.debug "WS sent `#{message.payload}` to `#{@req.path}` with sequence `#{message.sequence}`"
@@ -162,9 +164,14 @@ module Firehose
           # Subscribe the client to the channel on the server. Asks for
           # the last sequence for clients that reconnect.
           def subscribe(channel_name, last_sequence, params)
-            channel      = Server::ChannelSubscription.new channel_name, params: params
-            deferrable   = channel.next_messages last_sequence
-            subscription = Subscription.new(channel, deferrable)
+            chan_sub = Server::ChannelSubscription.new(
+              channel_name,
+              params: params,
+              sequence: last_sequence
+            )
+
+            deferrable   = chan_sub.next_messages
+            subscription = Subscription.new(chan_sub, deferrable)
 
             @subscriptions[channel_name] = subscription
 

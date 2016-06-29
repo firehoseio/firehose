@@ -2,7 +2,7 @@ module Firehose
   module Server
     # Connects to a specific channel on Redis and listens for messages to notify subscribers.
     class ChannelSubscription
-      attr_reader :channel_key
+      attr_reader :channel_key, :params, :sequence, :timeout
 
       def self.redis
         @redis ||= Firehose::Server.redis.connection
@@ -12,9 +12,11 @@ module Firehose
         @subscriber ||= Server::Subscriber.new
       end
 
-      def initialize(channel_key, params: {}, redis: self.class.redis, subscriber: self.class.subscriber)
-        @redis        = redis
-        @subscriber   = subscriber
+      def initialize(channel_key, sequence: 0, params: {}, timeout: nil)
+        @redis        = self.class.redis
+        @subscriber   = self.class.subscriber
+        @sequence     = sequence
+        @timeout      = timeout
         @channel_key  = channel_key
         @deferrable = EM::DefaultDeferrable.new
         @deferrable.errback {|e| EM.next_tick { raise e } unless [:timeout, :disconnect].include?(e) }
@@ -33,7 +35,7 @@ module Firehose
         message_filter.process(message)
       end
 
-      def next_messages(consumer_sequence=nil, timeout: nil)
+      def next_messages
         list_key     = Server::Redis.key(channel_key, :list)
         sequence_key = Server::Redis.key(channel_key, :sequence)
 
@@ -49,12 +51,12 @@ module Firehose
           # script. We kept it out of this for now because it represents a deployment risk and `reverse!`
           # is a cheap operation in Ruby.
           message_list.reverse!
-          buffer = MessageBuffer.new(message_list, channel_sequence, consumer_sequence)
+          buffer = MessageBuffer.new(message_list, channel_sequence, @sequence)
           if buffer.remaining_messages.empty?
-            Firehose.logger.debug "No messages in buffer, subscribing. sequence: `#{channel_sequence}` consumer_sequence: #{consumer_sequence}"
+            Firehose.logger.debug "No messages in buffer, subscribing. sequence: `#{channel_sequence}` consumer_sequence: #{@sequence}"
             # Either this resource has never been seen before or we are all caught up.
             # Subscribe and hope something gets published to this end-point.
-            subscribe timeout
+            subscribe
           else # Either the client is under water or caught up to head.
             @deferrable.succeed process_messages buffer.remaining_messages
             @deferrable.callback { on_unsubscribe }
@@ -85,10 +87,10 @@ module Firehose
         end
       end
 
-      def subscribe(timeout=nil)
+      def subscribe
         @subscriber.subscribe self
-        if timeout
-          timer = EventMachine::Timer.new(timeout) do
+        if @timeout
+          timer = EventMachine::Timer.new(@timeout) do
             @deferrable.fail :timeout
             unsubscribe
           end

@@ -3,11 +3,24 @@ require 'spec_helper'
 describe Firehose::Server::ChannelSubscription do
   include EM::TestHelper
 
-  let(:channel_key)     { '/bears/are/mean' }
-  let(:channel)         { Firehose::Server::ChannelSubscription.new(channel_key, redis: Firehose::Server.redis.connection, subscriber: subscriber) }
-  let(:subscriber)      { Firehose::Server::Subscriber.new }
-  let(:message)         { 'Raaaarrrrrr!!!!' }
-  let(:publisher)       { Firehose::Server::Publisher.new }
+  let(:channel_key) { '/bears/are/mean' }
+  let(:channel) do
+    Firehose::Server::ChannelSubscription.new(channel_key,
+                                              sequence: sequence,
+                                              timeout: timeout)
+  end
+  let(:sequence)    { 0 }
+  let(:timeout)     { nil }
+  let(:message)     { 'Raaaarrrrrr!!!!' }
+  let(:publisher)   { Firehose::Server::Publisher.new }
+
+  # If you use the memoized redis and subscriber connection objects between test
+  # runs, EM won't clean up connections properly, lock forever, fail all of your tests
+  # and remind you that you're wasting your life fighting event machine. Go have a beer.
+  before(:each) do
+    Firehose::Server::ChannelSubscription.stub(:redis) { Firehose::Server.redis.connection }
+    Firehose::Server::ChannelSubscription.stub(:subscriber) { Firehose::Server::Subscriber.new(Firehose::Server.redis.connection) }
+  end
 
   def push_message
     redis_exec 'lpush', "firehose:#{channel_key}:list", message
@@ -69,51 +82,65 @@ describe Firehose::Server::ChannelSubscription do
       end
     end
 
-    it "waits for message if most recent sequence is given" do
-      push_message
+    context "most recent sequence" do
+      let(:sequence) { 100 }
 
-      em 3 do
-        channel.next_messages(100).callback do |messages|
-          msg = messages.first.payload
-          seq = messages.first.sequence
-          expect(msg).to eql(message)
-          expect(seq).to eql(101)
-          em.next_tick { em.stop }
-        end.errback
+      it "waits for message if most recent sequence is given" do
+        push_message
 
-        publisher.publish(channel_key, message)
-      end
-    end
-
-    it "waits for message if a future sequence is given" do
-      push_message
-
-      em 3 do
-        channel.next_messages(101).callback do |messages|
-          msg = messages.first.payload
-          seq = messages.first.sequence
-          expect(msg).to eql(message)
-          expect(seq).to eql(101)
-          em.next_tick { em.stop }
-        end.errback
-
-        publisher.publish(channel_key, message)
-      end
-    end
-
-    it "immediatly gets a message if message sequence is behind and in list" do
-      messages = %w[a b c d e]
-
-      em 3 do
-        publish_messages(messages) do
-          channel.next_messages(2).callback do |messages|
+        em 3 do
+          channel.next_messages.callback do |messages|
             msg = messages.first.payload
             seq = messages.first.sequence
-            expect(msg).to eql('c')
-            expect(seq).to eql(3)
-
-            # This must happen _after_ the callback runs in order to pass consistently.
+            expect(msg).to eql(message)
+            expect(seq).to eql(101)
             em.next_tick { em.stop }
+          end.errback
+
+          publisher.publish(channel_key, message)
+        end
+      end
+    end
+
+
+    context "future sequence" do
+      let(:sequence) { 101 }
+
+      it "waits for message if a future sequence is given" do
+        push_message
+
+        em 3 do
+          channel.next_messages.callback do |messages|
+            msg = messages.first.payload
+            seq = messages.first.sequence
+            expect(msg).to eql(message)
+            expect(seq).to eql(101)
+            em.next_tick { em.stop }
+          end.errback
+
+          publisher.publish(channel_key, message)
+        end
+      end
+    end
+
+
+    context "outdated sequence" do
+      let(:sequence) { 2 }
+
+      it "immediatly gets a message if message sequence is behind and in list" do
+        messages = %w[a b c d e]
+
+        em 3 do
+          publish_messages(messages) do
+            channel.next_messages.callback do |messages|
+              msg = messages.first.payload
+              seq = messages.first.sequence
+              expect(msg).to eql('c')
+              expect(seq).to eql(3)
+
+              # This must happen _after_ the callback runs in order to pass consistently.
+              em.next_tick { em.stop }
+            end
           end
         end
       end
@@ -124,7 +151,7 @@ describe Firehose::Server::ChannelSubscription do
 
       em 3 do
         publish_messages(messages) do
-          channel.next_messages(2).callback do |msgs|
+          channel.next_messages.callback do |msgs|
             msg = msgs.last.payload
             seq = msgs.last.sequence
             expect(msg).to eql(messages.last)
@@ -138,11 +165,14 @@ describe Firehose::Server::ChannelSubscription do
     end
 
     context "a timeout is set" do
+      let(:sequence) { 100 }
+      let(:timeout)  { 1 }
+
       it "times out if message isn't published in time" do
         push_message
 
         em 3 do
-          channel.next_messages(100, :timeout => 1).callback do |messages|
+          channel.next_messages.callback do |messages|
             msg = messages.first.payload
             seq = messages.first.sequence
             raise 'test failed'
@@ -157,26 +187,30 @@ describe Firehose::Server::ChannelSubscription do
         end
       end
 
-      it "does not timeout if message is published in time" do
-        push_message
+      context "larger timeout" do
+        let(:timeout)  { 2 }
 
-        em 3 do
-          d = channel.next_messages(100, :timeout => 2).callback do |messages|
-            msg = messages.first.payload
-            seq = messages.first.sequence
-            expect(msg).to eql(message)
-            expect(seq).to eql(101)
-            EM::add_timer(1) do
-              em.stop
+        it "does not timeout if message is published in time" do
+          push_message
+
+          em 3 do
+            d = channel.next_messages.callback do |messages|
+              msg = messages.first.payload
+              seq = messages.first.sequence
+              expect(msg).to eql(message)
+              expect(seq).to eql(101)
+              EM::add_timer(1) do
+                em.stop
+              end
+            end.errback do |e|
+              raise 'test failed'
             end
-          end.errback do |e|
-            raise 'test failed'
-          end
 
-          d.should_not_receive(:fail)
+            d.should_not_receive(:fail)
 
-          EM::add_timer(1) do
-            publisher.publish(channel_key, message)
+            EM::add_timer(1) do
+              publisher.publish(channel_key, message)
+            end
           end
         end
       end
