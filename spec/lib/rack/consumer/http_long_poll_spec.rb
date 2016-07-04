@@ -44,9 +44,9 @@ describe Firehose::Rack::Consumer::HttpLongPoll do
           expect_any_instance_of(Firehose::Server::ChannelSubscription).to receive(:next_messages).and_return(EM::DefaultDeferrable.new)
           expect_any_instance_of(Firehose::Server::ChannelSubscription).to receive(:on_subscribe).with({"soup" => "nuts"})
           post "/channels@firehose", JSON.generate({
-              "/soup": {
-                "last_message_sequence": 1,
-                "soup": "nuts"
+              "/soup" => {
+                "last_message_sequence" => 1,
+                "soup" => "nuts"
               }
             })
           EM.next_tick { em.stop }
