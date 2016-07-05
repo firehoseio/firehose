@@ -24,7 +24,7 @@ describe Firehose::Server::Subscriber do
         expect(chan_sub).to receive(:process_messages)#.with([Firehose::Server::Message.new(message, 1)])
         subscriber.subscribe(chan_sub)
         publisher.publish(channel_key, message).callback do
-          em.stop
+          em.next_tick { em.stop }
         end
       end
     end
@@ -37,7 +37,7 @@ describe Firehose::Server::Subscriber do
         subscriber.subscribe(chan_sub)
         publisher.publish(channel_key, message).callback do
           publisher.publish(channel_key, '2nd message').callback do
-            em.stop
+            em.next_tick { em.stop }
           end
         end
       end
@@ -58,7 +58,7 @@ describe Firehose::Server::Subscriber do
         subscriber.subscribe(chan_sub)
         subscriber.unsubscribe(chan_sub)
         publisher.publish(channel_key, message).callback do
-          em.stop
+          em.next_tick { em.stop }
         end
       end
     end
