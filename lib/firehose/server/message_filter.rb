@@ -3,6 +3,8 @@ module Firehose
     # A no-op message filter. This class is meant to be
     # extended by users for implementing channel middleware.
     class MessageFilter
+      attr_reader :channel, :params
+
       def initialize(channel)
         @channel = channel
         @params = {}
