@@ -1,6 +1,6 @@
 module Firehose
   module Server
-    class Message < Struct.new(:payload, :sequence)
+    Message = Struct.new(:payload, :sequence) do
       def json_payload
         JSON.parse payload
       end
