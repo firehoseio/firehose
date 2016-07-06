@@ -2,6 +2,10 @@ module Firehose
   module Server
     # Connects to a specific channel on Redis and listens for messages to notify subscribers.
     class ChannelSubscription
+      # Can be raised if a Subscription failed for any reason.
+      class Failed < StandardError
+      end
+
       attr_reader :channel_key, :params, :sequence, :timeout
 
       def self.redis

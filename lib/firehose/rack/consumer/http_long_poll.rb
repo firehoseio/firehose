@@ -91,26 +91,34 @@ module Firehose
               if last_sequence < 0
                 async_callback env, 400, "The last_message_sequence parameter may not be less than zero"
               else
-                chan_sub = Server::ChannelSubscription.new(
-                  channel,
-                  params: params,
-                  sequence: last_sequence,
-                  timeout: @timeout
-                )
+                begin
+                  chan_sub = Server::ChannelSubscription.new(
+                    channel,
+                    params: params,
+                    sequence: last_sequence,
+                    timeout: @timeout
+                  )
 
-                chan_sub.next_messages.callback do |messages|
-                  # TODO: Can we send all of these messages down in one request? Sending one message per
-                  # request is slow and inefficient. If we change the protocol (3.0?) we could batch the
-                  # messages and send them all down the pipe, then close the conneciton.
-                  message = messages.first
-                  async_callback env, 200, wrap_frame(channel, message)
-                end.errback do |e|
-                  if e == :timeout
-                    async_callback env, 204
-                  else
-                    Firehose.logger.error "Unexpected error when trying to GET last_sequence #{last_sequence} for path #{channel}: #{e.inspect}"
-                    async_callback env, 500, "Unexpected error"
+                  chan_sub.next_messages.callback do |messages|
+                    # TODO: Can we send all of these messages down in one request? Sending one message per
+                    # request is slow and inefficient. If we change the protocol (3.0?) we could batch the
+                    # messages and send them all down the pipe, then close the conneciton.
+                    message = messages.first
+                    async_callback env, 200, wrap_frame(channel, message)
+                  end.errback do |e|
+                    if e == :timeout
+                      async_callback env, 204
+                    else
+                      Firehose.logger.error "Unexpected error when trying to GET last_sequence #{last_sequence} for path #{channel}: #{e.inspect}"
+                      async_callback env, 500, "Unexpected error"
+                    end
                   end
+                rescue Server::ChannelSubscription::Failed => e
+                  Firehose.logger.info "Subscription failed: #{e.message}"
+                  async_callback env,
+                                 500,
+                                 JSON.generate(error: "Subscription failed",
+                                               reason: e.message)
                 end
               end
             end

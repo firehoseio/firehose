@@ -78,33 +78,43 @@ module Firehose
           # Log a message that the client has disconnected and reset the state for the class. Clean
           # up the subscribers to the channels.
           def close(event)
+            disconnect
+            Firehose.logger.debug "WS connection `#{@req.path}` closing. Code: #{event.code.inspect}; Reason #{event.reason.inspect}"
+          end
+
+          def disconnect
             if @deferrable
               @deferrable.fail :disconnect
               @chan_sub.unsubscribe if @chan_sub
             end
-            Firehose.logger.debug "WS connection `#{@req.path}` closing. Code: #{event.code.inspect}; Reason #{event.reason.inspect}"
           end
 
           # Subscribe the client to the channel on the server. Asks for
           # the last sequence for clients that reconnect.
           def subscribe(last_sequence, params)
-            @subscribed = true
-            @chan_sub   = Server::ChannelSubscription.new @req.path,
-                                                          params: params,
-                                                          sequence: last_sequence
-            @deferrable = @chan_sub.next_messages
-            @deferrable.callback do |messages|
-              messages.each do |message|
-                Firehose.logger.debug "WS sent `#{message.payload}` to `#{@req.path}` with sequence `#{message.sequence}`"
-                send_message message: message.payload, last_sequence: message.sequence
+            begin
+              @subscribed = true
+              @chan_sub   = Server::ChannelSubscription.new @req.path,
+                                                            params: params,
+                                                            sequence: last_sequence
+              @deferrable = @chan_sub.next_messages
+              @deferrable.callback do |messages|
+                messages.each do |message|
+                  Firehose.logger.debug "WS sent `#{message.payload}` to `#{@req.path}` with sequence `#{message.sequence}`"
+                  send_message message: message.payload, last_sequence: message.sequence
+                end
+                subscribe messages.last.sequence, params
               end
-              subscribe messages.last.sequence, params
-            end
-            @deferrable.errback do |e|
-              unless e == :disconnect
-                Firehose.logger.error "WS Error: #{e}"
-                EM.next_tick { raise e.inspect }
+              @deferrable.errback do |e|
+                unless e == :disconnect
+                  Firehose.logger.error "WS Error: #{e}"
+                  EM.next_tick { raise e.inspect }
+                end
               end
+            rescue Server::ChannelSubscription::Failed => e
+              Firehose.logger.info "Subscription failed: #{e.message}"
+              send_message error: "Subscription failed", reason: e.message
+              disconnect
             end
           end
         end

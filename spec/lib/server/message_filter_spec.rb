@@ -8,6 +8,12 @@ class MinValFilter < Firehose::Server::MessageFilter
     @min = min
   end
 
+  def on_subscribe(params)
+    unless params["valid"]
+      raise Firehose::Server::ChannelSubscription::Failed, "Invalid params"
+    end
+  end
+
   def process(message)
     if message.json_payload["val"] < @min
       message.payload = JSONError
@@ -24,6 +30,20 @@ describe Firehose::Server::MessageFilter do
   let(:json_ok)       { JSON.generate(val: 0.6) }
   let(:json_fail)     { JSON.generate(val: 0.4) }
   let(:json_error)    { MinValFilter::JSONError }
+
+  describe "#on_subscribe" do
+    it "raises an exception if params invalid" do
+      expect {
+        mf.on_subscribe "valid" => false
+      }.to raise_error(Firehose::Server::ChannelSubscription::Failed)
+    end
+
+    it "does not raise an exception if params valid" do
+      expect {
+        mf.on_subscribe "valid" => true
+      }.to_not raise_error
+    end
+  end
 
   describe "#process" do
     it "doesn't change the message if the min val is reached" do
