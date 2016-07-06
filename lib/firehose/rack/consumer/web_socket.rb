@@ -75,7 +75,7 @@ module Firehose
             Firehose.logger.debug "WebSocket subscribed to `#{@req.path}`. Waiting for last_message_sequence..."
           end
 
-          # Log a message that hte client has disconnected and reset the state for the class. Clean
+          # Log a message that the client has disconnected and reset the state for the class. Clean
           # up the subscribers to the channels.
           def close(event)
             if @deferrable
