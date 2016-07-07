@@ -58,8 +58,9 @@ describe Firehose::Server::Metrics::TimeSeries do
   end
 
   describe "#bucket" do
+    let(:interval) { 2 }
     let(:metrics) do
-      Firehose::Server::Metrics::TimeSeries.new(seconds: 2)
+      Firehose::Server::Metrics::TimeSeries.new(seconds: interval)
     end
 
     it "returns the same bucket for a given time within the configured seconds" do
@@ -79,6 +80,20 @@ describe Firehose::Server::Metrics::TimeSeries do
       expect(b3).to_not eql(b4)
 
       expect(b4).to eql(b5)
+    end
+
+    context "interval of 1 second" do
+      let(:interval) { 1 }
+
+      it "returns a new bucket for each second" do
+        b0 = metrics.bucket(Time.at(0))
+        b1 = metrics.bucket(Time.at(1))
+        b2 = metrics.bucket(Time.at(2))
+
+        expect(b0).to_not eql(b1)
+        expect(b1).to_not eql(b2)
+        expect(b2).to_not eql(b0)
+      end
     end
   end
 
