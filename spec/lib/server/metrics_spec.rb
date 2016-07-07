@@ -11,6 +11,10 @@ describe Firehose::Server::Metrics::TimeSeries do
     context "invalid interval" do
       it "raises an ArgumentError if the given interval is invalid" do
         expect {
+          Firehose::Server::Metrics::TimeSeries.new(seconds: nil)
+        }.to raise_error(ArgumentError)
+
+        expect {
           Firehose::Server::Metrics::TimeSeries.new(seconds: -1)
         }.to raise_error(ArgumentError)
 
