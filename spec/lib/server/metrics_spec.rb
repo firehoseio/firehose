@@ -7,6 +7,32 @@ def set_time!(time)
 end
 
 describe Firehose::Server::Metrics::TimeSeries do
+  describe "#initialize" do
+    context "invalid interval" do
+      it "raises an ArgumentError if the given interval is invalid" do
+        expect {
+          Firehose::Server::Metrics::TimeSeries.new(seconds: -1)
+        }.to raise_error(ArgumentError)
+
+        expect {
+          Firehose::Server::Metrics::TimeSeries.new(seconds: 0)
+        }.to raise_error(ArgumentError)
+
+        expect {
+          Firehose::Server::Metrics::TimeSeries.new(seconds: 0.5)
+        }.to raise_error(ArgumentError)
+
+        expect {
+          Firehose::Server::Metrics::TimeSeries.new(seconds: 1)
+        }.to_not raise_error
+
+        expect {
+          Firehose::Server::Metrics::TimeSeries.new(seconds: 1.5)
+        }.to_not raise_error
+      end
+    end
+  end
+
   describe "#current" do
     let(:metrics) { Firehose::Server::Metrics::TimeSeries.new }
 

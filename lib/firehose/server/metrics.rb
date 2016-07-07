@@ -6,7 +6,10 @@ module Firehose::Server
       attr_reader :series
 
       def initialize(seconds: 5)
-        @seconds = seconds
+        @seconds = seconds.to_i
+        if @seconds < 1
+          raise ArgumentError, "TimeSeries interval must be >= 1"
+        end
         clear!
       end
 
