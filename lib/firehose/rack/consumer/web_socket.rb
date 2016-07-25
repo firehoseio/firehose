@@ -60,13 +60,12 @@ module Firehose
           def message(event)
             msg = parse_message(event)
             seq = last_message_sequence(msg)
-            params = msg[:params]
             if msg[:ping] == 'PING'
               Firehose.logger.debug "WS ping received, sending pong"
               send_message pong: "PONG"
             elsif !@subscribed && seq.kind_of?(Integer)
               Firehose.logger.debug "Subscribing at message_sequence #{seq}"
-              subscribe seq, params
+              subscribe seq, @req.params
             end
           end
 
