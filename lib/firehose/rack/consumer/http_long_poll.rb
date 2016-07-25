@@ -116,7 +116,7 @@ module Firehose
                 rescue Server::ChannelSubscription::Failed => e
                   Firehose.logger.info "Subscription failed: #{e.message}"
                   async_callback env,
-                                 500,
+                                 400,
                                  JSON.generate(error: "Subscription failed",
                                                reason: e.message)
                 end
