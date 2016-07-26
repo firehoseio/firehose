@@ -62,7 +62,7 @@ module Firehose
             # Subscribe and hope something gets published to this end-point.
             subscribe
           else # Either the client is under water or caught up to head.
-            @deferrable.succeed process_messages buffer.remaining_messages
+            @deferrable.succeed process_messages(buffer.remaining_messages)
             @deferrable.callback { on_unsubscribe }
           end
         end.errback {|e| @deferrable.fail e }
@@ -75,8 +75,16 @@ module Firehose
         @subscriber.unsubscribe self
       end
 
-      def process_messages(messages)
-        @deferrable.succeed messages.each { |m| on_message(m) }
+
+      class Firehose::Server::ChannelSubscription
+        def process_messages(messages)
+          messages = messages.map do |m|
+            m = m.dup
+            on_message(m)
+            m
+          end
+          @deferrable.succeed messages
+        end
       end
 
       private
