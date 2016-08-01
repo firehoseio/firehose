@@ -28,6 +28,10 @@ module Firehose::Server
         JSON.generate @series.values.map(&:to_hash)
       end
 
+      def empty?
+        @series.empty?
+      end
+
       # private
 
       def current

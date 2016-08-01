@@ -17,9 +17,11 @@ module Firehose::Server
     end
 
     def save_metrics
-      logger.info "Saving metrics to Redis to bucket #{metrics_bucket.inspect}"
-      redis.connection.set(metrics_bucket, Firehose::Server.metrics.to_json)
-      Firehose::Server.metrics.clear!
+      unless Firehose::Server.metrics.empty?
+        logger.info "Saving metrics to Redis to bucket #{metrics_bucket.inspect}"
+        redis.connection.set(metrics_bucket, Firehose::Server.metrics.to_json)
+        Firehose::Server.metrics.clear!
+      end
     end
 
     def metrics_interval
