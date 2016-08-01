@@ -57,6 +57,7 @@ module Firehose::Server
 
         cm = channel_metrics(channel)
         if message
+          incr_channel! channel, :total_size, message.size
           incr_channel! channel, :avg_size,
                         (cm[:avg_size].to_i + message.size) / cm[:published]
         end
