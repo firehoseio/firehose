@@ -213,6 +213,12 @@ class MyFilter < Firehose::Server::MessageFilter
   # - params: Hash of params of the subscription message the client sent
   def on_subscribe(params)
     @my_param = params["my-param"].to_i
+
+    # You can also optionally raise an instance of
+    # Firehose::Server::ChannelSubscription::Failed
+    # this will cause the client to receive an error message of the form:
+    # { error: "Subscription failed", reason: error_reason }
+    # and the client will call its `subscriptionFailed` callback (if configured)
   end
 
   # Custom logic for a message to be published to client.
