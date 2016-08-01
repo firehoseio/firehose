@@ -5,7 +5,7 @@
 - Less rubygem dependencies: JSON gem removed because its included in Ruby 2.x
 - DEPRECATED: `firehose javascript` command will be removed. Those have been moved to https://github.com/firehoseio/js_client.
 - Add support for per-subscriber message filtering via `Firehose::Server::MessageFilter` interface
-- Add ChannelSubscription::Failed Exception which can be raised by custom message filters to abort a channel subscription and return an error to the client.
+- Add `Firehose::Server::ChannelSubscription::Failed` Exception which can be raised by custom message filters to abort a channel subscription and return an error to the client.
 
 ## 1.3.6
 
