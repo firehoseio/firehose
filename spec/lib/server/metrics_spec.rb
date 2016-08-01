@@ -54,7 +54,7 @@ describe Firehose::Server::Metrics::TimeSeries do
     let(:metrics) { Firehose::Server::Metrics::TimeSeries.new(seconds: 1) }
 
     it "resets the TimeSeries to be empty again" do
-      metrics.message_published!("foo")
+      metrics.message_published!("foo", "hello")
       expect(metrics.series).to_not eql({})
       metrics.clear!
       expect(metrics.series).to eql({})

@@ -50,10 +50,16 @@ module Firehose::Server
 
       # metric handlers
 
-      def message_published!(channel)
+      def message_published!(channel, message = nil)
         @active_channels << channel
         incr_global! :published
         incr_channel! channel, :published
+
+        cm = channel_metrics(channel)
+        if message
+          incr_channel! channel, :avg_size,
+                        (cm[:avg_size].to_i + message.size) / cm[:published]
+        end
       end
 
       def channel_subscribed!(channel)
