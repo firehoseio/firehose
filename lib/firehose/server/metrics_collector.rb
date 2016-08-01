@@ -1,10 +1,11 @@
 module Firehose::Server
   class MetricsCollector
     DEFAULT_INTERVAL = 10 # in seconds
-    attr_reader :logger
+    attr_reader :logger, :redis
 
-    def initialize(logger = Firehose.logger)
+    def initialize(logger = Firehose.logger, redis = Firehose::Server.redis)
       @logger = logger
+      @redis = redis
     end
 
     def start
@@ -17,6 +18,8 @@ module Firehose::Server
 
     def save_metrics
       logger.info "Saving metrics to Redis to bucket #{metrics_bucket.inspect}"
+      redis.connection.set(metrics_bucket, Firehose::Server.metrics.to_json)
+      Firehose::Server.metrics.clear!
     end
 
     def metrics_interval
@@ -30,7 +33,9 @@ module Firehose::Server
     end
 
     def metrics_bucket
-      Time.now.to_i % metrics_interval
+      now = Time.now.to_i
+      bucket_id = now - (now % metrics_interval)
+      Firehose::Server::Redis.key :metrics, bucket_id
     end
   end
 end

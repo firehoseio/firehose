@@ -24,6 +24,10 @@ module Firehose::Server
         end
       end
 
+      def to_json
+        JSON.generate @series.values.map(&:to_hash)
+      end
+
       # private
 
       def current
