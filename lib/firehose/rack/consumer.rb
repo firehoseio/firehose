@@ -60,8 +60,8 @@ module Firehose
           if val.is_a? Hash
             {
               channel: chan,
-              last_message_sequence: val.delete("last_message_sequence"),
-              params: val
+              last_message_sequence: val["last_message_sequence"],
+              params: val["params"]
             }
           # Otherwise the value of the JSON hash is implicitly the message
           # sequence
