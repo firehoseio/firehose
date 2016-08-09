@@ -46,7 +46,9 @@ describe Firehose::Rack::Consumer::HttpLongPoll do
           post "/channels@firehose", JSON.generate({
               "/soup" => {
                 "last_message_sequence" => 1,
-                "soup" => "nuts"
+                "params" => {
+                  "soup" => "nuts"
+                }
               }
             })
           EM.next_tick { em.stop }
