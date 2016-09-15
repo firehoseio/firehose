@@ -9,8 +9,13 @@ module Firehose
 
       def initialize(message_list, channel_sequence, consumer_sequence = nil)
         @message_list = message_list
-        @channel_sequence = channel_sequence.to_i
+        @channel_sequence = channel_sequence
         @consumer_sequence = consumer_sequence.to_i
+
+        # Channel sequence is   10
+        # Buffer size of        5
+        # Start of sequence in buffer ... which would be 6
+        @starting_channel_sequence = @channel_sequence - @message_list.size + 1
       end
 
       def remaining_messages
@@ -42,15 +47,8 @@ module Firehose
       # [a b c e f]
       def messages
         @messages ||= @message_list.map.with_index do |payload, index|
-          Message.new(payload, starting_channel_sequence + index)
+          Message.new(payload, @starting_channel_sequence + index)
         end
-      end
-
-      # Channel sequence is   10
-      # Buffer size of        5
-      # Start of sequence in buffer ... which would be 6
-      def starting_channel_sequence
-        @channel_sequence - @message_list.size + 1
       end
     end
   end

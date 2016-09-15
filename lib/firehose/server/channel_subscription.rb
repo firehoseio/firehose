@@ -55,6 +55,7 @@ module Firehose
           # script. We kept it out of this for now because it represents a deployment risk and `reverse!`
           # is a cheap operation in Ruby.
           message_list.reverse!
+          channel_sequence = [channel_sequence.to_i, message_list.size].max
           buffer = MessageBuffer.new(message_list, channel_sequence, @sequence)
           if buffer.remaining_messages.empty?
             Firehose.logger.debug "No messages in buffer, subscribing. sequence: `#{channel_sequence}` consumer_sequence: #{@sequence}"
