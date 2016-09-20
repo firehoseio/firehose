@@ -5,11 +5,12 @@ module Firehose::Server
     class TimeSeries
       attr_reader :series
 
-      def initialize(seconds: 5)
+      def initialize(seconds: 5, keep_buckets: 2)
         @seconds = seconds.to_i
         if @seconds < 1
           raise ArgumentError, "TimeSeries interval must be >= 1"
         end
+        @keep_buckets = keep_buckets
         clear!
       end
 
@@ -22,6 +23,22 @@ module Firehose::Server
           bucket = bucket(k)
           h[bucket] = Firehose::Server::Metrics::Buffer.new(bucket)
         end
+      end
+
+      def clear_old!
+        # keep latest @keep_buckets buckets
+        buckets = []
+        @keep_buckets.times do |i|
+          bucket = bucket(Time.now) - (i * @seconds)
+          buckets << [bucket, @series[bucket]]
+        end
+        clear!
+        # use reverse_each to keep insertion order correct
+        # (Hash keys are insertion ordered)
+        buckets.reverse_each do |(bucket, buffer)|
+          @series[bucket] = buffer
+        end
+        @series
       end
 
       def to_json

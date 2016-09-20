@@ -9,11 +9,21 @@ module Firehose::Server
     end
 
     def start
+      logger.info "Starting MetricsCollector with an interval of #{metrics_interval}s"
       EM.next_tick do
-        EM.add_periodic_timer(metrics_interval) do
-          save_metrics
+        # Disable for now and just keep metrics in memory
+        # EM.add_periodic_timer(metrics_interval) do
+        #   save_metrics
+        # end
+        EM.add_periodic_timer(metrics_interval * 1.3) do
+          clear_old_metrics
         end
       end
+    end
+
+    def clear_old_metrics
+      logger.debug "Clearing old metrics"
+      Firehose::Server.metrics.clear_old!
     end
 
     def save_metrics
@@ -21,7 +31,6 @@ module Firehose::Server
         bucket = metrics_bucket
         logger.info "Saving metrics to Redis to bucket #{bucket.inspect}"
         redis.connection.set(bucket, metrics_data)
-        Firehose::Server.metrics.clear!
       end
     end
 
@@ -30,6 +39,10 @@ module Firehose::Server
     end
 
     def metrics_interval
+      self.class.metrics_interval
+    end
+
+    def self.metrics_interval
       @interval ||= begin
         if (i = ENV["METRICS_INTERVAL"].to_i) > 0
           i

@@ -31,7 +31,9 @@ module Firehose
     end
 
     def self.metrics
-      @metrics ||= Firehose::Server::Metrics::TimeSeries.new
+      interval = ENV["METRICS_INTERVAL"].to_i
+      interval = MetricsCollector.metrics_interval
+      @metrics ||= Firehose::Server::Metrics::TimeSeries.new(seconds: interval)
     end
   end
 end

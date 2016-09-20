@@ -54,10 +54,74 @@ describe Firehose::Server::Metrics::TimeSeries do
     let(:metrics) { Firehose::Server::Metrics::TimeSeries.new(seconds: 1) }
 
     it "resets the TimeSeries to be empty again" do
-      metrics.message_published!("foo", "hello")
+      metrics.message_published!("chan", "hello")
       expect(metrics.series).to_not eql({})
       metrics.clear!
       expect(metrics.series).to eql({})
+    end
+  end
+
+  describe "#clear_old!" do
+    let(:metrics) do
+      Firehose::Server::Metrics::TimeSeries.new(
+        seconds: seconds,
+        keep_buckets: keep_buckets
+      )
+    end
+    let(:seconds) { 5 }
+
+    context "keep only last buckets" do
+      let(:keep_buckets) { 1 }
+
+      it "deletes all but the last bucket" do
+        now = Time.now
+        metrics.message_published!("chan1", "hello1")
+        set_time!(now + 6)
+        metrics.message_published!("chan2", "hello2")
+        set_time!(now + 11)
+        metrics.message_published!("chan3", "hello3")
+        expect(metrics.series.size).to eql(3)
+        set_time!(now + 12)
+        metrics.clear_old!
+        expect(metrics.series.size).to eql(1)
+      end
+    end
+
+    context "keep last 2 buckets" do
+      let(:keep_buckets) { 2 }
+
+      it "deletes all but the last 2 buckets" do
+        now = Time.now
+        metrics.message_published!("chan1", "hello1")
+        set_time!(now + 6)
+        metrics.message_published!("chan2", "hello2")
+        set_time!(now + 11)
+        metrics.message_published!("chan3", "hello3")
+        expect(metrics.series.size).to eql(3)
+        set_time!(now + 12)
+        metrics.clear_old!
+        expect(metrics.series.size).to eql(2)
+      end
+    end
+
+    context "keep last 3 buckets" do
+      let(:keep_buckets) { 3 }
+      let(:seconds) { 2 }
+
+      it "deletes all but the last 3 buckets" do
+        now = Time.now
+        metrics.message_published!("chan1", "hello1")
+        set_time!(now + 2)
+        metrics.message_published!("chan2", "hello2")
+        set_time!(now + 4)
+        metrics.message_published!("chan3", "hello3")
+        set_time!(now + 6)
+        metrics.message_published!("chan4", "hello4")
+        expect(metrics.series.size).to eql(4)
+        set_time!(now + 8)
+        metrics.clear_old!
+        expect(metrics.series.size).to eql(3)
+      end
     end
   end
 
