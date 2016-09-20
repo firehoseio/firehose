@@ -3,6 +3,7 @@ ENV['RACK_ENV'] ||= 'development' # TODO - Lets not rock out envs like its 1999.
 require 'uri'
 require 'firehose/version'
 require 'firehose/logging'
+require 'json'
 
 # TODO - Figure if we need to have an if/else for Rails::Engine loading and Firehose::Assets::Sprockets.auto_detect
 require 'firehose/rails' if defined?(::Rails::Engine)
