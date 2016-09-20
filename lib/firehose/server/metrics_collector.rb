@@ -18,8 +18,9 @@ module Firehose::Server
 
     def save_metrics
       unless Firehose::Server.metrics.empty?
-        logger.info "Saving metrics to Redis to bucket #{metrics_bucket.inspect}"
-        redis.connection.set(metrics_bucket, metrics_data)
+        bucket = metrics_bucket
+        logger.info "Saving metrics to Redis to bucket #{bucket.inspect}"
+        redis.connection.set(bucket, metrics_data)
         Firehose::Server.metrics.clear!
       end
     end
