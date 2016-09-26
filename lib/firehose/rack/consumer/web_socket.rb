@@ -72,6 +72,7 @@ module Firehose
           # Log a message that the client has connected.
           def open(event)
             Firehose.logger.debug "WebSocket subscribed to `#{@req.path}`. Waiting for last_message_sequence..."
+            Firehose::Server.metrics.new_connection!
           end
 
           # Log a message that the client has disconnected and reset the state for the class. Clean
@@ -79,6 +80,7 @@ module Firehose
           def close(event)
             disconnect
             Firehose.logger.debug "WS connection `#{@req.path}` closing. Code: #{event.code.inspect}; Reason #{event.reason.inspect}"
+            Firehose::Server.metrics.connection_closed!
           end
 
           def disconnect
