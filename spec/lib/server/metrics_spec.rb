@@ -270,7 +270,9 @@ describe Firehose::Server::Metrics::Buffer do
         metrics.connection_closed!
         metrics.message_published!(channel)
         2.times { metrics.channel_subscribed!(channel) }
-        metrics.channels_subscribed_multiplexed!([channel, channel2])
+        metrics.channels_subscribed_multiplexed_ws!([channel, channel2])
+        metrics.channels_subscribed_multiplexed_long_polling!([channel, channel2])
+        metrics.channels_subscribed_multiplexed_ws_dynamic!([{channel: "foo"}, {channel: "bar"}])
 
         expect(metrics.to_hash).to eql({
           time: time,
@@ -281,16 +283,20 @@ describe Firehose::Server::Metrics::Buffer do
             connections_closed: 1,
             published: 1,
             subscribed: 2,
-            subscribed_multiplexed: 2
+            subscribed_multiplexed_ws: 2,
+            subscribed_multiplexed_ws_dynamic: 2,
+            subscribed_multiplexed_long_polling: 2
           },
           channels: {
             channel => {
               published: 1,
               subscribed: 2,
-              subscribed_multiplexed: 1
+              subscribed_multiplexed_ws: 1,
+              subscribed_multiplexed_long_polling: 1
             },
             channel2 => {
-              subscribed_multiplexed: 1
+              subscribed_multiplexed_ws: 1,
+              subscribed_multiplexed_long_polling: 1
             }
           }
         })

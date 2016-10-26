@@ -88,12 +88,28 @@ module Firehose::Server
         incr_channel! channel, :subscribed
       end
 
-      def channels_subscribed_multiplexed!(channels)
+      def channels_subscribed_multiplexed_ws!(channels)
         channels.each do |channel|
           @active_channels << channel
-          incr_global! :subscribed_multiplexed
-          incr_channel! channel, :subscribed_multiplexed
+          incr_global! :subscribed_multiplexed_ws
+          incr_channel! channel, :subscribed_multiplexed_ws
         end
+      end
+
+      def channels_subscribed_multiplexed_long_polling!(channels)
+        channels.each do |channel|
+          @active_channels << channel
+          incr_global! :subscribed_multiplexed_long_polling
+          incr_channel! channel, :subscribed_multiplexed_long_polling
+        end
+      end
+
+      def channels_subscribed_multiplexed_ws_dynamic!(subscriptions)
+        incr_global! :subscribed_multiplexed_ws_dynamic, subscriptions.size
+      end
+
+      def duplicate_multiplex_ws_subscription!
+        incr_global! :duplicate_multiplex_subscription
       end
 
       def new_connection!

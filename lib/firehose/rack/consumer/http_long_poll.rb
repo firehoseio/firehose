@@ -169,7 +169,7 @@ module Firehose
             subscriptions = Consumer.multiplex_subscriptions(request)
             log_request request, subscriptions, env
             channels = subscriptions.map{|s| s[:channel]}
-            Firehose::Server.metrics.channels_subscribed_multiplexed!(channels)
+            Firehose::Server.metrics.channels_subscribed_multiplexed_long_polling!(channels)
             subscriptions.each do |sub|
               respond_async(sub[:channel], sub[:last_message_sequence] || sub[:message_sequence], sub[:params], env)
             end
