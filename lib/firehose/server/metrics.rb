@@ -5,12 +5,13 @@ module Firehose::Server
     class TimeSeries
       attr_reader :series
 
-      def initialize(seconds: 5, keep_buckets: 2)
+      def initialize(seconds: 5, keep_buckets: 2, gc: true)
         @seconds = seconds.to_i
         if @seconds < 1
           raise ArgumentError, "TimeSeries interval must be >= 1"
         end
         @keep_buckets = keep_buckets
+        @track_gc_metrics = gc
         clear!
       end
 
@@ -21,7 +22,7 @@ module Firehose::Server
       def clear!
         @series = Hash.new do |h, k|
           bucket = bucket(k)
-          h[bucket] = Firehose::Server::Metrics::Buffer.new(bucket)
+          h[bucket] = Firehose::Server::Metrics::Buffer.new(bucket, gc: @track_gc_metrics)
         end
       end
 
@@ -62,11 +63,14 @@ module Firehose::Server
     end
 
     class Buffer
-      def initialize(time_bucket)
+      def initialize(time_bucket, gc: true)
         @time_bucket = time_bucket
         @active_channels = Set.new
         @global = Hash.new { 0 }
         @channel_metrics = Hash.new
+        if gc
+          @gc_metrics = GC.stat
+        end
       end
 
       # metric handlers
@@ -125,11 +129,13 @@ module Firehose::Server
       # serialization helpers (used to store metrics to redis)
 
       def to_hash
-        {
+        h = {
           time: @time_bucket,
           global: @global.merge(active_channels: @active_channels.size),
           channels: @channel_metrics
         }
+        h.merge!(gc: @gc_metrics) if @gc_metrics
+        h
       end
 
       def to_json

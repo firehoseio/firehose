@@ -167,7 +167,7 @@ describe Firehose::Server::Metrics::TimeSeries do
 
   describe "#series" do
     let(:metrics) do
-      Firehose::Server::Metrics::TimeSeries.new(seconds: 2)
+      Firehose::Server::Metrics::TimeSeries.new(seconds: 2, gc: false)
     end
 
     context "without any metrics" do
@@ -188,7 +188,7 @@ describe Firehose::Server::Metrics::TimeSeries do
         metrics.message_published!(channel1)
         metrics.message_published!(channel2)
 
-        buffer = Firehose::Server::Metrics::Buffer.new(metrics.bucket(Time.now))
+        buffer = Firehose::Server::Metrics::Buffer.new(metrics.bucket(Time.now), gc: false)
         buffer.message_published!(channel1)
         buffer.message_published!(channel2)
 
@@ -214,8 +214,8 @@ describe Firehose::Server::Metrics::TimeSeries do
         bucket1 = metrics.bucket(t1)
         bucket2 = metrics.bucket(t2)
 
-        buf1 = Firehose::Server::Metrics::Buffer.new(bucket1)
-        buf2 = Firehose::Server::Metrics::Buffer.new(bucket2)
+        buf1 = Firehose::Server::Metrics::Buffer.new(bucket1, gc: false)
+        buf2 = Firehose::Server::Metrics::Buffer.new(bucket2, gc: false)
 
         buf1.message_published!(channel1)
         buf1.message_published!(channel2)
@@ -233,11 +233,11 @@ end
 describe Firehose::Server::Metrics::Buffer do
   context "new metrics instance" do
     let(:time) { 0 }
-    let(:metrics) { Firehose::Server::Metrics::Buffer.new(time) }
+    let(:metrics) { Firehose::Server::Metrics::Buffer.new(time, gc: false) }
 
     describe "#==" do
-      let(:buf1) { Firehose::Server::Metrics::Buffer.new(time) }
-      let(:buf2) { Firehose::Server::Metrics::Buffer.new(time) }
+      let(:buf1) { Firehose::Server::Metrics::Buffer.new(time, gc: false) }
+      let(:buf2) { Firehose::Server::Metrics::Buffer.new(time, gc: false) }
 
       it "returns true for empty buffers" do
         expect(buf1).to be == buf2
