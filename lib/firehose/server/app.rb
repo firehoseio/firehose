@@ -10,6 +10,7 @@ module Firehose
         @server = opts[:server] || :rainbows
 
         Firehose.logger.info "Starting #{Firehose::VERSION} '#{Firehose::CODENAME}', in #{ENV['RACK_ENV']}"
+        Firehose::Server::MetricsCollector.new.start
       end
 
       def start

@@ -17,6 +17,8 @@ module Firehose
     autoload :ChannelSubscription, 'firehose/server/channel_subscription'
     autoload :App,                 'firehose/server/app'
     autoload :Redis,               'firehose/server/redis'
+    autoload :Metrics,             'firehose/server/metrics'
+    autoload :MetricsCollector,    'firehose/server/metrics_collector'
 
     def self.configuration
       @configuration ||= Configuration.new
@@ -26,6 +28,12 @@ module Firehose
 
     def self.redis
       configuration.redis
+    end
+
+    def self.metrics
+      interval = ENV["METRICS_INTERVAL"].to_i
+      interval = MetricsCollector.metrics_interval
+      @metrics ||= Firehose::Server::Metrics::TimeSeries.new(seconds: interval)
     end
   end
 end

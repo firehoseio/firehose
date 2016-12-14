@@ -72,6 +72,7 @@ module Firehose
           # Log a message that the client has connected.
           def open(event)
             Firehose.logger.debug "WebSocket subscribed to `#{@req.path}`. Waiting for last_message_sequence..."
+            Firehose::Server.metrics.new_connection!
           end
 
           # Log a message that the client has disconnected and reset the state for the class. Clean
@@ -79,6 +80,7 @@ module Firehose
           def close(event)
             disconnect
             Firehose.logger.debug "WS connection `#{@req.path}` closing. Code: #{event.code.inspect}; Reason #{event.reason.inspect}"
+            Firehose::Server.metrics.connection_closed!
           end
 
           def disconnect
@@ -137,6 +139,7 @@ module Firehose
 
             if subscriptions = msg[:multiplex_subscribe]
               subscriptions = [subscriptions] unless subscriptions.is_a?(Array)
+              Firehose::Server.metrics.channels_subscribed_multiplexed_ws_dynamic!(subscriptions)
               return subscribe_multiplexed(subscriptions)
             end
 
@@ -160,12 +163,23 @@ module Firehose
           end
 
           def subscribe_multiplexed(subscriptions)
+            channels = subscriptions.map{|s| s[:channel]}
+            Firehose::Server.metrics.channels_subscribed_multiplexed_ws!(channels)
+
             subscriptions.each do |sub|
               Firehose.logger.debug "Subscribing multiplexed to: #{sub}"
 
               channel, sequence = sub[:channel]
 
               next if channel.nil?
+
+              if @subscriptions.include?(channel)
+                Firehose.logger.warn "Duplicate (aborted) multiplexing WS channel subscription: #{channel}"
+                Firehose::Server.metrics.duplicate_multiplex_ws_subscription!
+                # skip duplicate channel subscriptions
+                next
+              end
+
               subscribe(channel, last_message_sequence(sub), sub[:params])
             end
           end

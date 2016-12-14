@@ -18,18 +18,23 @@ module Firehose
         when 'PUT'
           # Firehose::Client::Publisher PUT's payloads to the server.
           publisher.call(env)
-        when 'HEAD' 
+        when 'HEAD'
           # HEAD requests are used to prevent sockets from timing out
           # from inactivity
           ping.call(env)
         else
-          # TODO - 'harden' this up with a GET request and throw a "Bad Request" 
-          # HTTP error code. I'd do it now but I'm in a plane and can't think of it.
-          consumer.call(env)
+          case req.path
+          when "/metrics@firehose"
+            metrics_api.call(env)
+          else
+            # TODO - 'harden' this up with a GET request and throw a "Bad Request"
+            # HTTP error code. I'd do it now but I'm in a plane and can't think of it.
+            consumer.call(env)
+          end
         end
       end
 
-      # The consumer pulls messages off of the backend and passes messages to the 
+      # The consumer pulls messages off of the backend and passes messages to the
       # connected HTTP or WebSocket client. This can be configured from the initialization
       # method of the rack app.
       def consumer
@@ -43,6 +48,10 @@ module Firehose
 
       def ping
         @ping ||= Ping.new
+      end
+
+      def metrics_api
+        @metrics_api ||= MetricsAPI.new
       end
     end
   end

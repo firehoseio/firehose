@@ -47,6 +47,8 @@ module Firehose
           eval_publish_script channel_key, message, ttl, buffer_size, deferrable
         end
 
+        Firehose::Server.metrics.message_published!(channel_key, message)
+
         deferrable
       end
 

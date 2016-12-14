@@ -143,6 +143,8 @@ module Firehose
             last_sequence = params.delete('last_message_sequence').to_i
             channel       = request.path
 
+            Firehose::Server.metrics.channel_subscribed!(channel)
+
             log_request   channel, last_sequence, env
             respond_async channel, last_sequence, params, env
           end
@@ -166,6 +168,8 @@ module Firehose
           def handle_request(request, env)
             subscriptions = Consumer.multiplex_subscriptions(request)
             log_request request, subscriptions, env
+            channels = subscriptions.map{|s| s[:channel]}
+            Firehose::Server.metrics.channels_subscribed_multiplexed_long_polling!(channels)
             subscriptions.each do |sub|
               respond_async(sub[:channel], sub[:last_message_sequence] || sub[:message_sequence], sub[:params], env)
             end

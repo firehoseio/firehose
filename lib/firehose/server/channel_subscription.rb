@@ -76,16 +76,13 @@ module Firehose
         @subscriber.unsubscribe self
       end
 
-
-      class Firehose::Server::ChannelSubscription
-        def process_messages(messages)
-          messages = messages.map do |m|
-            m = m.dup
-            on_message(m)
-            m
-          end
-          @deferrable.succeed messages
+      def process_messages(messages)
+        messages = messages.map do |m|
+          m = m.dup
+          on_message(m)
+          m
         end
+        @deferrable.succeed messages
       end
 
       private
