@@ -1,4 +1,13 @@
 ## master
+- Update faraday gem (old version had a bug that could cause our specs to fail)
+- Added metrics for channel & global events & expose them via HTTP as JSON at /metrics@firehose
+
+## 1.3.9
+- Bugfix: Prevent channel sequence of 0 when there's messages buffered.
+
+## 1.3.8
+- Fix params parsing for multiplexed subscriptions
+- Fix http long poll spec related to params parsing
 
 ## 1.3.7
 - Configuration of Redis via the `Firehose::Server.redis` object.
