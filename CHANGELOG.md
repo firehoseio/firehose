@@ -4,6 +4,7 @@
 - Update faraday gem (old version had a bug that could cause our specs to fail)
 - Added metrics for channel & global events & expose them via HTTP as JSON at /metrics@firehose
 - Lock down dependency version to prevent build failure & fix code climate reporter to work with latest version in travis build.
+- Add support for defining & detecting deprecated channels that cause subscriptions and publishes to those channels to be logged.
 
 ## 1.3.9
 - Bugfix: Prevent channel sequence of 0 when there's messages buffered.

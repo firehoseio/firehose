@@ -16,6 +16,10 @@ module Firehose
 
         case method
         when 'PUT'
+          if Server.configuration.channel_deprecated?(req.path)
+            Firehose.logger.warn "Publishing to DEPRECATED Channel: #{req.path}"
+          end
+
           # Firehose::Client::Publisher PUT's payloads to the server.
           publisher.call(env)
         when 'HEAD'

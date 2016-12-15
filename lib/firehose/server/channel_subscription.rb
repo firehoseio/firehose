@@ -24,6 +24,9 @@ module Firehose
         @channel_key  = channel_key
         @deferrable = EM::DefaultDeferrable.new
         @deferrable.errback {|e| EM.next_tick { raise e } unless [:timeout, :disconnect].include?(e) }
+        if Server.configuration.channel_deprecated?(channel_key)
+          Firehose.logger.warn "Subscription to DEPRECATED Channel: #{channel_key}"
+        end
         on_subscribe(params)
       end
 

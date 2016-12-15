@@ -235,6 +235,23 @@ class MyFilter < Firehose::Server::MessageFilter
 end
 ```
 
+## Deprecation logging for channels
+
+You can specify a list of channels that are marked as deprecated and will cause subscription and publish events on any of those channels to be logged with a special deprecation message.
+
+Example config:
+
+```ruby
+Firehose::Server.configuration do |config|
+  # set a static list of deprecated channels:
+  config.deprecated_channels = ["/foo/bar.json", "/foo/bar/baz.json"]
+  # provide a block to determine if a channel is deprecated via custom logic:
+  config.deprecated_channel do |channel|
+    channel =~ /^\/foo\/*\.json$/
+  end
+end
+```
+
 ## Rack Configuration
 
 There are two rack applications that are included with Firehose: `Firehose::Rack::Producer` which a client can `PUT` HTTP request with message payloads to publish information on Firehose and the `Firehose::Rack::Consumer` application which a client connects to via HTTP long polling or WebSockets to consume a message.

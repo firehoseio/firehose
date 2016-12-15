@@ -13,6 +13,7 @@ describe Firehose::Server::Configuration do
       config = Firehose::Server.configuration
       expect(config.message_filter).to eql(Firehose::Server::MessageFilter)
       expect(config.redis.url).to eql(DEFAULT_REDIS_URL)
+      expect(config.deprecated_channels.to_a).to eql([])
     end
 
     it "overrides values when given a configuration block" do
@@ -35,6 +36,23 @@ describe Firehose::Server::Configuration do
       end
 
       expect(config.redis.url).to eql(DEFAULT_REDIS_URL)
+      expect(config.deprecated_channels.to_a).to eql([])
+
+      config = Firehose::Server.configuration do |conf|
+        conf.deprecated_channels = ["/foo", "/foo/bar"]
+        conf.deprecated_channel do |channel|
+          channel =~ /^\/foo\/(\d+)$/
+        end
+      end
+
+      expect(config.deprecated_channels.to_a).to eql(["/foo", "/foo/bar"])
+      expect(config.channel_deprecated?("/foo")).to be true
+      expect(config.channel_deprecated?("/foo/bar")).to be true
+      expect(config.channel_deprecated?("/foobar")).to be false
+      expect(config.channel_deprecated?("/foo/123")).to be true
+      expect(config.channel_deprecated?("/foo/123abc")).to be false
+      expect(config.channel_deprecated?("/foo/123/456")).to be false
+      expect(config.channel_deprecated?("/foo/123/bar")).to be false
     end
   end
 end
