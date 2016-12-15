@@ -1,6 +1,7 @@
 ENV['RACK_ENV'] ||= 'test'
 
 require 'logger'
+require 'eventmachine'
 require 'em-http'
 require 'faye/websocket'
 require 'hiredis'
@@ -8,8 +9,8 @@ require 'firehose'
 
 # Test coverage reports on CodeClimate.
 begin
-  require "codeclimate-test-reporter"
-  CodeClimate::TestReporter.start
+  require 'simplecov'
+  SimpleCov.start
 rescue LoadError
 end
 

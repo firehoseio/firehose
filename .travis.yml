@@ -9,4 +9,4 @@ services:
   - redis-server
 
 script:
-  - bundle exec rake spec
+  - bundle exec rake spec && bundle exec codeclimate-test-reporter
