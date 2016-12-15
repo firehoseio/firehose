@@ -1,4 +1,4 @@
 module Firehose
-  VERSION  = "1.3.9"
-  CODENAME = "Filtered Messages"
+  VERSION  = "1.4.0"
+  CODENAME = "Inspectable Pipes"
 end
