@@ -237,6 +237,16 @@ end
 
 ## Deprecation logging for channels
 
+## Client publishing option
+You can mark a message as deprecated (to be logged by Firehose) by passing
+`deprecated: true` as an option to `Firehose::Client::Producer::HTTP#put`.
+
+```ruby
+firehose = Firehose::Client::Producer::Http.new('//127.0.0.1:7474')
+firehose.publish("{'hello': 'world'}").to("/my/messages/path", deprecated: true)
+```
+
+## Server side config
 You can specify a list of channels that are marked as deprecated and will cause subscription and publish events on any of those channels to be logged with a special deprecation message.
 
 Example config:

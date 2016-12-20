@@ -32,6 +32,9 @@ module Firehose
             if buffer_size = env["HTTP_X_FIREHOSE_BUFFER_SIZE"]
               opts[:buffer_size] = buffer_size.to_i
             end
+            if env["HTTP_X_FIREHOSE_DEPRECATED"] == "true"
+              opts[:deprecated] = true
+            end
             publisher.publish(path, body, opts).callback do
               env['async.callback'].call [202, {'Content-Type' => 'text/plain', 'Content-Length' => '0'}, []]
               env['async.callback'].call response(202, '', 'Content-Type' => 'text/plain')
