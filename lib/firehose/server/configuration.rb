@@ -14,6 +14,20 @@ module Firehose
         @deprecated_channel_check = -> (_channel) { false }
       end
 
+      def deprecate_channel(channel)
+        unless channel_deprecated?(channel)
+          Firehose.logger.info "Deprecated channel: #{channel}"
+          @deprecated_channels << channel
+        end
+      end
+
+      def undeprecate_channel(channel)
+        if channel_deprecated?(channel)
+          Firehose.logger.info "Undeprecated channel: #{channel}"
+          @deprecated_channels.delete channel
+        end
+      end
+
       def deprecated_channels=(channels)
         @deprecated_channels = Set.new(channels)
       end

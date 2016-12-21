@@ -87,5 +87,26 @@ describe Firehose::Server::Publisher do
       end
     end
 
+    it "marks the channel as deprecated" do
+      em do
+        expect(Firehose::Server.configuration.channel_deprecated?(channel_key)).to be(false)
+        publisher.publish(channel_key, message, deprecated: true).callback do
+          expect(Firehose::Server.configuration.channel_deprecated?(channel_key)).to be(true)
+          em.stop
+        end
+      end
+    end
+
+    it "marks the channel as undeprecated" do
+      em do
+        Firehose::Server.configuration.deprecate_channel(channel_key)
+        expect(Firehose::Server.configuration.channel_deprecated?(channel_key)).to be(true)
+        publisher.publish(channel_key, message, deprecated: false).callback do
+          expect(Firehose::Server.configuration.channel_deprecated?(channel_key)).to be(false)
+          em.stop
+        end
+      end
+    end
+
   end
 end

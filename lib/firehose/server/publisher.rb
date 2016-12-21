@@ -13,10 +13,13 @@ module Firehose
         # How long should we hang on to the resource once is published?
         ttl = (opts[:ttl] || TTL).to_i
         buffer_size = (opts[:buffer_size] || MessageBuffer::DEFAULT_SIZE).to_i
-        deprecated  = opts[:deprecated]
 
-        if deprecated
-          Firehose.logger.warn "Publishing to DEPRECATED Channel: #{channel_key}"
+        if opts.include?(:deprecated)
+          if opts[:deprecated]
+            Server.configuration.deprecate_channel channel_key
+          else
+            Server.configuration.undeprecate_channel channel_key
+          end
         end
 
         # TODO hi-redis isn't that awesome... we have to setup an errback per even for wrong
