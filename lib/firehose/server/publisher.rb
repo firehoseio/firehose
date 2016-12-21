@@ -129,11 +129,17 @@ module Firehose
         local message_payload = firehose_resource .. payload_delimiter .. sequence .. payload_delimiter .. message
 
         redis.call('set', sequence_key, sequence)
-        redis.call('expire', sequence_key, ttl)
         redis.call('lpush', list_key, message)
         redis.call('ltrim', list_key, 0, buffer_size - 1)
-        redis.call('expire', list_key, ttl)
         redis.call('publish', channel_key, message_payload)
+
+        if tonumber(ttl) > 0 then
+          redis.call('expire', sequence_key, ttl)
+          redis.call('expire', list_key, ttl)
+        else
+          redis.call('persist', sequence_key)
+          redis.call('persist', list_key)
+        end
 
         return sequence
       LUA
