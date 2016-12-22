@@ -28,13 +28,7 @@ module Firehose
           EM.next_tick do
             body = env['rack.input'].read
             Firehose.logger.debug "HTTP published #{body.inspect} to #{path.inspect} with ttl #{ttl.inspect}"
-            opts = { :ttl => ttl }
-            if buffer_size = env["HTTP_X_FIREHOSE_BUFFER_SIZE"]
-              opts[:buffer_size] = buffer_size.to_i
-            end
-            if deprecated = env["HTTP_X_FIREHOSE_DEPRECATED"]
-              opts[:deprecated] = deprecated == "true"
-            end
+            opts = { :ttl => ttl }.merge(parse_options(env))
             publisher.publish(path, body, opts).callback do
               env['async.callback'].call [202, {'Content-Type' => 'text/plain', 'Content-Length' => '0'}, []]
               env['async.callback'].call response(202, '', 'Content-Type' => 'text/plain')
@@ -54,6 +48,21 @@ module Firehose
       end
 
       private
+
+      def parse_options(env)
+        opts = {}
+        if buffer_size = env["HTTP_X_FIREHOSE_BUFFER_SIZE"]
+          opts[:buffer_size] = buffer_size.to_i
+        end
+        if deprecated = env["HTTP_X_FIREHOSE_DEPRECATED"]
+          opts[:deprecated] = deprecated == "true"
+        end
+        if persist = env["HTTP_X_FIREHOSE_PERSIST"]
+          opts[:persist] = persist == "true"
+        end
+        opts
+      end
+
       def publisher
         @publisher ||= Firehose::Server::Publisher.new
       end

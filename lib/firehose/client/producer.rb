@@ -46,6 +46,7 @@ module Firehose
           timeout     = opts[:timeout] || @timeout || DEFAULT_TIMEOUT
           buffer_size = opts[:buffer_size]
           deprecated  = opts[:deprecated]
+          persist     = opts[:persist]
 
           response = conn.put do |req|
             req.options[:timeout] = timeout
@@ -64,6 +65,7 @@ module Firehose
             req.headers['Cache-Control'] = "max-age=#{ttl.to_i}" if ttl
             req.headers["X-Firehose-Buffer-Size"] = buffer_size.to_s if buffer_size
             req.headers["X-Firehose-Deprecated"] = (!!deprecated).to_s if opts.include?(:deprecated)
+            req.headers["X-Firehose-Persist"] = (!!persist).to_s if opts.include?(:persist)
           end
           response.on_complete do
             case response.status

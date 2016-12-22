@@ -161,6 +161,34 @@ firehose = Firehose::Client::Producer::Http.new('//127.0.0.1:7474')
 firehose.publish(json).to("/my/messages/path")
 ```
 
+## Publishing Options
+You can pass additional options to the publisher that set specific custom
+configuration http headers. The options available are:
+- TTL (how long should the message be buffered for)
+- Buffer size (how many messages for the channel should be kept in the buffer)
+- Deprecated (if marked as deprecated, any publications or subscriptions to the channel will be logged with a deprecation warning)
+- Persist (persisting causes the channel & message to not be expired after a given or the default TTL)
+
+The corresponding HTTP headers and allowed values are:
+- `Cache-Control: int`
+- `X-Firehose-Buffer-Size: int`
+- `X-Firehose-Deprecated: true | false`
+- `X-Firehose-Persist: true | false`
+
+```ruby
+firehose = Firehose::Client::Producer::Http.new('//127.0.0.1:7474')
+# mark channel as deprecated
+firehose.publish(json).to("/my/messages/path", deprecated: true)
+# expire after 120 seconds
+firehose.publish(json).to("/my/messages/path", ttl: 120)
+# only keep last item
+firehose.publish(json).to("/my/messages/path", buffer_size: 1)
+# persist channel & message forever (or until a new message for this channel declares a new TTL and persist != true)
+firehose.publish(json).to("/my/messages/path", persist: true)
+```
+
+These options can be of course be combined within a single request.
+
 # Configuration
 
 Firehose can be configured via environmental variables. Take a look at the [`.env.sample`](./.env.sample) file for more info.

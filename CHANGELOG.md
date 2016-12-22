@@ -5,6 +5,7 @@
 - Added metrics for channel & global events & expose them via HTTP as JSON at /metrics@firehose
 - Lock down dependency version to prevent build failure & fix code climate reporter to work with latest version in travis build.
 - Add support for defining & detecting deprecated channels that cause subscriptions and publishes to those channels to be logged.
+- Add support for persisting channels & messages.
 
 ## 1.3.9
 - Bugfix: Prevent channel sequence of 0 when there's messages buffered.
