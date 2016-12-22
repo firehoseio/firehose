@@ -38,21 +38,44 @@ describe Firehose::Server::Configuration do
       expect(config.redis.url).to eql(DEFAULT_REDIS_URL)
       expect(config.deprecated_channels.to_a).to eql([])
 
-      config = Firehose::Server.configuration do |conf|
-        conf.deprecated_channels = ["/foo", "/foo/bar"]
-        conf.deprecated_channel do |channel|
-          channel =~ /^\/foo\/(\d+)$/
-        end
-      end
 
-      expect(config.deprecated_channels.to_a).to eql(["/foo", "/foo/bar"])
-      expect(config.channel_deprecated?("/foo")).to be true
-      expect(config.channel_deprecated?("/foo/bar")).to be true
-      expect(config.channel_deprecated?("/foobar")).to be false
-      expect(config.channel_deprecated?("/foo/123")).to be true
-      expect(config.channel_deprecated?("/foo/123abc")).to be false
-      expect(config.channel_deprecated?("/foo/123/456")).to be false
-      expect(config.channel_deprecated?("/foo/123/bar")).to be false
+      em_run do
+        config = Firehose::Server.configuration do |conf|
+          conf.deprecated_channels = ["/foo", "/foo/bar"]
+          conf.deprecated_channel do |channel|
+            channel =~ /^\/foo\/(\d+)$/
+          end
+        end
+
+        expect(config.deprecated_channels.to_a).to eql(["/foo", "/foo/bar"])
+        expect(config.channel_deprecated?("/foo")).to be true
+        expect(config.channel_deprecated?("/foo/bar")).to be true
+        expect(config.channel_deprecated?("/foobar")).to be false
+        expect(config.channel_deprecated?("/foo/123")).to be true
+        expect(config.channel_deprecated?("/foo/123abc")).to be false
+        expect(config.channel_deprecated?("/foo/123/456")).to be false
+        expect(config.channel_deprecated?("/foo/123/bar")).to be false
+      end
+    end
+
+    it "marks a channel as deprecated" do
+      em_run do
+        config = Firehose::Server.configuration
+        config.undeprecate_channel("/foo")
+        expect(config.channel_deprecated?("/foo")).to be(false)
+        config.deprecate_channel("/foo")
+        expect(config.channel_deprecated?("/foo")).to be(true)
+      end
+    end
+
+    it "undeprecates a channel" do
+      em_run do
+        config = Firehose::Server.configuration
+        expect(config.channel_deprecated?("/foo")).to be(true)
+        config.undeprecate_channel("/foo")
+        expect(config.channel_deprecated?("/foo")).to be(false)
+        redis_key = Firehose::Server::Redis.key(:configuration, :deprecated_channels)
+      end
     end
   end
 end

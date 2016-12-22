@@ -36,6 +36,13 @@ module EM::TestHelper
       EM
     end
   end
+
+  def em_run(ttl=30, &block)
+    em(ttl) do
+      block.call
+      EM.stop
+    end
+  end
 end
 
 module Hiredis::TestHelper
