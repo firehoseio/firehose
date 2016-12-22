@@ -108,5 +108,24 @@ describe Firehose::Server::Publisher do
       end
     end
 
+    it "sets no ttl on the channel if message is to be persisted" do
+      em do
+        publisher.publish(channel_key, message, persist: true).callback do
+          expect(redis_exec('TTL', "firehose:#{channel_key}:sequence")).to be -1
+          expect(redis_exec('TTL', "firehose:#{channel_key}:list")).to be -1
+          em.stop
+        end
+      end
+    end
+
+    it "sets no ttl on the channel if message is to be persisted even if ttl given" do
+      em do
+        publisher.publish(channel_key, message, ttl: 10, persist: true).callback do
+          expect(redis_exec('TTL', "firehose:#{channel_key}:sequence")).to be -1
+          expect(redis_exec('TTL', "firehose:#{channel_key}:list")).to be -1
+          em.stop
+        end
+      end
+    end
   end
 end

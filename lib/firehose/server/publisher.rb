@@ -13,6 +13,7 @@ module Firehose
         # How long should we hang on to the resource once is published?
         ttl = (opts[:ttl] || TTL).to_i
         buffer_size = (opts[:buffer_size] || MessageBuffer::DEFAULT_SIZE).to_i
+        persist = !!opts[:persist]
 
         if opts.include?(:deprecated)
           if opts[:deprecated]
@@ -49,10 +50,10 @@ module Firehose
           end.callback do |digest|
             @publish_script_digest = digest
             Firehose.logger.debug "Registered Lua publishing script with Redis => #{digest}"
-            eval_publish_script channel_key, message, ttl, buffer_size, deferrable
+            eval_publish_script channel_key, message, ttl, buffer_size, persist, deferrable
           end
         else
-          eval_publish_script channel_key, message, ttl, buffer_size, deferrable
+          eval_publish_script channel_key, message, ttl, buffer_size, persist, deferrable
         end
 
         Firehose::Server.metrics.message_published!(channel_key, message)
@@ -87,7 +88,7 @@ module Firehose
         redis.script 'LOAD', REDIS_PUBLISH_SCRIPT
       end
 
-      def eval_publish_script(channel_key, message, ttl, buffer_size, deferrable)
+      def eval_publish_script(channel_key, message, ttl, buffer_size, persist, deferrable)
         list_key = Server::Redis.key(channel_key, :list)
         script_args = [
           Server::Redis.key(channel_key, :sequence),
@@ -96,6 +97,7 @@ module Firehose
           ttl,
           message,
           buffer_size,
+          persist,
           PAYLOAD_DELIMITER,
           channel_key
         ]
@@ -117,8 +119,9 @@ module Firehose
         local ttl               = KEYS[4]
         local message           = KEYS[5]
         local buffer_size       = KEYS[6]
-        local payload_delimiter = KEYS[7]
-        local firehose_resource = KEYS[8]
+        local persist           = KEYS[7] == "true"
+        local payload_delimiter = KEYS[8]
+        local firehose_resource = KEYS[9]
 
         local current_sequence = redis.call('get', sequence_key)
         if current_sequence == nil or current_sequence == false then
@@ -129,11 +132,17 @@ module Firehose
         local message_payload = firehose_resource .. payload_delimiter .. sequence .. payload_delimiter .. message
 
         redis.call('set', sequence_key, sequence)
-        redis.call('expire', sequence_key, ttl)
         redis.call('lpush', list_key, message)
         redis.call('ltrim', list_key, 0, buffer_size - 1)
-        redis.call('expire', list_key, ttl)
         redis.call('publish', channel_key, message_payload)
+
+        if persist then
+          redis.call('persist', sequence_key)
+          redis.call('persist', list_key)
+        else
+          redis.call('expire', sequence_key, ttl)
+          redis.call('expire', list_key, ttl)
+        end
 
         return sequence
       LUA
