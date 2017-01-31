@@ -383,7 +383,7 @@ end
 
 # Deployment
 
-The recommended method ofGdeploying firehose is to deploy it separately from your main app.
+The recommended method of deploying Firehose is to deploy it separately from your main app.
 
 1. Create a new project with a Gemfile such as
 
