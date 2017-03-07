@@ -11,3 +11,6 @@ services:
 
 script:
   - bundle exec rake spec && bundle exec codeclimate-test-reporter
+
+sudo: required
+dist: trusty
