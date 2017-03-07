@@ -80,7 +80,7 @@ module Firehose
           end
 
           # Hide Faraday with this Timeout exception, and through the error handler.
-          rescue Faraday::Error::TimeoutError => e
+          rescue Faraday::Error::TimeoutError, Faraday::ConnectionFailed => e
             error_handler.call TimeoutError.new(e)
         end
 
