@@ -26,7 +26,7 @@ module Firehose
     end
 
     desc "server", "Start an instance of a server."
-    method_option :port,   :type => :numeric, :default => ENV['PORT'] || Firehose::URI.port, :required => false, :aliases => '-p'
+    method_option :port,   :type => :numeric, :default => (ENV['PORT'] || Firehose::URI.port).to_i, :required => false, :aliases => '-p'
     method_option :host,   :type => :string,  :default => ENV['HOST'] || Firehose::URI.host, :required => false, :aliases => '-h'
     method_option :server, :type => :string,  :default => ENV['SERVER'] ||'rainbows', :required => false, :aliases => '-s'
     def server
