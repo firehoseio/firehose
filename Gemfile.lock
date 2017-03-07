@@ -105,7 +105,7 @@ GEM
       daemons (~> 1.0, >= 1.0.9)
       eventmachine (~> 1.0, >= 1.0.4)
       rack (~> 1.0)
-    thor (0.19.1)
+    thor (0.19.4)
     unicorn (4.9.0)
       kgio (~> 2.6)
       rack
@@ -147,4 +147,4 @@ DEPENDENCIES
   webmock
 
 BUNDLED WITH
-   1.13.6
+   1.14.6
