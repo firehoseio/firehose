@@ -281,9 +281,6 @@ Example config:
 
 ```ruby
 Firehose::Server.configuration do |config|
-  # sync dynamically (by a publisher) deprecated channels every 30 seconds from redis
-  # this is set to 1 minute by default.
-  config.deprecated_channels_sync_interval = 30
   # set a static list of deprecated channels:
   config.deprecated_channels = ["/foo/bar.json", "/foo/bar/baz.json"]
   # provide a block to determine if a channel is deprecated via custom logic:
