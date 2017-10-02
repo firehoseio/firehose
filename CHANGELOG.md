@@ -1,5 +1,8 @@
 ## master
 
+## 1.4.2
+- Ensure firehose server port is an integer and parsed correctly
+
 ## 1.4.1
 - Fixed duplicate call to Rack async.callback which caused the server to send a PUT request response twice
 
