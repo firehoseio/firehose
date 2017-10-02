@@ -1,5 +1,8 @@
 ## master
 
+## 1.4.1
+- Fixed duplicate call to Rack async.callback which caused the server to send a PUT request response twice
+
 ## 1.4.0
 - Update faraday gem (old version had a bug that could cause our specs to fail)
 - Added metrics for channel & global events & expose them via HTTP as JSON at /metrics@firehose
