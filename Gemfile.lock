@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    firehose (1.4.0)
+    firehose (1.4.2)
       em-hiredis (>= 0.2.0)
       em-http-request (>= 1.0.0)
       eventmachine (>= 1.0.0)
