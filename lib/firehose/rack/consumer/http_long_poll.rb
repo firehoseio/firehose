@@ -107,13 +107,16 @@ module Firehose
                     async_callback env, 200, wrap_frame(channel, message)
                   end.errback do |e|
                     if e == :timeout
+                      Firehose::Server.metrics.timeout!(:http_subscribe_multiplexed, channel)
                       async_callback env, 204
                     else
+                      Firehose::Server.metrics.error!(:http_subscribe_multiplexed, channel)
                       Firehose.logger.error "Unexpected error when trying to GET last_sequence #{last_sequence} for path #{channel}: #{e.inspect}"
                       async_callback env, 500, "Unexpected error"
                     end
                   end
                 rescue Server::ChannelSubscription::Failed => e
+                  Firehose::Server.metrics.error!(:http_subscribe_multiplexed_failed, channel)
                   Firehose.logger.info "Subscription failed: #{e.message}"
                   async_callback env,
                                  400,
@@ -167,11 +170,20 @@ module Firehose
 
           def handle_request(request, env)
             subscriptions = Consumer.multiplex_subscriptions(request)
-            log_request request, subscriptions, env
-            channels = subscriptions.map{|s| s[:channel]}
-            Firehose::Server.metrics.channels_subscribed_multiplexed_long_polling!(channels)
-            subscriptions.each do |sub|
-              respond_async(sub[:channel], sub[:last_message_sequence] || sub[:message_sequence], sub[:params], env)
+            if subscriptions.empty?
+              Firehose::Server.metrics.error!(:http_subscribe_multiplexed_empty)
+              Firehose.logger.warn "Client tried to subscribe multiplexed via HTTP without any channel subscriptions."
+              async_callback env,
+                             400,
+                             JSON.generate(error: "Subscription failed",
+                                           reason: "No subscription data given - can't subscribe to nothing")
+            else
+              log_request request, subscriptions, env
+              channels = subscriptions.map{|s| s[:channel]}
+              Firehose::Server.metrics.channels_subscribed_multiplexed_long_polling!(channels)
+              subscriptions.each do |sub|
+                respond_async(sub[:channel], sub[:last_message_sequence] || sub[:message_sequence], sub[:params], env)
+              end
             end
           end
         end

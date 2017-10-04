@@ -126,6 +126,24 @@ module Firehose::Server
         decr_global! :connections
       end
 
+      def error!(error_tag, channel = nil)
+        incr_global! :errors
+        if channel
+          incr_channel! channel, "error_#{error_tag}"
+        else
+          incr_global! "error_#{error_tag}"
+        end
+      end
+
+      def timeout!(tag, channel = nil)
+        incr_global! :timeouts
+        if channel
+          incr_channel! channel, "timeout_#{tag}"
+        else
+          incr_global! "timeout_#{tag}"
+        end
+      end
+
       # serialization helpers (used to store metrics to redis)
 
       def to_hash

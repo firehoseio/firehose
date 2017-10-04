@@ -211,7 +211,10 @@ module Firehose
             end
 
             deferrable.errback do |e|
-              EM.next_tick { raise e.inspect } unless e == :disconnect
+              unless e == :disconnect
+                Firehose::Server.metrics.error!(:ws_subscribe_multiplexed, channel_name)
+                EM.next_tick { raise e.inspect }
+              end
             end
           end
 
