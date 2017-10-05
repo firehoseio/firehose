@@ -8,13 +8,18 @@ module Firehose
       class WebSocket
         # Setup a handler for the websocket connection.
         def call(env)
-          ws = Faye::WebSocket.new(env)
-          if Consumer.multiplexing_request?(env)
-            MultiplexingHandler.new(ws)
-          else
-            DefaultHandler.new(ws)
+          begin
+            ws = Faye::WebSocket.new(env)
+            if Consumer.multiplexing_request?(env)
+              MultiplexingHandler.new(ws)
+            else
+              DefaultHandler.new(ws)
+            end
+            ws.rack_response
+          rescue StandardError => e
+            Firehose.logger.error "WS connection error: #{e.inspect}"
+            Firehose::Rack::Helpers.response(400, "Invalid WebSocket request")
           end
-          ws.rack_response
         end
 
         # Determine if the rack request is a WebSocket request.
