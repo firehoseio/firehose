@@ -18,6 +18,7 @@ module Firehose
             ws.rack_response
           rescue StandardError => e
             Firehose.logger.error "WS connection error: #{e.inspect}"
+            Firehose::Server.metrics.error!(:ws_invalid_request)
             Firehose::Rack::Helpers.response(400, "Invalid WebSocket request")
           end
         end
