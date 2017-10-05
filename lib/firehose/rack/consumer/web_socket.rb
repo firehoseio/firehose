@@ -6,6 +6,8 @@ module Firehose
   module Rack
     class Consumer
       class WebSocket
+        include Firehose::Rack::Helpers
+
         # Setup a handler for the websocket connection.
         def call(env)
           begin
@@ -19,7 +21,7 @@ module Firehose
           rescue StandardError => e
             Firehose.logger.error "WS connection error: #{e.inspect}"
             Firehose::Server.metrics.error!(:ws_invalid_request)
-            Firehose::Rack::Helpers.response(400, "Invalid WebSocket request")
+            response(400, "Invalid WebSocket request")
           end
         end
 
