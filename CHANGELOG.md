@@ -1,5 +1,8 @@
 ## master
 
+## 1.4.3
+- Track errors and timeouts in metrics (type of error/timeout per channel and global error/timeout count)
+
 ## 1.4.2
 - Ensure firehose server port is an integer and parsed correctly
 
