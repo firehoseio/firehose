@@ -42,11 +42,12 @@ module Firehose
 
         # Publish the message via HTTP.
         def put(message, channel, opts, &block)
-          ttl         = opts[:ttl]
-          timeout     = opts[:timeout] || @timeout || DEFAULT_TIMEOUT
-          buffer_size = opts[:buffer_size]
-          deprecated  = opts[:deprecated]
-          persist     = opts[:persist]
+          ttl            = opts[:ttl]
+          timeout        = opts[:timeout] || @timeout || DEFAULT_TIMEOUT
+          buffer_size    = opts[:buffer_size]
+          deprecated     = opts[:deprecated]
+          persist        = opts[:persist]
+          custom_headers = opts[:headers] || {}
 
           response = conn.put do |req|
             req.options[:timeout] = timeout
@@ -66,6 +67,9 @@ module Firehose
             req.headers["X-Firehose-Buffer-Size"] = buffer_size.to_s if buffer_size
             req.headers["X-Firehose-Deprecated"] = (!!deprecated).to_s if opts.include?(:deprecated)
             req.headers["X-Firehose-Persist"] = (!!persist).to_s if opts.include?(:persist)
+            custom_headers.each do |k, v|
+              req.headers[k] = v
+            end
           end
           response.on_complete do
             case response.status

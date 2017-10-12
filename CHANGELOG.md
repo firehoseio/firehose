@@ -1,5 +1,7 @@
 ## master
 
+- Allow passing custom HTTP headers to the Firehose::Client::Producer::Http which can be useful for things like passing along request trace headers
+
 ## 1.4.3
 - Track errors and timeouts in metrics (type of error/timeout per channel and global error/timeout count)
 
