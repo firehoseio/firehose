@@ -94,6 +94,7 @@ module Firehose
                 begin
                   chan_sub = Server::ChannelSubscription.new(
                     channel,
+                    env,
                     params: params,
                     sequence: last_sequence,
                     timeout: @timeout

@@ -4,7 +4,14 @@ describe Firehose::Server::Subscriber do
   include EM::TestHelper
 
   let(:channel_key)     { '/bears/are/mean' }
-  let(:chan_sub)        { Firehose::Server::ChannelSubscription.new(channel_key) }
+  let(:env) {
+    {
+      "REMOTE_ADDR" => "192.168.0.1",
+      "HTTP_REFERER"=> "http://localhost:80/test",
+      "HTTP_USER_AGENT" => "test/runner"
+    }
+  }
+  let(:chan_sub)        { Firehose::Server::ChannelSubscription.new(channel_key, env) }
   let(:subscriber)      { Firehose::Server::Subscriber.new(Firehose::Server.redis.connection) }
   let(:dummy_subscriber){ Firehose::Server::Subscriber.new(double('redis', :pubsub => double('pubsub', :subscribe => EM::DefaultDeferrable.new, :on => nil))) }
   let(:message)         { 'Raaaarrrrrr!!!!' }

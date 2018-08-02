@@ -16,16 +16,30 @@ module Firehose
         @subscriber ||= Server::Subscriber.new
       end
 
-      def initialize(channel_key, sequence: 0, params: {}, timeout: nil)
+      class ClientInfo
+        attr_reader :ip, :referer, :user_agent
+        def initialize(env)
+          @ip         = env["REMOTE_ADDR"]
+          @referer    = env["HTTP_REFERER"]
+          @user_agent = env["HTTP_USER_AGENT"]
+        end
+
+        def to_s
+          "ip=#{@ip.inspect} referer=#{@referer.inspect} user_agent=#{@user_agent.inspect}"
+        end
+      end
+
+      def initialize(channel_key, env, sequence: 0, params: {}, timeout: nil)
         @redis        = self.class.redis
         @subscriber   = self.class.subscriber
         @sequence     = sequence
         @timeout      = timeout
         @channel_key  = channel_key
+        @client_info  = ClientInfo.new(env)
         @deferrable = EM::DefaultDeferrable.new
         @deferrable.errback {|e| EM.next_tick { raise e } unless [:timeout, :disconnect].include?(e) }
         if Server.configuration.channel_deprecated?(channel_key)
-          Firehose.logger.warn "Subscription to DEPRECATED Channel: #{channel_key}"
+          Firehose.logger.warn "Subscription to DEPRECATED Channel: #{channel_key} from client: #{@client_info}"
         end
         on_subscribe(params)
       end

@@ -104,6 +104,7 @@ module Firehose
             begin
               @subscribed = true
               @chan_sub   = Server::ChannelSubscription.new @req.path,
+                                                            @ws.env,
                                                             params: params,
                                                             sequence: last_sequence
               @deferrable = @chan_sub.next_messages
@@ -197,6 +198,7 @@ module Firehose
           def subscribe(channel_name, last_sequence, params)
             chan_sub = Server::ChannelSubscription.new(
               channel_name,
+              @ws.env,
               params: params,
               sequence: last_sequence
             )

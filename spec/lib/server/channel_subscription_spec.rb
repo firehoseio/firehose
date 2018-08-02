@@ -4,8 +4,15 @@ describe Firehose::Server::ChannelSubscription do
   include EM::TestHelper
 
   let(:channel_key) { '/bears/are/mean' }
+  let(:env) {
+    {
+      "REMOTE_ADDR" => "192.168.0.1",
+      "HTTP_REFERER"=> "http://localhost:80/test",
+      "HTTP_USER_AGENT" => "test/runner"
+    }
+  }
   let(:channel) do
-    Firehose::Server::ChannelSubscription.new(channel_key,
+    Firehose::Server::ChannelSubscription.new(channel_key, env,
                                               sequence: sequence,
                                               timeout: timeout)
   end
