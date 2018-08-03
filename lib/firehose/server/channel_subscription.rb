@@ -20,6 +20,9 @@ module Firehose
         attr_reader :ip, :referer, :user_agent
         def initialize(env)
           @ip         = env["REMOTE_ADDR"]
+          if realIp = env["HTTP_X_FORWARDED_FOR"]
+            @ip = realIp
+          end
           @referer    = env["HTTP_REFERER"]
           @user_agent = env["HTTP_USER_AGENT"]
         end
