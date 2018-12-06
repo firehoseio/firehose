@@ -12,7 +12,7 @@ module Firehose
         def call(env)
           begin
             ws = Faye::WebSocket.new(env)
-            if Consumer.multiplexing_request?(env)
+            if multiplexing_request?(env)
               MultiplexingHandler.new(ws)
             else
               DefaultHandler.new(ws)

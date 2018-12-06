@@ -8,25 +8,37 @@ module Firehose
       # over Firehose.
       PAYLOAD_DELIMITER = "\n"
 
-      # Publish a message to a Firehose channel via Redis.
-      def publish(channel_key, message, opts={})
-        # How long should we hang on to the resource once is published?
-        ttl = (opts[:ttl] || TTL).to_i
-        buffer_size = (opts[:buffer_size] || MessageBuffer::DEFAULT_SIZE).to_i
-        persist = !!opts[:persist]
+      def publish_all(publications)
+        deferrable = EM::DefaultDeferrable.new
+        publications.inject(deferrable) do |prev_deferrable, pub|
+          publish(pub).callback do
+            prev_deferrable.succeed
+          end.errback do |e|
+            prev_deferrable.fail e
+          end
+        end
+        deferrable
+      end
 
-        if opts.include?(:deprecated)
-          if opts[:deprecated]
-            Server.configuration.deprecate_channel channel_key
+      # Publish a message to a Firehose channel via Redis.
+      def publish(pub)
+        # How long should we hang on to the resource once is published?
+        ttl = (pub.ttl || TTL).to_i
+        buffer_size = (pub.buffer_size || MessageBuffer::DEFAULT_SIZE).to_i
+        persist = !!pub.persist
+
+        unless pub.deprecated.nil?
+          if pub.deprecated
+            Server.configuration.deprecate_channel pub.channel
           else
-            Server.configuration.undeprecate_channel channel_key
+            Server.configuration.undeprecate_channel pub.channel
           end
         end
 
         # TODO hi-redis isn't that awesome... we have to setup an errback per even for wrong
         # commands because of the lack of a method_missing whitelist. Perhaps implement a whitelist in
         # em-hiredis or us a diff lib?
-        if (deferrable = opts[:deferrable]).nil?
+        if (deferrable = pub.deferrable).nil?
           deferrable = EM::DefaultDeferrable.new
           deferrable.errback do |e|
             # Handle missing Lua publishing script in cache
@@ -35,8 +47,8 @@ module Firehose
               deferrable.succeed
               EM.next_tick do
                 @publish_script_digest = nil
-                combined_opts = opts.merge :deferrable => deferrable
-                self.publish channel_key, message, combined_opts
+                pub.deferrable = deferrable
+                self.publish pub
               end
             else
               EM.next_tick { raise e }
@@ -50,13 +62,13 @@ module Firehose
           end.callback do |digest|
             @publish_script_digest = digest
             Firehose.logger.debug "Registered Lua publishing script with Redis => #{digest}"
-            eval_publish_script channel_key, message, ttl, buffer_size, persist, deferrable
+            eval_publish_script pub.channel, pub.payload, ttl, buffer_size, persist, deferrable
           end
         else
-          eval_publish_script channel_key, message, ttl, buffer_size, persist, deferrable
+          eval_publish_script pub.channel, pub.payload, ttl, buffer_size, persist, deferrable
         end
 
-        Firehose::Server.metrics.message_published!(channel_key, message)
+        Firehose::Server.metrics.message_published!(pub.channel, pub.payload)
 
         deferrable
       end
@@ -115,7 +127,7 @@ module Firehose
       REDIS_PUBLISH_SCRIPT = <<-LUA
         local sequence_key      = KEYS[1]
         local list_key          = KEYS[2]
-        local channel_key       = KEYS[3]
+        local chan_updates_key  = KEYS[3]
         local ttl               = KEYS[4]
         local message           = KEYS[5]
         local buffer_size       = KEYS[6]
@@ -134,7 +146,7 @@ module Firehose
         redis.call('set', sequence_key, sequence)
         redis.call('lpush', list_key, message)
         redis.call('ltrim', list_key, 0, buffer_size - 1)
-        redis.call('publish', channel_key, message_payload)
+        redis.call('publish', chan_updates_key, message_payload)
 
         if persist then
           redis.call('persist', sequence_key)

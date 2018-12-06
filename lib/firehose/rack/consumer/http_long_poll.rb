@@ -7,6 +7,7 @@ module Firehose
         # How long should we wait before closing out the consuming clients web connection
         # for long polling? Most browsers timeout after a connection has been idle for 30s.
         TIMEOUT = 20
+        include Firehose::Rack::Helpers
 
         attr_accessor :timeout
 
@@ -16,7 +17,7 @@ module Firehose
         end
 
         def call(env)
-          if Consumer.multiplexing_request?(env)
+          if multiplexing_request?(env)
             MultiplexingHandler.new(@timeout).call(env)
           else
             DefaultHandler.new(@timeout).call(env)
@@ -43,7 +44,7 @@ module Firehose
               return ASYNC_RESPONSE
             # we use post messages for http long poll multiplexing
             when "POST"
-              if Consumer.multiplexing_request?(env)
+              if multiplexing_request?(env)
                 handle_request(request, env)
                 return ASYNC_RESPONSE
               end

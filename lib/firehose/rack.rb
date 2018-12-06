@@ -28,6 +28,12 @@ module Firehose
         headers = {'Content-Length' => body.size.to_s}.merge(headers)
         [status, headers, [body]]
       end
+
+      MULTIPLEX_CHANNEL = "/channels@firehose"
+
+      def multiplexing_request?(env)
+        env["PATH_INFO"].start_with? MULTIPLEX_CHANNEL
+      end
     end
   end
 end
