@@ -72,6 +72,10 @@ module Firehose
             }
           end
         end
+
+        if subs.empty?
+          Firehose.logger.warn "Consumer.post_subscriptions: Empty / Invalid subscriptions POST body: #{body.inspect}"
+        end
       end
 
       # Let the client configure the consumer on initialization.
