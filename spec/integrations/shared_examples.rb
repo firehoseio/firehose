@@ -93,10 +93,10 @@ shared_examples_for 'Firehose::Rack::App' do
     # Great, we have all the pieces in order, lets run this thing in the reactor.
     em 180 do
       # Start the clients.
-      websocket.call(1)
-      websocket.call(2)
-      http_long_poll.call(3)
-      http_long_poll.call(4)
+      websocket.call("ws1")
+      websocket.call("ws2")
+      http_long_poll.call("http1")
+      http_long_poll.call("http2")
 
       # Wait a sec to let our clients set up.
       em.add_timer(1){ publish.call }
@@ -104,9 +104,14 @@ shared_examples_for 'Firehose::Rack::App' do
 
     # When EM stops, these assertions will be made.
     expect(received.size).to eql(4)
-    received.each_value do |arr|
-      expect(arr.size).to eql(messages.size)
-      expect(arr.sort).to eql(messages.sort)
+
+    (1..2).each do |id|
+      ws_msgs = received["ws#{id}"].sort
+      http_msgs = received["http#{id}"].sort
+      expect(ws_msgs.size).to eql(messages.size)
+      expect(http_msgs.size).to be >= messages.size * 0.75
+      expect(http_msgs.size).to be <= messages.size
+      expect(ws_msgs).to eql(messages.sort)
     end
   end
 
@@ -171,10 +176,10 @@ shared_examples_for 'Firehose::Rack::App' do
 
     em 180 do
       # Start the clients.
-      multiplexed_http_long_poll.call(5)
-      multiplexed_http_long_poll.call(6)
-      multiplexed_websocket.call(7)
-      multiplexed_websocket.call(8)
+      multiplexed_websocket.call("ws3")
+      multiplexed_websocket.call("ws4")
+      multiplexed_http_long_poll.call("http3")
+      multiplexed_http_long_poll.call("http4")
 
       # Wait a sec to let our clients set up.
       em.add_timer(1){ publish_multi.call }
@@ -182,9 +187,13 @@ shared_examples_for 'Firehose::Rack::App' do
 
     # When EM stops, these assertions will be made.
     expect(received.size).to eql(4)
-    received.each_value do |arr|
-      expect(arr.size).to be <= messages.size
-      # expect(arr.sort).to eql(messages.sort)
+    (3..4).each do |id|
+      ws_msgs = received["ws#{id}"].sort
+      http_msgs = received["http#{id}"].sort
+      expect(ws_msgs.size).to eql(messages.size)
+      expect(http_msgs.size).to be >= messages.size * 0.75
+      expect(http_msgs.size).to be <= messages.size
+      expect(ws_msgs).to eql(messages.sort)
     end
   end
 
