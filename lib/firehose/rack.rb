@@ -25,7 +25,7 @@ module Firehose
       # Calculates the content of a message body for the response so that HTTP Keep-Alive
       # connections work.
       def response(status, body='', headers={})
-        headers = {'Content-Length' => body.size.to_s}.merge(headers)
+        headers = {'Content-Length' => body.bytesize.to_s}.merge(headers)
         [status, headers, [body]]
       end
     end
