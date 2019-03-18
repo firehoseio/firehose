@@ -1,5 +1,12 @@
 ## master
 
+## 1.4.6
+- Update some dependencies (minor version upgrades)
+- Remove old JS client files (the current JS client can be found @ https://github.com/firehoseio/js_client)
+- Keep track of some client information in Firehose::Server::ChannelSubscription::ClientInfo
+- Improve logging
+- Use String#byte_size instead of String#size for Content-Length response header
+
 ## 1.4.3
 - Track errors and timeouts in metrics (type of error/timeout per channel and global error/timeout count)
 
