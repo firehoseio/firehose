@@ -42,7 +42,7 @@ module Firehose
         else
           Firehose.logger.debug "HTTP #{method} not supported"
           msg = "#{method} not supported."
-          [501, {'Content-Type' => 'text/plain', 'Content-Length' => msg.size.to_s}, [msg]]
+          [501, {'Content-Type' => 'text/plain', 'Content-Length' => msg.bytesize.to_s}, [msg]]
         end
       end
 
