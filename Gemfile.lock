@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    firehose (1.4.5)
+    firehose (1.4.6)
       em-hiredis (>= 0.2.0)
       em-http-request (>= 1.0.0)
       eventmachine (>= 1.0.0)
@@ -146,4 +146,4 @@ DEPENDENCIES
   webmock
 
 BUNDLED WITH
-   1.14.6
+   1.17.2
