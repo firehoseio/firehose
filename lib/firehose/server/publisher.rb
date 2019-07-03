@@ -118,7 +118,7 @@ module Firehose
         local channel_key       = KEYS[3]
         local ttl               = KEYS[4]
         local message           = KEYS[5]
-        local buffer_size       = KEYS[6]
+        local buffer_size       = KEYS[6] + 0
         local persist           = KEYS[7] == "true"
         local payload_delimiter = KEYS[8]
         local firehose_resource = KEYS[9]
@@ -132,8 +132,13 @@ module Firehose
         local message_payload = firehose_resource .. payload_delimiter .. sequence .. payload_delimiter .. message
 
         redis.call('set', sequence_key, sequence)
-        redis.call('lpush', list_key, message)
-        redis.call('ltrim', list_key, 0, buffer_size - 1)
+        if buffer_size > 0 then
+          redis.call('lpush', list_key, message)
+          redis.call('ltrim', list_key, 0, buffer_size - 1)
+        else
+          redis.call('del', list_key)
+        end
+
         redis.call('publish', channel_key, message_payload)
 
         if persist then
