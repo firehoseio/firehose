@@ -72,7 +72,7 @@ GEM
     mini_racer (0.1.8)
       libv8 (~> 5.3)
     multipart-post (2.0.0)
-    nokogiri (1.10.3)
+    nokogiri (1.10.8)
       mini_portile2 (~> 2.4.0)
     public_suffix (2.0.5)
     rack (1.6.11)
