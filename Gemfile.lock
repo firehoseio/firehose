@@ -62,7 +62,7 @@ GEM
     hashdiff (0.3.2)
     hiredis (0.6.1)
     http_parser.rb (0.6.0)
-    json (2.0.3)
+    json (2.3.1)
     kgio (2.11.0)
     libv8 (5.3.332.38.3)
     mime-types (3.1)
