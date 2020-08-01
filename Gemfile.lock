@@ -54,7 +54,7 @@ GEM
     execjs (2.7.0)
     faraday (0.11.0)
       multipart-post (>= 1.2, < 3)
-    faye-websocket (0.10.7)
+    faye-websocket (0.11.0)
       eventmachine (>= 0.12.0)
       websocket-driver (>= 0.5.1)
     foreman (0.83.0)
@@ -114,9 +114,9 @@ GEM
       addressable (>= 2.3.6)
       crack (>= 0.3.2)
       hashdiff
-    websocket-driver (0.6.5)
+    websocket-driver (0.7.3)
       websocket-extensions (>= 0.1.0)
-    websocket-extensions (0.1.2)
+    websocket-extensions (0.1.5)
     xpath (2.0.0)
       nokogiri (~> 1.3)
 
