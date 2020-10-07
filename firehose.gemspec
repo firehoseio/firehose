@@ -12,8 +12,6 @@ Gem::Specification.new do |s|
   s.description = %q{Firehose is a realtime web application toolkit for building realtime Ruby web applications.}
   s.license     = "MIT"
 
-  s.rubyforge_project = "firehose"
-
   s.files         = `git ls-files`.split("\n")
   s.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")
   s.executables   = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
