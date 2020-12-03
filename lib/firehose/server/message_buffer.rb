@@ -5,7 +5,7 @@ module Firehose
     class MessageBuffer
       # Number of messages that Redis buffers for the client if its
       # connection drops, then reconnects.
-      DEFAULT_SIZE = 100
+      DEFAULT_SIZE = ENV.fetch("DEFAULT_BUFFER_SIZE", 100)
 
       def initialize(message_list, channel_sequence, consumer_sequence = nil)
         @message_list = message_list
