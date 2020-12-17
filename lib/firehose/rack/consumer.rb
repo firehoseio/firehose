@@ -78,9 +78,13 @@ module Firehose
         end
 
         subs
-      rescue JSON::ParserError
-        Firehose.logger.warn "Consumer.post_subscriptions: JSON::ParserError for request body: #{body.inspect}"
+      rescue JSON::ParserError => e
+        handle_parse_error(request, body, e)
         []
+      end
+
+      def self.handle_parse_error(request, body, error)
+        Firehose.logger.warn "JSON::ParserError for request body: #{body.inspect}"
       end
 
       # Let the client configure the consumer on initialization.
