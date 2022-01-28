@@ -6,7 +6,7 @@ end
 describe Firehose::Server::Configuration do
   include EM::TestHelper
 
-  DEFAULT_REDIS_URL = URI(Firehose::Server::Redis::DEFAULT_URL)
+  DEFAULT_REDIS_URL = URI(ENV.fetch("REDIS_URL", Firehose::Server::Redis::DEFAULT_URL))
 
   describe "configuring Firehose" do
     it "sets the default values" do

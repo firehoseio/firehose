@@ -12,8 +12,6 @@ Gem::Specification.new do |s|
   s.description = %q{Firehose is a realtime web application toolkit for building realtime Ruby web applications.}
   s.license     = "MIT"
 
-  s.rubyforge_project = "firehose"
-
   s.files         = `git ls-files`.split("\n")
   s.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")
   s.executables   = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
@@ -23,7 +21,7 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency "eventmachine", ">= 1.0.0"
   s.add_runtime_dependency "em-hiredis", ">= 0.2.0"
   s.add_runtime_dependency "thor"
-  s.add_runtime_dependency "faraday", "~> 0.11.0"
+  s.add_runtime_dependency "faraday"
   s.add_runtime_dependency "faye-websocket"
   s.add_runtime_dependency "em-http-request", ">= 1.0.0"
   s.add_runtime_dependency "rack"

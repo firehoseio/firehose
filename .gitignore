@@ -12,3 +12,4 @@ public/javascripts
 node_modules
 vendor
 lib/assets/javascripts/firehose/version.js.coffee
+coverage

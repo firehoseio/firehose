@@ -8,7 +8,7 @@ module Firehose
       class Http
         # Exception gets raised when a 202 is _not_ received from the server after a message is published.
         PublishError = Class.new(RuntimeError)
-        TimeoutError = Class.new(Faraday::Error::TimeoutError)
+        TimeoutError = Class.new(Faraday::TimeoutError)
         DEFAULT_TIMEOUT = 1 # How many seconds should we wait for a publish to take?
         DEFAULT_ERROR_HANDLER = ->(e) { raise e }
 
@@ -80,7 +80,7 @@ module Firehose
           end
 
           # Hide Faraday with this Timeout exception, and through the error handler.
-          rescue Faraday::Error::TimeoutError, Faraday::ConnectionFailed => e
+          rescue Faraday::TimeoutError, Faraday::ConnectionFailed => e
             error_handler.call TimeoutError.new(e)
         end
 
