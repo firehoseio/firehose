@@ -35,6 +35,13 @@ $ firehose server
 >> Listening on 127.0.0.1:7474, CTRL+C to stop
 ```
 
+or
+
+```
+docker-compose build
+docker-compose up
+```
+
 In case you're wondering, the Firehose application server runs the Rack app `Firehose::Rack::App.new` inside of Thin or Rainbows! `Firehose::Rack::App` consists of a bunch of smaller apps and a middleware, which is useful for hacking.
 
 ## Publish a message to a bunch of subscribers
@@ -55,6 +62,12 @@ and you should see the message in the other terminal.
 
 ```sh
 Greetings fellow human being...
+```
+
+## Run the tests
+
+```sh
+docker-compose run firehose bundle exec rspec spec
 ```
 
 ## Yeah, so?

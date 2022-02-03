@@ -38,8 +38,8 @@ describe Firehose::Server::Subscriber do
 
     it "doesn't call process_messages on the deferrable when a 2nd message is published" do
       em do
-        chan_sub.should_receive(:process_messages).with([Firehose::Server::Message.new(message, 1)]) # The publisher is fresh, so the sequence ID will be 1.
-        chan_sub.should_not_receive(:process_messages).with([Firehose::Server::Message.new('2nd message', 2)])
+        expect(chan_sub).to receive(:process_messages).with([Firehose::Server::Message.new(message, 1)])
+        expect(chan_sub).to_not receive(:process_messages).with([Firehose::Server::Message.new('2nd message', 2)])
 
         subscriber.subscribe(chan_sub)
         publisher.publish(channel_key, message).callback do
