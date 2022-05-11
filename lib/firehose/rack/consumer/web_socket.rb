@@ -17,7 +17,8 @@ module Firehose
             else
               DefaultHandler.new(ws)
             end
-            ws.rack_response
+            [status, headers, body] = ws.rack_response
+            [status, response_headers(env, headers), body]
           rescue StandardError => e
             Firehose.logger.error "WS connection error: #{e.inspect}"
             Firehose::Server.metrics.error!(:ws_invalid_request)

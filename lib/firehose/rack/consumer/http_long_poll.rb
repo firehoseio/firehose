@@ -55,19 +55,6 @@ module Firehose
 
           private
 
-          # If the request is a CORS request, return those headers, otherwise don't worry 'bout it
-          def response_headers(env)
-            cors_origin(env) ? cors_headers(env) : {}
-          end
-
-          def cors_origin(env)
-            env['HTTP_ORIGIN']
-          end
-
-          def cors_headers(env)
-            {'Access-Control-Allow-Origin' => cors_origin(env)}
-          end
-
           def request(env)
             env['parsed_request'] ||= ::Rack::Request.new(env)
           end

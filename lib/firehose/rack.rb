@@ -28,6 +28,20 @@ module Firehose
         headers = {'Content-Length' => body.bytesize.to_s}.merge(headers)
         [status, headers, [body]]
       end
+
+      # If the request is a CORS request, return those headers, otherwise don't worry 'bout it
+      def response_headers(env, merge_headers={})
+        headers = cors_origin(env) ? cors_headers(env) : {}
+        headers.merge(merge_headers)
+      end
+
+      def cors_origin(env)
+        env['HTTP_ORIGIN']
+      end
+
+      def cors_headers(env)
+        {'Access-Control-Allow-Origin' => cors_origin(env)}
+      end
     end
   end
 end
